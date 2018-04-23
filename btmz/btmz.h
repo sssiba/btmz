@@ -30,10 +30,6 @@
 
 
 
-#include "gamemain.h"
-//#include "fbIllumination.h"
-#include "gameflow.h"
-
 //-------------------------------------------
 //-------------------------------------------
 //-------------------------------------------
@@ -42,7 +38,7 @@
 #define FRAMERATE 25
 
 // 方向定義
-enum {
+enum : uint8_t {
   DIR_N,
   DIR_E,
   DIR_S,
@@ -57,8 +53,21 @@ enum {
 //-------------------------------------------
 //-------------------------------------------
 
+
+#include "gamemain.h"
+//#include "fbIllumination.h"
+#include "gameflow.h"
+
+#include "ui.h"
+
+
+//-------------------------------------------
+//-------------------------------------------
+//-------------------------------------------
+
 extern GameMain gamemain;
 extern fbIllumination fbl;
+
 extern const int8_t g_dirstepx[DIRMAX];
 extern const int8_t g_dirstepy[DIRMAX];
 
