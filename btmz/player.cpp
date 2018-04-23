@@ -8,6 +8,8 @@
 
 #include "item.h"
 
+#include "ui.h"
+
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -341,11 +343,13 @@ void modeAttackInit()
   g_plmode = PLMODE_ATTACK;
   g_plphase = PLPHASE_AT_WAIT;
   g_plwait = 0;
+
+  UIC().openBtnCmd( 0, UICtrl::BCMD_EMPTY, UICtrl::BCMD_ATTACK, UICtrl::BCMD_EMPTY, UICtrl::BCMD_EMPTY );
 }
 
 void modeAttackFinish()
 {
-  
+  UIC().closeBtnCmd();
 }
 
 void modeAttack()
@@ -409,11 +413,13 @@ void modeActionInit()
   g_planmwait = 0;
   g_plmode = PLMODE_ACTION;
   g_plphase = PLPHASE_AC_WAIT;
+
+  UIC().openBtnCmd( 1, UICtrl::BCMD_EMPTY, UICtrl::BCMD_ATTACK, UICtrl::BCMD_EMPTY, UICtrl::BCMD_EMPTY );
 }
 
 void modeActionFinish()
 {
-  
+  UIC().closeBtnCmd();
 }
 
 void modeAction()
