@@ -12,8 +12,8 @@ enum PICID {
   PIC_CHARACTER,
   PIC_OBJECT, //8x8
   PIC_OBJECT16x8, //16x8
-  PIC_OBJECT16x16, //16x16
   PIC_OBJECT12x16, //12x16
+  PIC_ICON5x5, //icon
 };
 
 extern Image* g_pictbl[];

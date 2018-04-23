@@ -63,8 +63,11 @@ enum ObjType {
 class CellMaker
 {
 public:
-    enum {
+    enum { //entrance
       E_WALL, E_CORRIDOR, E_NOTHING, E_DOOR,
+    };
+    enum : int8_t { //cellobject
+      O_EMPTY, O_UPSTAIR, O_DOWNSTAIR,
     };
     struct CELL {
       uint8_t id;
@@ -72,6 +75,7 @@ public:
       uint8_t entrance;      //2bit 単位(0x03 のシフトで判定するので、0bWWSSEENN)で、NESW の接続部分情報を表す(E_WALL, E_CORRIDOR, ...)
       uint8_t toArea[DIRMAX]; //各方向の接続先エリア
       uint8_t toBlock[DIRMAX]; //各方向の接続先ブロック(エリア内の場所)
+      uint8_t mapobject;  //階段等のマップに紐づく object
     };
     struct AREABASE {
       int8_t sx, sy;
@@ -92,6 +96,8 @@ public:
   inline CELL* getCell( int8_t x, int8_t y ) { return &m_cell[ x + y * TMAPW ]; }
   CELL* getCellFromAreaDist( uint8_t area, uint8_t dist ); //指定エリアの開始位置から、指定された距離にある CELL を返す
 
+  bool randomObject( int8_t cellobj );
+
 private:
   void initConnect( uint8_t id );
   bool findNextStart( uint8_t curid, int8_t& x, int8_t& y, uint8_t& dir, int8_t& nx, int8_t& ny );
@@ -106,8 +112,8 @@ private:
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-#if defined( DBG_MAP )
 class Area;
+#if defined( DBG_MAP )
 class Map;
 #endif
 /*
@@ -120,7 +126,7 @@ public:
   friend class Map;
   friend class Area;
 #endif
-  Block( CellMaker* cm, CellMaker::AREABASE* abase, CellMaker::CELL* cell );
+  Block( Area* area, CellMaker* cm, CellMaker::AREABASE* abase, CellMaker::CELL* cell );
   ~Block();
 
 

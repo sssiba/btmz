@@ -370,6 +370,26 @@ void ObjCandle::draw()
 
 }
 
+//-----------------------------------------------
+//-----------------------------------------------
+//-----------------------------------------------
+void ObjUpStair::draw()
+{
+  int16_t sx = DUNMAP()->toScrX( m_x );
+  int16_t sy = DUNMAP()->toScrY( m_y );
+  //土台
+  getPic( PIC_OBJECT12x16 )->setFrame( 0 );
+  gb.display.drawImage( sx, sy, *getPic( PIC_OBJECT12x16 ) );
+}
+
+void ObjDownStair::draw()
+{
+  int16_t sx = DUNMAP()->toScrX( m_x );
+  int16_t sy = DUNMAP()->toScrY( m_y );
+  //土台
+  getPic( PIC_OBJECT12x16 )->setFrame( 1 );
+  gb.display.drawImage( sx, sy, *getPic( PIC_OBJECT12x16 ) );
+}
 
 //-----------------------------------------------
 //-----------------------------------------------

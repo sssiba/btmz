@@ -13,6 +13,8 @@ enum {
   OBJID_CANDLE,
   OBJID_BOX,
   OBJID_TABLE,
+  OBJID_UPSTAIR,
+  OBJID_DOWNSTAIR,
 
   MAX_OBJID
 };
@@ -225,6 +227,31 @@ private:
   uint8_t m_fireanmwait;
 };
 
+//-----------------------------------------------
+class ObjUpStair : public NotContainable
+{
+  typedef NotContainable super;
+public:
+  ObjUpStair() {}
+  virtual ~ObjUpStair() {}
+
+  virtual void draw();
+  virtual int8_t getOfstX() const { return -6; }
+  virtual int8_t getOfstY() const { return 0; }
+};
+
+//-----------------------------------------------
+class ObjDownStair : public NotContainable
+{
+  typedef NotContainable super;
+public:
+  ObjDownStair() {}
+  virtual ~ObjDownStair() {}
+
+  virtual void draw();
+  virtual int8_t getOfstX() const { return -6; }
+  virtual int8_t getOfstY() const { return 0; }
+};
 
 //-----------------------------------------------
 

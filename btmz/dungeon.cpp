@@ -145,7 +145,7 @@ static const uint8_t rightDoor[] PROGMEM = { //右のドア
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-Block::Block( CellMaker* cm, CellMaker::AREABASE* abase, CellMaker::CELL* cell )
+Block::Block( Area* area, CellMaker* cm, CellMaker::AREABASE* abase, CellMaker::CELL* cell )
 {
   uint8_t dir = abase->dir; //ブロックの方向(エリアが伸びていく方向)
   uint8_t rdir = (dir + 2) & 0x3; //ブロックの方向の逆方向
@@ -218,6 +218,23 @@ Block::Block( CellMaker* cm, CellMaker::AREABASE* abase, CellMaker::CELL* cell )
         break;
     }
   }
+
+  //map object
+  switch( cell->mapobject ) {
+    case CellMaker::O_UPSTAIR:
+      {
+        ObjUpStair* obj = static_cast<ObjUpStair*>( area->createObj( m_dist, OBJID_UPSTAIR ) );
+        setObjCeiling( obj );
+      }
+      break;
+    case CellMaker::O_DOWNSTAIR:
+      {
+        ObjDownStair* obj = static_cast<ObjDownStair*>( area->createObj( m_dist, OBJID_DOWNSTAIR ) );
+        setObjGround( obj );
+      }
+      break;
+  }
+  
 }
 
 Block::~Block()
@@ -347,6 +364,13 @@ void Block::setObjCenter( ObjBase* obj )
 
 void Block::setObjCeiling( ObjBase* obj )
 {
+  int16_t x, y;
+  x = ( m_dist * BLKTILEW + 2) * TILEW;
+  y = 0 * TILEH;
+
+  x += obj->getOfstX();
+  y += obj->getOfstY();
+  obj->setPos( x, y );
 
 }
 
@@ -386,7 +410,7 @@ void Area::setup( CellMaker* cm, uint8_t id )
 
   for ( int i = 0; i < m_blkcnt; i++ ) {
     CellMaker::CELL* cell = cm->getCell( x, y );
-    m_blk[i] = new Block( cm, abp, cell );
+    m_blk[i] = new Block( this, cm, abp, cell );
 
     abp->fwdPos( x, y );
 
@@ -505,6 +529,8 @@ ObjBase* Area::createObj( uint8_t blk, uint8_t objid )
     case OBJID_CANDLE: obj = new ObjCandle(); break;
     case OBJID_BOX: obj = new ObjBox(); break;
     case OBJID_TABLE: obj = new ObjTable(); break;
+    case OBJID_UPSTAIR: obj = new ObjUpStair(); break;
+    case OBJID_DOWNSTAIR: obj = new ObjDownStair(); break;
   }
 
   if ( obj ) {
@@ -949,7 +975,6 @@ void CellMaker::make()
           sy = ny;
           dir = ndir;
 
-
           break;
         }
       }
@@ -960,8 +985,15 @@ void CellMaker::make()
     }
     //周辺に次の開始位置が設定できないので、次のエリアの周りを調べる
     delete[] done;
-
   }
+
+  //階段設置
+  //down
+  randomObject( O_DOWNSTAIR );
+  randomObject( O_UPSTAIR );
+  
+
+  
 
 #if defined( DBG_MAP )
   {
@@ -1076,6 +1108,26 @@ void CellMaker::make()
   }
   TRACE( "|" );
 #endif
+}
+
+bool CellMaker::randomObject( int8_t obj )
+{
+  //開始位置をランダム決定
+  uint8_t s = random(TMAPW*TMAPH);
+
+  //有効な場所を見つけるまで右下方向に向けて調べる
+  //右下を超えたら左上に戻って続く
+  for( uint8_t c=0; c<TMAPW*TMAPH; c++ ) {
+    CELL* cell = &m_cell[s];
+    if( cell->id != 0 ) {
+      //有効なセル
+      if( cell->mapobject == 0 ) { //まだ何も object が無い場所なら OK
+        cell->mapobject = obj;
+        return true;        
+      }
+    }
+    if( ++s >= TMAPW*TMAPH ) s = 0;
+  }
 }
 
 void CellMaker::initConnect( uint8_t id )
