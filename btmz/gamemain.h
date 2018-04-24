@@ -246,6 +246,8 @@ public:
   inline int8_t getResult() { return m_result; }
   inline void resetDecide() { m_stat = STAT_SELECTING; }
 
+  void fixCursor();
+
 protected:
   int8_t m_result;
   int8_t m_cursor;  //カーソル位置(item index)

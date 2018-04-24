@@ -21,14 +21,11 @@ static uint8_t g_plphase;
 static uint8_t g_plmode;
 static uint8_t g_plwait;
 static uint8_t g_plwkflag; //ワーク的に使用するフラグ
-//static int16_t g_plhpmax;
-//static int16_t g_plhp;
-//static int16_t g_plstr;
-//static int16_t g_pldef;
 Rect8 g_plmvrect;
 Rect8 g_platrect;
 Rect8 g_pldfrect;
 PLSTAT g_plstat;
+uint8_t g_plfloor;
 
 enum : uint8_t {
   PLMODE_UNDEFINED,
@@ -85,6 +82,13 @@ static void plDrawStat();
 static void applyItem(ITEM* item);
 static void removeItem(ITEM* item);
 
+static void gatherAction( uint8_t slot[UICtrl::BCSLOTMAX] );
+static bool checkActionTarget( ObjBase* obj );
+
+static void actStair( bool descend );
+static void actGet();
+static void actLoot();
+
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -133,6 +137,8 @@ void plInit()
   g_plstat.def = 0;
   g_plstat.healhp = 0;
 
+  g_plfloor = 0; //1F
+
   //x!x! 適当な武器を装備させておく
   ITEM* weapon = itGenerate( IBI_SHORTSWORD, ITRANK_MAGIC, 10 );
   plEquip( weapon );
@@ -144,17 +150,6 @@ void plInit()
   plAddItem( itGenerateFloor(4) );
   plAddItem( itGenerateFloor(6) );
   plAddItem( itGenerateFloor(8) );
-  plAddItem( itGenerateFloor(10) );
-  
-  plAddItem( itGenerateFloor(10) );
-  plAddItem( itGenerateFloor(10) );
-  plAddItem( itGenerateFloor(10) );
-  plAddItem( itGenerateFloor(10) );
-  plAddItem( itGenerateFloor(10) );
-  plAddItem( itGenerateFloor(10) );
-  plAddItem( itGenerateFloor(10) );
-  plAddItem( itGenerateFloor(10) );
-  plAddItem( itGenerateFloor(10) );
   plAddItem( itGenerateFloor(10) );
 }
 
@@ -199,7 +194,7 @@ void enterMode( uint8_t newmode )
 //------------------------------------------
 void modeMoveInit()
 {
-  g_planm = 0;
+  g_planm = 4;
   g_planmwait = 0;
   g_plmode = PLMODE_MOVE;
   g_plphase = PLPHASE_MV_WAIT;
@@ -344,7 +339,12 @@ void modeAttackInit()
   g_plphase = PLPHASE_AT_WAIT;
   g_plwait = 0;
 
-  UIC().openBtnCmd( 0, UICtrl::BCMD_EMPTY, UICtrl::BCMD_ATTACK, UICtrl::BCMD_EMPTY, UICtrl::BCMD_EMPTY );
+  UIC().openBtnCmd( UICtrl::BCMD_A,
+                    UICtrl::BCMD_EMPTY,  //up
+                    g_plflip ? UICtrl::BCMD_EMPTY : UICtrl::BCMD_ATTACK, //right
+                    UICtrl::BCMD_EMPTY, //down
+                    g_plflip ? UICtrl::BCMD_ATTACK : UICtrl::BCMD_EMPTY //left
+                  );
 }
 
 void modeAttackFinish()
@@ -409,12 +409,16 @@ void modeAttack()
 //------------------------------------------
 void modeActionInit()
 {
-  g_planm = 0;
+  g_planm = 4;
   g_planmwait = 0;
   g_plmode = PLMODE_ACTION;
   g_plphase = PLPHASE_AC_WAIT;
 
-  UIC().openBtnCmd( 1, UICtrl::BCMD_EMPTY, UICtrl::BCMD_ATTACK, UICtrl::BCMD_EMPTY, UICtrl::BCMD_EMPTY );
+  uint8_t slot[UICtrl::BCSLOTMAX ];
+
+  gatherAction( slot );
+
+  UIC().openBtnCmd( UICtrl::BCMD_B, slot[0], slot[1], slot[2], slot[3] );
 }
 
 void modeActionFinish()
@@ -424,8 +428,168 @@ void modeActionFinish()
 
 void modeAction()
 {
-  
+  uint8_t slot = UICtrl::BCSLOTMAX;
+  if( gamemain.isTrigger( BUTTON_UP ) ) {
+    slot = UICtrl::BCSLOT_UP;
+  } else
+  if( gamemain.isTrigger( BUTTON_RIGHT ) ) {
+    slot = UICtrl::BCSLOT_RIGHT;
+  } else
+  if( gamemain.isTrigger( BUTTON_DOWN ) ) {
+    slot = UICtrl::BCSLOT_DOWN;
+  } else
+  if( gamemain.isTrigger( BUTTON_LEFT ) ) {
+    slot = UICtrl::BCSLOT_LEFT;
+  }
+  if( slot != UICtrl::BCSLOTMAX ) {
+    uint8_t cmd = UIC().getBtnCmd( slot );
+    if( cmd != UICtrl::BCMD_EMPTY ) {
+      switch( cmd ) {
+        case UICtrl::BCMD_UP: actStair( false ); break;
+        case UICtrl::BCMD_DOWN: actStair( true ); break;
+        case UICtrl::BCMD_GET: actGet(); break;
+        case UICtrl::BCMD_LOOT: actLoot(); break;
+      }
+    }
+  }
 }
+
+/*
+ * 自分周辺の B ボタンコマンドに反応する object を調べてコマンド登録
+ */
+void gatherAction( uint8_t slot[UICtrl::BCSLOTMAX] )
+{
+  int8_t si = 0;
+  Area* area = DUNMAP()->getCurArea();
+
+  uint8_t flag = 0;
+  enum {
+    FLAG_LOOT = (1<<0),
+    FLAG_UP = (1<<1),
+    FLAG_DOWN = (1<<2),
+    FLAG_GET = (1<<3),
+  };
+
+  for( int8_t i=0; i<MAX_OBJECT; i++ ) {
+    ObjBase* obj = area->getObj( i );
+
+    //当たり判定
+    if( checkActionTarget( obj ) ) {
+      switch( obj->getAction() ) {
+        case UICtrl::BCMD_LOOT:
+          flag |= FLAG_LOOT;
+          break;
+        case UICtrl::BCMD_UP:
+          flag |= FLAG_UP;
+          break;
+        case UICtrl::BCMD_DOWN:
+          flag |= FLAG_DOWN;
+          break;
+        case UICtrl::BCMD_GET:
+          flag |= FLAG_GET;
+          break;
+      }
+    }
+  }
+
+  if( flag & FLAG_LOOT ) slot[si++] = UICtrl::BCMD_LOOT;
+  if( flag & FLAG_UP ) slot[si++] = UICtrl::BCMD_UP;
+  if( flag & FLAG_DOWN ) slot[si++] = UICtrl::BCMD_DOWN;
+  if( flag & FLAG_GET ) slot[si++] = UICtrl::BCMD_GET;
+
+  for( ;si<UICtrl::BCSLOTMAX; si++ ) {
+    slot[si] = UICtrl::BCMD_EMPTY;
+  }
+} 
+
+/*
+ * 指定 object が操作可能範囲内にいるか返す
+ */
+bool checkActionTarget( ObjBase* obj )
+{
+  if( !obj ) return false;
+  
+  int16_t x0, x1;
+  int16_t px0, px1;
+
+  px0 = plGetX() - 4;
+  px1 = px0 + 8;
+    
+  x0 = obj->getX();
+  x1 = x0 + obj->getActionRegionW();
+
+  return px0 <= x1 && x0 <= px1;
+}
+
+/*
+ * 操作範囲内に有る指定コマンドの対象となる object を集める。
+ */
+uint8_t collectActTarget( uint8_t cmd, ObjBase** out )
+{
+  uint8_t cnt = 0;
+  Area* area = DUNMAP()->getCurArea();
+
+  for( int8_t i=0; i<MAX_OBJECT; i++ ) {
+    ObjBase* obj = area->getObj( i );
+    if( checkActionTarget( obj ) ) {
+      if( obj->getAction() == cmd ) {
+        out[cnt++] = obj;
+      }
+    }
+  }
+
+  return cnt;
+}
+
+void actStair( bool descend )
+{
+  dunFinish();
+  enFinish();
+  
+  uint8_t f = plGetFloor();
+  if( descend ) {
+    if( f < 99 ) f++;
+  } else {
+    if( f > 0 ) f--;
+  }
+  plSetFloor( f );
+
+  enInit();
+  dunInit();
+
+  //プレイヤー配置
+  DUNMAP()->enterFloor( descend );
+}
+
+void actGet()
+{
+  uint8_t cnt;
+  ObjBase* tgt[MAX_OBJECT]; //１エリア内の最大 object 数分用意する
+
+  cnt = collectActTarget( UICtrl::BCMD_GET, tgt );
+
+  if( !cnt ) return; //ここに来てる時点で無いはずだけど、１つも無ければ何もしない
+
+  if( cnt == 1 ) { //１つだけならそのまま拾う
+    ObjDropItem* odi = static_cast<ObjDropItem*>( tgt[0] );
+    ITEM* item = odi->getItem();
+
+    if( plIsItemFull() ) {
+      showModalInfoDlg( "Item is full" ); //閉じるまで進行停止する
+    } else {
+      plAddItem( item );
+      DUNMAP()->getCurArea()->removeObj( odi ); //この中で Object が削除される
+    }
+  } else { //二つ以上あれば選択画面を出す
+    takeObjDropItemMenu( "Take", NULL, cnt, tgt ); //title, parent container, count, list
+  }
+}
+
+void actLoot()
+{
+}
+
+
 
 
 //------------------------------------------
@@ -553,17 +717,31 @@ void modeAttackDraw()
 
 void modeActionDraw()
 {
-
+  modeMoveDraw();
 }
 
 void plDrawStat()
 {
-    gb.display.setColor( Color::white );
-    gb.display.setCursor( 0, 0 );
-    char s[32];
-    sprintf( s, PSTR("H:%d/%d"), g_plstat.hp, g_plstat.hpmax );
-    gb.display.print( s );
+  //HP
+  getPic( PIC_ICON6x5 )->setFrame( UICtrl::ICON_HEART ); //HEART
+  gb.display.drawImage( 0, 0, *getPic( PIC_ICON6x5 ) );
+  gb.display.setColor( Color::white );
+  gb.display.setCursor( 6, 0 );
+  char s[32];
+  sprintf( s, PSTR("%d/%d"), g_plstat.hp, g_plstat.hpmax );
+  gb.display.print( s );
+
+  //Floor
+  gb.display.setColor( Color::white );
+  gb.display.setCursor( 0, 6 );
+  sprintf( s, PSTR("B%dF"), g_plfloor+1 );
+  gb.display.print(s);
   
+
+
+
+  gb.display.setColor( Color::green );
+  gb.display.drawFastHLine( 0, 15, SCRW ); 
 }
 
 void plFinish()

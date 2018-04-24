@@ -176,6 +176,7 @@ public:
   void update();
 
   Block* getBlock( uint8_t blk ) { return m_blk[blk]; }
+  inline uint8_t getBlockCnt() { return m_blkcnt; }
 
   void getEnterPos( uint8_t blk, int16_t& x, int16_t& y );
 
@@ -192,9 +193,9 @@ public:
 
   ObjBase* createObj( uint8_t blk, uint8_t objid );
   bool entryObj( uint8_t blk, ObjBase* obj );
-  ObjBase* getObj( uint8_t id );
+  ObjBase* getObj( uint8_t idx );
   void removeObj( ObjBase* obj );
-  void removeObj( uint8_t id );
+  void removeObj( uint8_t idx );
   void setObjPosWall( ObjBase* obj );
   void setObjPosGround( ObjBase* obj );
   
@@ -224,6 +225,19 @@ public:
 class Map
 {
 public:
+  typedef struct _OBJFINDER {
+    int8_t area;
+    int8_t objidx;
+    uint8_t objid;
+
+    _OBJFINDER( uint8_t findobjid )
+    {
+      area = -1;
+      objidx = -1;
+      objid = findobjid;
+    }
+  } OBJFINDER;
+public:
   Map();
   ~Map();
 
@@ -240,6 +254,14 @@ public:
   inline uint8_t* getAreaBG() { return m_areaBG; } //現在の area の BG map を取得
   Block* getBlock( int16_t x, int16_t y );
 
+  /*
+   * 指定の object id を持つ object を探す
+   * 最初に見つかったものを返す。複数あるものを順次見つける場合は、同じ OBJFINDER を使って呼び続ける。
+   * objid に OBJID_ALL を指定すると全ての object を拾う
+   */
+  ObjBase* findObject( OBJFINDER& of );
+
+  void enterFloor( bool descend );
   void enter( int8_t area, int8_t blk );
 
   //マップ上の X 座標を画面座標に変換

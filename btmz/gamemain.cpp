@@ -409,12 +409,8 @@ void WinSelect::update()
       m_stat = STAT_DONESELECT;
     }
   }
-  if( m_cursor >= m_itemnum ) m_cursor = m_itemnum-1;
-  if( m_cursor < 0 ) m_cursor = 0;
-  m_top = m_cursor - m_vline + 2;
-  if( m_top > (m_itemnum - m_vline)) m_top = m_itemnum - m_vline;
-  if( m_top < 0 ) m_top = 0;
-  if( (m_cursor > 0) && (m_cursor <= (m_top + 1)) ) m_top = m_cursor - 1;
+
+  fixCursor();
 
 #if 0
   gb.display.setColor( ColorIndex::gray );
@@ -423,6 +419,17 @@ void WinSelect::update()
   sprintf( s, "c:%d t:%d v:%d %d/%d", m_cursor, m_top, m_vline, m_itemnum, m_itemmax );
   gb.display.print( s );
 #endif  
+}
+
+void WinSelect::fixCursor()
+{
+  if ( m_cursor >= m_itemnum ) m_cursor = m_itemnum - 1;
+  if ( m_cursor < 0 ) m_cursor = 0;
+  int8_t scrcursor = m_cursor - m_top; //画面上のカーソル位置に変換
+  if( scrcursor == 0 ) m_top = m_cursor - 1;
+  if( scrcursor == (m_vline-1) ) m_top = m_cursor - m_vline + 2;
+  if ( m_top > (m_itemnum - m_vline)) m_top = m_itemnum - m_vline;
+  if ( m_top < 0 ) m_top = 0;
 }
 
 void WinSelect::draw()

@@ -60,7 +60,7 @@ typedef struct { //基本情報
   ItemUseEffect useeff; //使用時効果
   uint8_t brokenrate; //使用時破損率(100 で必ず壊れる)
 //  uint16_t cprefix; //付加可能性のある prefix (bit)
-//  uint16_t cpostfix; //付加可能性のある postfix (bit)
+//  uint16_t csuffix; //付加可能性のある suffix (bit)
 } ITEMBASE;
 
 
@@ -227,6 +227,7 @@ extern void itMakeName( ITEM* item, char* buf );
 extern const char* itGetPrefixName( ITEM* item );
 extern const char* itGetSuffixName( ITEM* item );
 extern const char* itGetBaseName( ITEM* item );
+
 
 //--------------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------------

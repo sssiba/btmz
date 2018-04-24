@@ -26,11 +26,6 @@ void dunCreate()
   g_map = new Map;
   g_map->create();
 
-  //登る階段部屋
-  //  makeRoom( )
-
-
-  //降りる階段部屋
 }
 
 
@@ -344,7 +339,7 @@ void Block::setObjWall( ObjBase* obj )
 }
 
 /*
-   指定の object を床に配置する
+   指定の object を床(奥側)に配置する
 */
 void Block::setObjGround( ObjBase* obj )
 {
@@ -359,7 +354,13 @@ void Block::setObjGround( ObjBase* obj )
 
 void Block::setObjCenter( ObjBase* obj )
 {
+  int16_t x, y;
+  x = ( m_dist * BLKTILEW + 2) * TILEW;
+  y = 4 * TILEH;
 
+  x += obj->getOfstX();
+  y += obj->getOfstY();
+  obj->setPos( x, y );
 }
 
 void Block::setObjCeiling( ObjBase* obj )
@@ -425,7 +426,7 @@ void Area::setup( CellMaker* cm, uint8_t id )
         m_blk[i]->setObjGround( o );  //床に配置
       }
     }
-#if 01
+#if 01 //container
     if ( random(100) < 20 ) {
       if ( random(100) < 30 ) {
         ObjBase* o = createObj( i, OBJID_BOX );
@@ -436,6 +437,27 @@ void Area::setup( CellMaker* cm, uint8_t id )
         //直接作成して机に置く
         tbl->addObj( new ObjCandle() ); //ろうそくを机におく
       }
+    }
+#endif
+#if 01 //item
+    if( random(100) < 30 ) {
+      ObjDropItem* o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
+      if( o ) {
+        ITEM* item = itGenerateFloor( plGetFloor() );
+        o->setItem( item );
+        m_blk[i]->setObjCenter( o ); //通路上に置く
+      }
+
+      //同じ場所に２個おいて実験
+       o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
+      if( o ) {
+        ITEM* item = itGenerateFloor( plGetFloor() );
+        o->setItem( item );
+        m_blk[i]->setObjCenter( o ); //通路上に置く
+      }
+    
+    
+    
     }
 #endif
 #endif
@@ -477,6 +499,7 @@ void Area::draw()
   }
 
 #if 01
+  //x!x! object 間の描画のプライオリティを付けないとまずい。階段とたいまつの位置関係等がおかしくなる。 x!x!
   //object
   for ( int i = 0; i < MAX_OBJECT; i++ ) {
     if ( m_obj[i] ) {
@@ -531,6 +554,7 @@ ObjBase* Area::createObj( uint8_t blk, uint8_t objid )
     case OBJID_TABLE: obj = new ObjTable(); break;
     case OBJID_UPSTAIR: obj = new ObjUpStair(); break;
     case OBJID_DOWNSTAIR: obj = new ObjDownStair(); break;
+    case OBJID_DROPITEM: obj = new ObjDropItem(); break;
   }
 
   if ( obj ) {
@@ -569,9 +593,9 @@ void Area::setObjPosGround( ObjBase* obj )
 {
 }
 
-ObjBase* Area::getObj( uint8_t id )
+ObjBase* Area::getObj( uint8_t idx )
 {
-  return m_obj[id];
+  return m_obj[idx];
 }
 
 void Area::removeObj( ObjBase* obj )
@@ -591,9 +615,9 @@ void Area::removeObj( ObjBase* obj )
   }
 }
 
-void Area::removeObj( uint8_t id )
+void Area::removeObj( uint8_t idx )
 {
-  removeObj( m_obj[id] );
+  removeObj( m_obj[idx] );
 }
 
 //--------------------------------------------------------------------------
@@ -632,14 +656,12 @@ void Map::create()
   //object 配置test
   //  m_area[0]->entryObj( 0, new ObjBox() );
 
-  //プレイヤー配置
-  enter( 0, 0 );
+  m_homex = 0;
 
 #if defined( DBG_MAP )
   DBGout();
 #endif
 
-  m_homex = 0;
 
   delete cm;
 }
@@ -647,6 +669,75 @@ void Map::create()
 void Map::draw()
 {
   getCurArea()->draw();
+}
+
+
+/*
+ * 指定の object id を持つ object を探す
+ * 最初に見つかったものを返す。複数あるものを順次見つける場合は、同じ OBJFINDER を使って呼び続ける。
+ * objid に OBJID_ALL を指定すると全ての object を拾う
+ */
+ObjBase* Map::findObject( OBJFINDER& of )
+{
+  if( of.area < 0 || of.objidx < 0 ) {
+    //初回
+    of.area = of.objidx = 0;
+  } else {
+    //２回目以降
+    of.objidx++;
+  }
+
+  for(;;) {
+    if( of.area >= m_areacnt ) break;
+    Area* a = m_area[ of.area ];
+
+    for( ; of.objidx < MAX_OBJECT; of.objidx++ ) {
+      ObjBase* obj = a->getObj( of.objidx );
+      if( obj ) {
+        if( (of.objid == OBJID_ALL) || (obj->getID() == of.objid) ) {
+          return obj;
+        }
+      }
+    }    
+    of.area++;
+    of.objidx = 0;
+  }
+
+  return NULL; //無かった 
+}
+
+
+/*
+ * 別フロアへの移動
+ * descend true:降りてきた==登る階段のある場所へ   false:登ってきた==降りる階段のある場所へ
+ */
+void Map::enterFloor( bool descend )
+{
+  OBJFINDER of( descend ? OBJID_UPSTAIR : OBJID_DOWNSTAIR );
+
+  ObjBase* obj = findObject( of );
+
+  if( !obj ) {
+    return; //x!x! こうなったらおかしい… assert()
+  }
+
+  int8_t area = of.area;
+  int8_t blk = 0;
+  int16_t x, y;
+
+  //入るエリアの BG マップ作成
+  m_area[ area ]->makeBG( m_areaBG );
+
+  //階段の位置に出現
+  x = obj->getX() + 6;
+  y = (BLKTILEH - 2) * TILEH + (TILEH / 2);
+
+  plSetPos( x, y );
+
+  //プレイヤーが中心に来る様にホーム修正
+  m_homex = (x + 4) - (80 / 2);
+
+  m_curareaidx = area;
 }
 
 void Map::enter( int8_t area, int8_t blk )

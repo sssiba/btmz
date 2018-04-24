@@ -26,7 +26,7 @@
 
 #define MAX_AREA 24   //１マップ内の最大エリア数
 #define MAX_BLOCK 8   //１エリア内の最大 block 数
-#define MAX_OBJECT 16 //１エリア内の最大 object 数
+#define MAX_OBJECT 24 //１エリア内の最大 object 数
 
 
 
@@ -101,7 +101,13 @@ extern void showModalInfoDlg( const char* msg );
  * ・表示中動作停止板
  * ・サイズ・位置指定版
  */
- extern void showModelInfoDlg( int16_t x, int16_t y, int8_t w, int8_t h, int16_t bufsz, const char* msg );
+extern void showModelInfoDlg( int16_t x, int16_t y, int8_t w, int8_t h, int16_t bufsz, const char* msg );
+
+/*
+ * 複数 ObjDropItem 取得メニュー
+ */
+class ObjBase;
+extern void takeObjDropItemMenu( const char* title, ObjBase* parent, uint8_t cnt, ObjBase** objlist );
 
 
 extern FLOWFUNCSET fsMain;

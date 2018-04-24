@@ -11,7 +11,7 @@ UICtrl g_uictrl;
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 UICtrl::UICtrl()
-  : m_btncmd(-1)
+  : m_btncmd(BCMD_EMPTY)
 {
   for( int8_t i=0; i<BCSLOTMAX; i++ ) m_btncmdslot[i] = BCMD_EMPTY;
 }
@@ -29,42 +29,7 @@ void UICtrl::update()
 void UICtrl::draw()
 {
   //A/B command
-  int8_t ofstx[BCSLOTMAX] = { 0, 5, 0, -5 };
-  int8_t ofsty[BCSLOTMAX] = { -5, 0, 5, 0 };
-
-  static const int8_t AX = 60;
-  static const int8_t AY = 5;
-  static const int8_t BX = 70;
-  static const int8_t BY = 5;
-  
-  switch( m_btncmd ) {
-    case 0: //A
-      getPic( PIC_ICON6x5 )->setFrame( 3 ); //+
-      gb.display.drawImage( AX, AY, *getPic( PIC_ICON6x5 ) );
-      for( int8_t i=0; i<BCSLOTMAX; i++ ) {
-        getPic( PIC_ICON6x5 )->setFrame( m_btncmdslot[i] );
-        gb.display.drawImage( AX+ofstx[i], AY+ofsty[i], *getPic( PIC_ICON6x5 ) );
-      }
-      getPic( PIC_ICON6x5 )->setFrame( 2 ); //B
-      gb.display.drawImage( BX, BY, *getPic( PIC_ICON6x5 ) );
-      break;
-    case 1: //B
-      getPic( PIC_ICON6x5 )->setFrame( 3 ); //+
-      gb.display.drawImage( BX, BY, *getPic( PIC_ICON6x5 ) );
-      for( int8_t i=0; i<BCSLOTMAX; i++ ) {
-        getPic( PIC_ICON6x5 )->setFrame( m_btncmdslot[i] );
-        gb.display.drawImage( BX+ofstx[i], BY+ofsty[i], *getPic( PIC_ICON6x5 ) );
-      }
-      getPic( PIC_ICON6x5 )->setFrame( 1 ); //A
-      gb.display.drawImage( AX, AY, *getPic( PIC_ICON6x5 ) );
-      break;
-    default:
-      getPic( PIC_ICON6x5 )->setFrame( 1 ); //A
-      gb.display.drawImage( AX, AY, *getPic( PIC_ICON6x5 ) );
-      getPic( PIC_ICON6x5 )->setFrame( 2 ); //B
-      gb.display.drawImage( BX, BY, *getPic( PIC_ICON6x5 ) );
-      break;
-  }
+  drawBtnCmd();
 }
 
 void UICtrl::openBtnCmd( int btn, uint8_t slotup, uint8_t slotright, uint8_t slotdown, uint8_t slotleft )
@@ -77,10 +42,46 @@ void UICtrl::openBtnCmd( int btn, uint8_t slotup, uint8_t slotright, uint8_t slo
 }
 void UICtrl::closeBtnCmd()
 {
-  m_btncmd = -1;
+  m_btncmd = BCMD_EMPTY;
 }
 
+void UICtrl::drawBtnCmd()
+{
+  int8_t ofstx[BCSLOTMAX] = { 0, 5, 0, -5 };
+  int8_t ofsty[BCSLOTMAX] = { -5, 0, 5, 0 };
 
+  static const int8_t AX = 60;
+  static const int8_t AY = 5;
+  static const int8_t BX = 70;
+  static const int8_t BY = 5;
+
+  static const int8_t bpos[] = {
+    60, 5, //A
+    70, 5, //B
+  };
+  
+  if( m_btncmd == BCMD_EMPTY ) {
+    //どちらも押されてない
+    getPic( PIC_ICON6x5 )->setFrame( ICON_A ); //A
+    gb.display.drawImage( bpos[0*2+0], bpos[0*2+1], *getPic( PIC_ICON6x5 ) );
+    getPic( PIC_ICON6x5 )->setFrame( ICON_B ); //B
+    gb.display.drawImage( bpos[1*2+0], bpos[1*2+1], *getPic( PIC_ICON6x5 ) );
+  } else {
+    //A,B どちから起動中
+    int8_t b = m_btncmd - BCMD_A;
+    int8_t ob = b ^ 1;
+    int8_t x = bpos[b*2+0];
+    int8_t y = bpos[b*2+1];
+    getPic( PIC_ICON6x5 )->setFrame( ICON_CROSS ); //+
+    gb.display.drawImage( x, y, *getPic( PIC_ICON6x5 ) );
+    for( int8_t i=0; i<BCSLOTMAX; i++ ) {
+      getPic( PIC_ICON6x5 )->setFrame( m_btncmdslot[i] );
+      gb.display.drawImage( x+ofstx[i], y+ofsty[i], *getPic( PIC_ICON6x5 ) );
+    }
+    getPic( PIC_ICON6x5 )->setFrame( ICON_A+ob ); //other button
+    gb.display.drawImage( bpos[ob*2+0], bpos[ob*2+1], *getPic( PIC_ICON6x5 ) );
+  }
+}
 
 
 //--------------------------------------------------------------------------

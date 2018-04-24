@@ -54,6 +54,7 @@ extern Rect8 g_plmvrect;
 extern Rect8 g_platrect;
 extern Rect8 g_pldfrect;
 extern PLSTAT g_plstat;
+extern uint8_t g_plfloor;
 
 
 extern void plInit();
@@ -76,6 +77,8 @@ inline Rect8& plGetMvRect() { return g_plmvrect; }
 inline Rect8& plGetAtRect() { return g_platrect; }
 inline Rect8& plGetDfRect() { return g_pldfrect; }
 inline PLSTAT& plGetStat() { return g_plstat; }
+inline uint8_t plGetFloor() { return g_plfloor; }
+inline void plSetFloor( uint8_t f ) { g_plfloor = f; }
 
 
 extern int16_t plCalcDamage( EnemyData* ed );
@@ -105,6 +108,9 @@ extern bool plDelItem( ITEM* item );
 extern int8_t plGetItemCount();
 inline bool plIsItemFull() {
   return plGetItemCount() == MAX_PLITEM;
+}
+inline bool plIsItemEmpty() {
+  return plGetItemCount() == 0;
 }
 
 /*

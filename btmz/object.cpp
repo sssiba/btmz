@@ -4,11 +4,13 @@
 
 #include "dungeon.h"
 
+#include "ui.h"
+
 //-----------------------------------------------
 //-----------------------------------------------
 //-----------------------------------------------
 ObjBase::ObjBase()
- : m_id( MAX_OBJECT )
+ : m_id( MAX_OBJID )
  , m_flag( 0 )
 {
 }
@@ -176,6 +178,7 @@ ObjTorch::ObjTorch()
   , m_fireanm( 0 )
   , m_fireanmwait( 0 )
 {
+  setID( OBJID_TORCH );
   setPicID( PIC_OBJECT );
 }
 
@@ -229,6 +232,7 @@ void ObjTorch::draw()
 //-----------------------------------------------
 ObjBox::ObjBox()
 {
+  setID( OBJID_BOX );
   setPicID( PIC_OBJECT16x8 );
 }
 
@@ -266,6 +270,7 @@ void ObjBox::finish()
 //-----------------------------------------------
 ObjTable::ObjTable()
 {
+  setID( OBJID_TABLE );
   setPicID( PIC_OBJECT16x8 );
 }
 
@@ -325,6 +330,7 @@ ObjCandle::ObjCandle()
   , m_fireanm( 0 )
   , m_fireanmwait( 0 )
 {
+  setID( OBJID_CANDLE );
   setPicID( PIC_OBJECT );
 }
 
@@ -373,6 +379,10 @@ void ObjCandle::draw()
 //-----------------------------------------------
 //-----------------------------------------------
 //-----------------------------------------------
+ObjUpStair::ObjUpStair()
+{
+  setID( OBJID_UPSTAIR );
+}
 void ObjUpStair::draw()
 {
   int16_t sx = DUNMAP()->toScrX( m_x );
@@ -380,6 +390,11 @@ void ObjUpStair::draw()
   //土台
   getPic( PIC_OBJECT12x16 )->setFrame( 0 );
   gb.display.drawImage( sx, sy, *getPic( PIC_OBJECT12x16 ) );
+}
+
+ObjDownStair::ObjDownStair()
+{
+  setID( OBJID_DOWNSTAIR );
 }
 
 void ObjDownStair::draw()
@@ -394,4 +409,44 @@ void ObjDownStair::draw()
 //-----------------------------------------------
 //-----------------------------------------------
 //-----------------------------------------------
+ObjDropItem::ObjDropItem()
+  : m_item( NULL )
+{
+}
+
+void ObjDropItem::draw()
+{
+  ItemPic* ip = itGetItemBase( m_item->base )->pic;
+
+  int16_t sx = DUNMAP()->toScrX( m_x );
+  int16_t sy = DUNMAP()->toScrY( m_y );
+  
+  ip->pic->setFrame( ip->frm );
+  gb.display.drawImage( sx, sy, *ip->pic );  
+}
+
+int8_t ObjDropItem::getOfstX()
+{
+  ItemPic* ip = itGetItemBase( m_item->base )->pic;
+  return -ip->w/2;
+}
+
+int8_t ObjDropItem::getOfstY()
+{
+  ItemPic* ip = itGetItemBase( m_item->base )->pic;
+  return -ip->h/2;
+}
+
+int8_t ObjDropItem::getActionRegionW() const
+{
+  ItemPic* ip = itGetItemBase( m_item->base )->pic;
+  return ip->w;
+}
+
+
+//-----------------------------------------------
+//-----------------------------------------------
+//-----------------------------------------------
+
+
 

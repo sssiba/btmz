@@ -95,13 +95,16 @@ void loop() {
 //-------------------------------------------
 //-------------------------------------------
 enum {
+  PHASE_NONE,
   PHASE_GAME,
   PHASE_MENU,
   PHASE_MENU_ITEM,
   PHASE_MENU_EQUIP,
   PHASE_MENU_STATUS,
+  PHASE_MENU_OBJDROPITEM,
 };
-static uint8_t g_phase = PHASE_GAME;
+static uint8_t g_phase;
+static uint8_t g_nextphase;
 static WinSelect* g_win;
 static DlgInfo* g_dlginfo;
 
@@ -121,9 +124,15 @@ static bool updateMenuEquip();
 static void drawMenuEquip();
 static void finishMenuEquip();
 
+static void initMenuObjDropItem();
+static bool updateMenuObjDropItem();
+static void drawMenuObjDropItem();
+static void finishMenuObjDropItem();
+
 static const int8_t FONTW = 4;
 static const int8_t FONTH = 6;
 
+static void changePhase();
 
 //-------------------------------------------
 /*
@@ -169,6 +178,11 @@ void MainInit()
 
   dunInit();
 
+  //プレイヤー配置
+  DUNMAP()->enterFloor( true );
+
+
+
 #if 0
   WinMsg* w = gamemain.createWinMsg( 40, 20 );
   w->setPos( 20, 20 );
@@ -177,6 +191,9 @@ void MainInit()
 #endif
 
   g_dlginfo = NULL;
+
+  g_phase = PHASE_GAME;
+  g_nextphase = PHASE_NONE;
 }
 
 void MainUpdate()
@@ -188,52 +205,50 @@ void MainUpdate()
       g_dlginfo = NULL;
     }
   }
+
+  //phase 切り替え
+  if( g_nextphase != PHASE_NONE ) {
+    changePhase();
+  }
+  
   if ( !g_dlginfo ) {
     switch ( g_phase ) {
       case PHASE_GAME:
-        dunUpdate();
+        dunUpdate(); //map update
 
-        enUpdate();
+        enUpdate(); //enemy update
 
-        plUpdate();
+        plUpdate(); //player update
 
-        UIC().update();
-
+        UIC().update(); //ui update
+        
         if ( gamemain.isTrigger( BUTTON_C ) ) {
-          g_phase = PHASE_MENU;
-
-          enterMainMenu();
-
+          g_nextphase = PHASE_MENU;
         }
         break;
       case PHASE_MENU:
-        {
-          bool finish = updateMainMenu();
-          if ( finish ) {
-            g_phase = PHASE_GAME;
-            gamemain.delAutoWindow( g_win );
-            //          gamemain.destroyWindow( g_win );
-          }
+        if ( updateMainMenu() ) {
+          g_nextphase = PHASE_GAME;
         }
         break;
       case PHASE_MENU_ITEM:
         if ( updateMenuItem() ) {
-          finishMenuItem();
-          g_win->setVisible( true );
-          g_phase = PHASE_MENU;
+          g_nextphase = PHASE_MENU;
         }
         break;
       case PHASE_MENU_EQUIP:
         if ( updateMenuEquip() ) {
-          finishMenuEquip();
-          g_win->setVisible( true );
-          g_phase = PHASE_MENU;
+          g_nextphase = PHASE_MENU;
         }
         break;
       case PHASE_MENU_STATUS:
         if ( updateMenuStatus() ) {
-          g_win->setVisible( true );
-          g_phase = PHASE_MENU;
+          g_nextphase = PHASE_MENU;
+        }
+        break;
+      case PHASE_MENU_OBJDROPITEM:
+        if( updateMenuObjDropItem() ) {
+          g_nextphase = PHASE_GAME;
         }
         break;
     }
@@ -271,6 +286,9 @@ void MainDraw()
     case PHASE_MENU_STATUS:
       drawMenuStatus();
       break;
+    case PHASE_MENU_OBJDROPITEM:
+      drawMenuObjDropItem();
+      break;
   }
 }
 
@@ -292,6 +310,68 @@ FLOWFUNCSET fsMain = {
   MainFinish
 };
 
+void changePhase()
+{
+  //現在の phase 片付け
+  switch( g_phase ) {
+      case PHASE_GAME:
+        break;
+      case PHASE_MENU:
+        if( g_nextphase == PHASE_GAME ) {
+          //ゲームに戻る際には破棄
+          gamemain.delAutoWindow( g_win );
+          delete g_win;
+          g_win = NULL;
+        } else {
+          //item, equip, status に行く際は非表示にするだけ
+          g_win->setVisible( false );
+        }
+        break;
+      case PHASE_MENU_ITEM:
+        finishMenuItem();
+        g_win->setVisible( true );
+        break;
+      case PHASE_MENU_EQUIP:
+        finishMenuEquip();
+        g_win->setVisible( true );
+        break;
+      case PHASE_MENU_STATUS:
+        g_win->setVisible( true );
+        break;
+      case PHASE_MENU_OBJDROPITEM:
+        finishMenuObjDropItem();
+        break;
+  }
+
+  g_phase = g_nextphase;
+  g_nextphase = PHASE_NONE;
+
+  //新しい phase 準備
+  switch( g_phase ) {
+      case PHASE_GAME:
+        break;
+      case PHASE_MENU:
+        enterMainMenu();
+        break;
+      case PHASE_MENU_ITEM:
+        if ( !initMenuItem() ) {
+          //アイテム無くて開けない。
+          showModalInfoDlg( "No Item!" ); //閉じるまで進行停止する
+          g_nextphase = PHASE_MENU;
+          changePhase(); //直ぐに切り替える
+        }
+        break;
+      case PHASE_MENU_EQUIP:
+        initMenuEquip();
+        break;
+      case PHASE_MENU_STATUS:
+        break;
+      case PHASE_MENU_OBJDROPITEM:
+        initMenuObjDropItem();
+        break;
+  }
+}
+
 
 //-------------------------------------------
 //-------------------------------------------
@@ -306,6 +386,7 @@ enum {
 };
 void enterMainMenu()
 {
+  if( g_win ) return; //既に作成済みなら何もしない
   g_win = new WinSelect( 32, 4, 6 ); //gamemain.createWinSelect( 40, 4, 6 );
   gamemain.addAutoWindow( g_win );
   g_win->addItem( "Item" );
@@ -333,36 +414,30 @@ bool updateMainMenu()
       g_win->resetDecide();
       switch ( res ) {
         //Item
-        case 0:
-          if ( initMenuItem() ) {
-            g_win->setVisible( false );
-            g_phase = PHASE_MENU_ITEM;
-          } else {
-            //アイテム無くて開けない。
-            showModalInfoDlg( "No Item!" ); //閉じるまで進行停止する
-          }
+        case MMITEM_ITEM:
+          g_nextphase = PHASE_MENU_ITEM;
           //後で戻る様に finish はしない
           return false;
         //equip
-        case 1:
-
-          g_win->setVisible( false );
-          initMenuEquip();
-          g_phase = PHASE_MENU_EQUIP;
+        case MMITEM_EQUIP:
+          g_nextphase = PHASE_MENU_EQUIP;
           //後で戻る様に finish はしない
           return false;
         //status
-        case 2:
-          g_win->setVisible( false );
-          g_phase = PHASE_MENU_STATUS;
+        case MMITEM_STATUS:
+          g_nextphase = PHASE_MENU_STATUS;
           //後で戻る様に finish はしない
           return false;
         //DBG:restart
-        case 3: gamemain.getFlow().setFlow( &fsMain ); break;
+        case MMITEM_RESTART:
+          gamemain.getFlow().setFlow( &fsMain );
+          g_nextphase = PHASE_GAME; //現在の phase を終わらせ、window を破棄する為に PHASE_GAME で為に呼んでおく
+          changePhase(); //直ぐに反映
+          break;
         //DBG:light
-        case 4: FBL().setEnable( FBL().isEnable() ? false : true ); break;
+        case MMITEM_LIGHT: FBL().setEnable( FBL().isEnable() ? false : true ); break;
         //DBG:cancel
-        case 5: finish = true; break;
+        case MMITEM_CLOSE: finish = true; break;
       }
       finish = true;
     }
@@ -448,14 +523,16 @@ void drawMenuStatus()
 */
 class MenuItemSelect : public WinSelect
 {
-    static const int8_t ITEMMAX = (MAX_PLITEM > EQMAX) ? MAX_PLITEM : EQMAX;
+    static const int8_t ITEMMAX = MAX_PLITEM;
   public:
-    MenuItemSelect( uint8_t w, int8_t vline, int8_t itemmax, ITEM** itemlist );
-    virtual ~MenuItemSelect() {}
+    MenuItemSelect( const char* title, uint8_t w, int8_t vline, int8_t itemlistsize, ITEM** itemlist );
+    virtual ~MenuItemSelect() {
+      delete[] m_itemlist;
+    }
 
     virtual void draw();
 
-    void rebuild(int8_t itemmax, ITEM** itemlist ); //アイテムを削除した際等に再構築
+    void rebuild(int8_t itemlistsize, ITEM** itemlist ); //アイテムを削除した際等に再構築
     inline ITEM* getItem( int8_t idx ) {
       return m_itemlist[idx];
     }
@@ -463,38 +540,37 @@ class MenuItemSelect : public WinSelect
       return m_itemnum;
     }
   protected:
-    ITEM* m_itemlist[ITEMMAX];
+//    ITEM* m_itemlist[ITEMMAX];
+    ITEM** m_itemlist;
+    int8_t m_itemlistsize;
+    char m_title[12];
 };
 
-MenuItemSelect::MenuItemSelect( uint8_t w, int8_t vline, int8_t itemmax, ITEM** itemlist )
-  : WinSelect( w, vline, itemmax )
+MenuItemSelect::MenuItemSelect( const char* title, uint8_t w, int8_t vline, int8_t itemlistsize, ITEM** itemlist )
+  : WinSelect( w, vline, itemlistsize )
+  , m_itemlistsize( itemlistsize )
 {
-  rebuild( itemmax, itemlist );
+  m_itemlist = new ITEM*[itemlistsize];
+  
+  strncpy( m_title, title, 11 );
+  rebuild( itemlistsize, itemlist );
 }
 
 
-void MenuItemSelect::rebuild( int8_t itemmax, ITEM** itemlist )
+void MenuItemSelect::rebuild( int8_t itemlistsize, ITEM** itemlist )
 {
   m_itemnum = 0;
-  memset( m_itemlist, 0, sizeof(ITEM*)*ITEMMAX );
-  for ( int8_t i = 0; i < itemmax; i++ ) {
-    if ( itemlist[i] ) {
-      m_itemlist[m_itemnum++] = itemlist[i];
+  memset( m_itemlist, 0, sizeof(ITEM*)*itemlistsize );
+  if( itemlist ) {
+    for ( int8_t i = 0; i < itemlistsize; i++ ) {
+      if ( itemlist[i] ) {
+        m_itemlist[m_itemnum++] = itemlist[i];
+      }
     }
   }
 
   //カーソル位置補正
-  int8_t scrcursor = m_cursor - m_top; //画面上のカーソル位置に変換
-  //  if( m_cursor >= m_itemnum ) m_cursor = m_itemnum-1;
-  //  if( m_cursor < 0 ) m_cursor = 0;
-  m_top = m_cursor - m_vline + 2;
-  if ( m_top > (m_itemnum - m_vline)) m_top = m_itemnum - m_vline;
-  if ( m_top < 0 ) m_top = 0;
-
-  m_cursor = m_top + scrcursor; //画面上のカーソル位置を元に実際のカーソル位置を決める
-  if ( m_cursor >= m_itemnum ) m_cursor = m_itemnum - 1;
-  if ( m_cursor < 0 ) m_cursor = 0;
-  if ( (m_cursor > 0) && (m_cursor <= (m_top + 1)) ) m_top = m_cursor - 1;
+  fixCursor();
 }
 
 void MenuItemSelect::draw()
@@ -512,11 +588,7 @@ void MenuItemSelect::draw()
     gb.display.drawFastHLine( 0, 11, SCRW );
     gb.display.setColor( ColorIndex::lightgreen );
     gb.display.setCursor( 0, 4 );
-    gb.display.print( "Item" );
-    gb.display.setColor( ColorIndex::white );
-    sprintf( str, "%d/%d", plGetItemCount(), MAX_PLITEM );
-    gb.display.setCursor( 13 * 4, 4 );
-    gb.display.print( str );
+    gb.display.print( m_title );
 
 
     //各アイテムは１つで２行使う
@@ -582,7 +654,7 @@ static uint8_t g_miphase;
 bool initMenuItem()
 {
   PLSTAT& ps = plGetStat();
-  g_miselect = new MenuItemSelect( 20, 4, MAX_PLITEM, ps.items );
+  g_miselect = new MenuItemSelect( "Item", 20, 4, MAX_PLITEM, ps.items );
   if ( g_miselect->getItemNum() == 0 ) return false; //アイテムが無いと開けない
   g_miselect->open();
   g_miphase = MIPHASE_SELECT;
@@ -665,12 +737,20 @@ bool updateMenuItem()
       break;
   }
 
+  
+
   return false;
 }
 
 void drawMenuItem()
 {
   g_miselect->draw();
+
+  char str[32];
+  sprintf( str, "%d/%d", plGetItemCount(), MAX_PLITEM );
+  gb.display.setColor( ColorIndex::white );
+  gb.display.setCursor( 13 * 4, 4 );
+  gb.display.print( str );
 }
 
 void finishMenuItem()
@@ -719,17 +799,7 @@ void MenuEquipSelect::rebuild( int8_t itemmax, ITEM** itemlist )
   }
 
   //カーソル位置補正
-  int8_t scrcursor = m_cursor - m_top; //画面上のカーソル位置に変換
-  //  if( m_cursor >= m_itemnum ) m_cursor = m_itemnum-1;
-  //  if( m_cursor < 0 ) m_cursor = 0;
-  m_top = m_cursor - m_vline + 2;
-  if ( m_top > (m_itemnum - m_vline)) m_top = m_itemnum - m_vline;
-  if ( m_top < 0 ) m_top = 0;
-
-  m_cursor = m_top + scrcursor; //画面上のカーソル位置を元に実際のカーソル位置を決める
-  if ( m_cursor >= m_itemnum ) m_cursor = m_itemnum - 1;
-  if ( m_cursor < 0 ) m_cursor = 0;
-  if ( (m_cursor > 0) && (m_cursor <= (m_top + 1)) ) m_top = m_cursor - 1;
+  fixCursor();
 }
 
 void MenuEquipSelect::draw()
@@ -895,6 +965,100 @@ void finishMenuEquip()
   delete g_meselect;
   g_meselect = NULL;
 }
+
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+
+/*
+   ObjDropItem 画面用 window
+*/
+class MenuObjDropItemSelect : public MenuItemSelect
+{
+    static const int8_t ITEMMAX = MAX_OBJECT;
+  public:
+    MenuObjDropItemSelect( const char* title, uint8_t w, int8_t vline, ObjBase* parent, int8_t itemlistsize, ObjBase** itemlist );
+    virtual ~MenuObjDropItemSelect() {}
+
+    void rebuild(int8_t itemlistsize, ObjBase** itemlist ); //アイテムを削除した際等に再構築
+    inline ITEM* getItem( int8_t idx ) {
+      return m_itemlist[idx];
+    }
+    inline int8_t getItemNum() {
+      return m_itemnum;
+    }
+  protected:
+    ITEM* m_itemlist[ITEMMAX];
+    ObjBase* m_dropitemlist[ITEMMAX];
+    char m_title[12];
+    ObjBase* m_parent;
+};
+
+MenuObjDropItemSelect::MenuObjDropItemSelect( const char* title, uint8_t w, int8_t vline, ObjBase* parent, int8_t itemlistsize, ObjBase** itemlist )
+  : MenuItemSelect( title, w, vline, itemlistsize, NULL ) //一旦空の状態で作成
+  , m_parent( parent )
+{
+  rebuild( itemlistsize, itemlist );
+}
+
+
+void MenuObjDropItemSelect::rebuild( int8_t itemlistsize, ObjBase** itemlist )
+{
+  //一旦 ObjDropItem を全部コピー
+  memcpy( m_dropitemlist, itemlist, sizeof(ObjBase*)*itemlistsize );
+
+  //m_item へアイテム取り出し
+  m_itemnum = itemlistsize;
+  memset( m_itemlist, 0, sizeof(ITEM*)*itemlistsize );
+  for ( int8_t i = 0; i < itemlistsize; i++ ) {
+    m_itemlist[i] = static_cast<ObjDropItem*>(itemlist[i])->getItem();
+  }
+
+  //カーソル位置補正
+  fixCursor();
+}
+
+
+/*
+ * 複数 ObjDropItem 取得メニュー
+ * title title
+ * parent parent container
+ * cnt ObjDropItem count
+ * list ObjDropItem list
+ */
+void takeObjDropItemMenu( const char* title, ObjBase* parent, uint8_t cnt, ObjBase** list )
+{
+  //g_win 流用。MainMenu と同時に動かないので。
+  g_win = new MenuObjDropItemSelect( title, 20, 4, parent, cnt, list );
+  g_win->open();
+
+  g_nextphase = PHASE_MENU_OBJDROPITEM;
+}
+
+
+void initMenuObjDropItem()
+{
+}
+
+bool updateMenuObjDropItem()
+{
+  g_win->update();
+  if( g_win->isDecide() ) {
+    g_win->resetDecide();
+  }
+}
+
+void drawMenuObjDropItem()
+{
+  g_win->draw();
+}
+
+void finishMenuObjDropItem()
+{
+  delete g_win;
+  g_win = NULL;
+}
+
 
 //-------------------------------------------
 //-------------------------------------------

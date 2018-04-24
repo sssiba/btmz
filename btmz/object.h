@@ -4,19 +4,23 @@
 
 #include "pic.h"
 
+#include "item.h"
+
 //-----------------------------------------------
 //-----------------------------------------------
 //-----------------------------------------------
 
-enum {
+enum : uint8_t {
   OBJID_TORCH,
   OBJID_CANDLE,
   OBJID_BOX,
   OBJID_TABLE,
   OBJID_UPSTAIR,
   OBJID_DOWNSTAIR,
+  OBJID_DROPITEM,
 
-  MAX_OBJID
+  OBJID_ALL,
+  MAX_OBJID = OBJID_ALL
 };
 
 
@@ -40,12 +44,11 @@ public:
   virtual void draw() {}
   virtual void finish() {}
 
-  inline uint8_t getID() { return m_id; }
-  inline uint8_t getBlock() { return m_blk; }
-  inline int16_t getX() { return m_x; }
-  inline int16_t getY() { return m_y; }
-  inline PICID getPicID() { return m_picid; }
-  inline void setID( uint8_t id ) { m_id = id; }
+  inline uint8_t getID() const { return m_id; }
+  inline uint8_t getBlock() const { return m_blk; }
+  inline int16_t getX() const { return m_x; }
+  inline int16_t getY() const { return m_y; }
+  inline PICID getPicID() const { return m_picid; }
   inline void setBlock( uint8_t blk ) { m_blk = blk; }
   inline void setX( const int16_t x ) { m_x = x; }
   inline void setY( const int16_t y ) { m_y = y; }
@@ -64,9 +67,14 @@ public:
 
   virtual int8_t getOfstY() const { return 0; } //マップ配置時のオフセット
   virtual int8_t getOfstX() const { return 0; }
+  virtual uint8_t getAction() const { return UICtrl::BCMD_EMPTY; } //object に対して行える cmd を返す。
+  virtual int8_t getActionRegionW() const { return 0; } //action に反応する幅。この幅内に player がいたら対象となる。
 
 protected:
-  uint8_t m_id;
+  inline void setID( uint8_t objid ) { m_id = objid; }
+
+protected:
+  uint8_t m_id; //object id  (OBJID_xxx)
   uint8_t m_blk;
   int16_t m_x;
   int16_t m_y;
@@ -114,6 +122,8 @@ public:
 
   virtual void init();
   virtual void finish();
+
+  virtual uint8_t getAction() const { return UICtrl::BCMD_LOOT; }
   
 protected:
   uint8_t m_objnum; //中身の数
@@ -150,8 +160,6 @@ public:
 protected:
   uint8_t m_hooknum; //中身の数
   ObjBase* m_hooks[ MAX_HOOKS ]; //中身Object
-
-
 };
 
 
@@ -189,6 +197,7 @@ public:
 
   virtual int8_t getOfstX() const { return -8; }
   virtual int8_t getOfstY() const { return 2; }
+  virtual int8_t getActionRegionW() const { return 16; }
 };
 
 //-----------------------------------------------
@@ -208,6 +217,7 @@ public:
 
   virtual int8_t getOfstX() const { return -8; }
   virtual int8_t getOfstY() const { return 4; }
+  virtual int8_t getActionRegionW() const { return 16; }
 };
 
 //-----------------------------------------------
@@ -232,12 +242,15 @@ class ObjUpStair : public NotContainable
 {
   typedef NotContainable super;
 public:
-  ObjUpStair() {}
+  ObjUpStair();
   virtual ~ObjUpStair() {}
 
   virtual void draw();
   virtual int8_t getOfstX() const { return -6; }
   virtual int8_t getOfstY() const { return 0; }
+
+  virtual uint8_t getAction() const { return UICtrl::BCMD_UP; }
+  virtual int8_t getActionRegionW() const { return 12; }
 };
 
 //-----------------------------------------------
@@ -245,15 +258,46 @@ class ObjDownStair : public NotContainable
 {
   typedef NotContainable super;
 public:
-  ObjDownStair() {}
+  ObjDownStair();
   virtual ~ObjDownStair() {}
 
   virtual void draw();
   virtual int8_t getOfstX() const { return -6; }
   virtual int8_t getOfstY() const { return 0; }
+
+  virtual uint8_t getAction() const { return UICtrl::BCMD_DOWN; }
+  virtual int8_t getActionRegionW() const { return 12; }
 };
 
 //-----------------------------------------------
+/*
+ * アイテムを床に落とす為のコンテナ的な物
+ */
+class ObjDropItem : public Containable
+{
+  typedef NotContainable super;
+
+public:
+  explicit ObjDropItem();
+  virtual ~ObjDropItem() {}
+
+  virtual void draw();
+  virtual int8_t getOfstX();
+  virtual int8_t getOfstY();
+
+  virtual uint8_t getAction() const { return UICtrl::BCMD_GET; }
+  virtual int8_t getActionRegionW() const;
+
+  inline void setItem( ITEM* item ) { m_item = item; }
+  inline ITEM* getItem() const { return m_item; }
+
+private:
+  ITEM* m_item;
+};
+
+
+//-----------------------------------------------
+
 
 
 //-----------------------------------------------
