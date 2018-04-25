@@ -230,28 +230,28 @@ void ObjTorch::draw()
 //-----------------------------------------------
 //-----------------------------------------------
 //-----------------------------------------------
-ObjBox::ObjBox()
+ObjChest::ObjChest()
 {
-  setID( OBJID_BOX );
+  setID( OBJID_CHEST );
   setPicID( PIC_OBJECT16x8 );
 }
 
-ObjBox::~ObjBox()
+ObjChest::~ObjChest()
 {
 }
 
-void ObjBox::init()
+void ObjChest::init()
 {
 //  DUNMAP()->getBlockTilePos( getBlock(), 2, 3, m_x, m_y );  
 //  m_y += 2;
 }
 
-void ObjBox::update()
+void ObjChest::update()
 {
   
 }
 
-void ObjBox::draw()
+void ObjChest::draw()
 {
   int16_t sx = DUNMAP()->toScrX( m_x );
   int16_t sy = DUNMAP()->toScrY( m_y );
@@ -260,7 +260,7 @@ void ObjBox::draw()
   gb.display.drawImage( sx, sy, *getPic( getPicID() ) );
 }
 
-void ObjBox::finish()
+void ObjChest::finish()
 {
   super::finish();
 }
@@ -416,13 +416,15 @@ ObjDropItem::ObjDropItem()
 
 void ObjDropItem::draw()
 {
-  ItemPic* ip = itGetItemBase( m_item->base )->pic;
+  if( !isContained() ) { //何かに収納されている場合は描かない
+    ItemPic* ip = itGetItemBase( m_item->base )->pic;
 
-  int16_t sx = DUNMAP()->toScrX( m_x );
-  int16_t sy = DUNMAP()->toScrY( m_y );
+    int16_t sx = DUNMAP()->toScrX( m_x );
+    int16_t sy = DUNMAP()->toScrY( m_y );
   
-  ip->pic->setFrame( ip->frm );
-  gb.display.drawImage( sx, sy, *ip->pic );  
+    ip->pic->setFrame( ip->frm );
+    gb.display.drawImage( sx, sy, *ip->pic );  
+  }
 }
 
 int8_t ObjDropItem::getOfstX()

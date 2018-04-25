@@ -32,10 +32,15 @@ typedef struct ItemPic {
   int8_t x, y, w, h;  
 };
 
+//WEAPON
 extern ItemPic ipShortSword;   //落ちてる時
 extern ItemPic ipEqShortSword; //装備時
 extern ItemPic ipLongSword;
 extern ItemPic ipEqLongSword;
+
+//HEAD
+extern ItemPic ipLeatherHelm;
+extern ItemPic ipHelm;
 
 //-------------------------------------------------------
 //-------------------------------------------------------

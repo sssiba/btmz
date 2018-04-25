@@ -151,6 +151,7 @@ void plInit()
   plAddItem( itGenerateFloor(6) );
   plAddItem( itGenerateFloor(8) );
   plAddItem( itGenerateFloor(10) );
+  plAddItem( itGenerate( IBI_HELM, ITRANK_NORMAL, 10 ) );
 }
 
 void plUpdate()
@@ -472,6 +473,7 @@ void gatherAction( uint8_t slot[UICtrl::BCSLOTMAX] )
 
   for( int8_t i=0; i<MAX_OBJECT; i++ ) {
     ObjBase* obj = area->getObj( i );
+    if( obj->isContained() ) continue; //何かに収納されている物は無視
 
     //当たり判定
     if( checkActionTarget( obj ) ) {
@@ -531,6 +533,7 @@ uint8_t collectActTarget( uint8_t cmd, ObjBase** out )
 
   for( int8_t i=0; i<MAX_OBJECT; i++ ) {
     ObjBase* obj = area->getObj( i );
+    if( obj->isContained() ) continue; //何かに収納されている物は含めない
     if( checkActionTarget( obj ) ) {
       if( obj->getAction() == cmd ) {
         out[cnt++] = obj;
@@ -587,6 +590,18 @@ void actGet()
 
 void actLoot()
 {
+  uint8_t cnt;
+  ObjBase* tgt[MAX_OBJECT]; //１エリア内の最大 object 数分用意する
+
+  cnt = collectActTarget( UICtrl::BCMD_LOOT, tgt );
+
+  if( !cnt ) return; //ここに来てる時点で無いはずだけど、１つも無ければ何もしない
+
+  if( cnt == 1 ) { //１つだけならそれにアクセス
+    ObjContainer* oc = static_cast<ObjContainer*>( tgt[0] );
+    takeObjDropItemMenu( "Loot", oc, ObjContainer::MAX_CONTENTS, oc->getContentsList() );
+  } else { //二つ以上あればコンテナ選択
+  }
 }
 
 
@@ -603,6 +618,42 @@ void plDraw()
 
   plDrawStat();
 
+
+#if defined( DBG_SHOW_HITRECT )
+  {
+    int16_t x, y, rx, ry;
+    x = DUNMAP()->toScrX(TOINT(g_plx));
+    y = DUNMAP()->toScrY(TOINT(g_ply));
+    //move(green)
+    if( g_plflip ) {
+      rx = x - g_plmvrect.x - g_plmvrect.w;
+    } else {
+      rx = x + g_plmvrect.x;
+    }
+    ry = y + g_plmvrect.y;
+    gb.display.setColor( Color::lightgreen );
+    gb.display.drawRect( rx, ry, g_plmvrect.w, g_plmvrect.h );
+    //attack(red)
+    if( g_plflip ) {
+      rx = x - g_platrect.x - g_platrect.w;
+    } else {
+      rx = x + g_platrect.x;
+    }
+    ry = y + g_platrect.y;
+    gb.display.setColor( Color::red );
+    gb.display.drawRect( rx, ry, g_platrect.w, g_platrect.h );
+    //defense(blue)
+    rx = x + g_pldfrect.x;
+    if( g_plflip ) {
+      rx = x - g_pldfrect.x - g_pldfrect.w;
+    } else {
+      rx = x + g_pldfrect.x;
+    }
+    ry = y + g_pldfrect.y;
+    gb.display.setColor( Color::lightblue );
+    gb.display.drawRect( rx, ry, g_pldfrect.w, g_pldfrect.h );
+  }
+#endif
 
 #if defined( DBG_MAP )
     {

@@ -429,25 +429,29 @@ void Area::setup( CellMaker* cm, uint8_t id )
 #if 01 //container
     if ( random(100) < 20 ) {
       if ( random(100) < 30 ) {
-        ObjBase* o = createObj( i, OBJID_BOX );
+        ObjBase* o = createObj( i, OBJID_CHEST );
+        setupContainer( static_cast<ObjContainer*>(o), plGetFloor(), 0 ); //中身を入れる
         m_blk[i]->setObjGround( o );
       } else {
         ObjTable* tbl = static_cast<ObjTable*>( createObj( i, OBJID_TABLE ) );
         m_blk[i]->setObjGround( tbl );
         //直接作成して机に置く
-        tbl->addObj( new ObjCandle() ); //ろうそくを机におく
+        ObjCandle* c = static_cast<ObjCandle*>( createObj( i, OBJID_CANDLE ) );
+        if( c ) {
+          tbl->addObj( c ); //ろうそくを机におく
+        }
       }
     }
 #endif
 #if 01 //item
-    if( random(100) < 30 ) {
+    if( random(100) < 80 ) {
       ObjDropItem* o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
       if( o ) {
         ITEM* item = itGenerateFloor( plGetFloor() );
         o->setItem( item );
         m_blk[i]->setObjCenter( o ); //通路上に置く
       }
-
+#if 0
       //同じ場所に２個おいて実験
        o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
       if( o ) {
@@ -455,9 +459,7 @@ void Area::setup( CellMaker* cm, uint8_t id )
         o->setItem( item );
         m_blk[i]->setObjCenter( o ); //通路上に置く
       }
-    
-    
-    
+#endif
     }
 #endif
 #endif
@@ -550,7 +552,7 @@ ObjBase* Area::createObj( uint8_t blk, uint8_t objid )
   switch ( objid ) {
     case OBJID_TORCH: obj = new ObjTorch(); break;
     case OBJID_CANDLE: obj = new ObjCandle(); break;
-    case OBJID_BOX: obj = new ObjBox(); break;
+    case OBJID_CHEST: obj = new ObjChest(); break;
     case OBJID_TABLE: obj = new ObjTable(); break;
     case OBJID_UPSTAIR: obj = new ObjUpStair(); break;
     case OBJID_DOWNSTAIR: obj = new ObjDownStair(); break;
@@ -618,6 +620,27 @@ void Area::removeObj( ObjBase* obj )
 void Area::removeObj( uint8_t idx )
 {
   removeObj( m_obj[idx] );
+}
+
+void Area::setupContainer( ObjContainer* objc, uint8_t mapfloor, uint8_t droplvl )
+{
+  //個数
+  uint8_t num = random( ObjContainer::MAX_CONTENTS - 1 ) + 1;
+
+  for( int8_t i=0; i<num; i++ ) {
+    ObjDropItem* o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
+    if( o ) {
+      ITEM* item = itGenerateFloor( plGetFloor() );
+      o->setItem( item );
+
+      //コンテナに格納
+      objc->addObj( o );
+    } else {
+      //もう生成出来ない
+      break;
+    }
+  }
+  
 }
 
 //--------------------------------------------------------------------------

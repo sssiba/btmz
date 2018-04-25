@@ -45,13 +45,13 @@ ITEMBASE g_itembasetbl[] = {
 
   //-- IT_HEAD -----
   { //IBI_LEATHERHELM
-    IT_HEAD, &ipLongSword, NULL,
+    IT_HEAD, &ipLeatherHelm, NULL,
     "LeatherHelm",
     0, 0, 1,
     IUE_NOTHING, 0
   },
   { //IBI_HELM
-    IT_HEAD, &ipLongSword, NULL,
+    IT_HEAD, &ipHelm, NULL,
     "Helm",
     0, 0, 1,
     IUE_NOTHING, 0
@@ -216,6 +216,12 @@ ITEM* itGenerateFloor( uint8_t mapfloor )
   uint8_t droplvl = 1;
 
   return itGenerate( ibi, itrank, droplvl );
+}
+
+ITEM* itGenerateContainer( uint8_t mapfloor, uint8_t droplvl )
+{
+  //x!x! 仮 
+  return itGenerateFloor( mapfloor );
 }
 
 ItemType itRandomItemType( uint16_t flags )

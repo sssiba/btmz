@@ -76,6 +76,42 @@ void enDraw()
     if( ed->area != DUNMAP()->getCurAreaIdx() ) continue;
 
     ENTPL( ed->type )->fDraw( ed );    
+    
+#if defined( DBG_SHOW_HITRECT )
+  {
+    EnemyTemplate* et = ENTPL( ed->type );
+    int16_t x, y, rx, ry;
+    x = DUNMAP()->toScrX(TOINT(ed->x));
+    y = DUNMAP()->toScrY(TOINT(ed->y));
+    //move(green)
+    if( ed->flip ) {
+      rx = x - et->mvrect.x - et->mvrect.w;
+    } else {
+      rx = x + et->mvrect.x;
+    }
+    ry = y + et->mvrect.y;
+    gb.display.setColor( Color::lightgreen );
+    gb.display.drawRect( rx, ry, et->mvrect.w, et->mvrect.h );
+    //attack(red)
+    if( ed->flip ) {
+      rx = x - et->atrect.x - et->atrect.w;
+    } else {
+      rx = x + et->atrect.x;
+    }
+    ry = y + et->atrect.y;
+    gb.display.setColor( Color::red );
+    gb.display.drawRect( rx, ry, et->atrect.w, et->atrect.h );
+    //defense(blue)
+    if( ed->flip ) {
+      rx = x - et->dfrect.x - et->dfrect.w;
+    } else {
+      rx = x + et->dfrect.x;
+    }
+    ry = y + et->dfrect.y;
+    gb.display.setColor( Color::lightblue );
+    gb.display.drawRect( rx, ry, et->dfrect.w, et->dfrect.h );
+  }
+#endif
 
    }
 }
@@ -140,12 +176,11 @@ static EnemyData* enCheckRect( int8_t type, int16_t x, int16_t y, Rect8& rect, b
 {
   int16_t sx0, sx1;
   if( flip ) {
-    sx0 = x - rect.x;
-    sx1 = sx0 - rect.w;
+    sx0 = x - rect.x - rect.w;
   } else {
     sx0 = x + rect.x;
-    sx1 = sx0 + rect.w;
   }
+  sx1 = sx0 + rect.w;
   int16_t sy0 = y + rect.y;
   int16_t sy1 = sy0 + rect.h;
   

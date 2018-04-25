@@ -218,7 +218,8 @@ typedef struct {
  * アイテムを生成する
  */
 extern ITEM* itGenerate( ItemBaseIdx ibi, uint8_t itrank, uint8_t droplvl );
-extern ITEM* itGenerateFloor( uint8_t mapfloor );
+extern ITEM* itGenerateFloor( uint8_t mapfloor ); //床に落ちてるアイテム
+extern ITEM* itGenerateContainer( uint8_t mapfloor, uint8_t droplvl ); //宝箱等の内のアイテム
 extern ItemType itRandomItemType( uint16_t flags );
 extern ItemBaseIdx itRandomItemBase( ItemType type );
 extern ColorIndex itGetRankColor( uint8_t itrank );

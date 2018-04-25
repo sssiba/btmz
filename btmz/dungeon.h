@@ -205,6 +205,10 @@ public:
     y = by * TILEH;
   }
 
+  /*
+   * コンテナの中身を入れる
+   */
+   void setupContainer( ObjContainer* objc, uint8_t mapfloor, uint8_t droplvl );
 
 protected:
   uint8_t m_blkcnt;

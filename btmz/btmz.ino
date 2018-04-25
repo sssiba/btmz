@@ -181,15 +181,6 @@ void MainInit()
   //プレイヤー配置
   DUNMAP()->enterFloor( true );
 
-
-
-#if 0
-  WinMsg* w = gamemain.createWinMsg( 40, 20 );
-  w->setPos( 20, 20 );
-  w->setMsg( "Long Sword\nShield" );
-  w->open();
-#endif
-
   g_dlginfo = NULL;
 
   g_phase = PHASE_GAME;
@@ -540,7 +531,6 @@ class MenuItemSelect : public WinSelect
       return m_itemnum;
     }
   protected:
-//    ITEM* m_itemlist[ITEMMAX];
     ITEM** m_itemlist;
     int8_t m_itemlistsize;
     char m_title[12];
@@ -553,7 +543,7 @@ MenuItemSelect::MenuItemSelect( const char* title, uint8_t w, int8_t vline, int8
   m_itemlist = new ITEM*[itemlistsize];
   
   strncpy( m_title, title, 11 );
-  rebuild( itemlistsize, itemlist );
+//  rebuild( itemlistsize, itemlist );
 }
 
 
@@ -597,11 +587,11 @@ void MenuItemSelect::draw()
     for ( int8_t i = 0; i < m_vline; i++ ) {
       int8_t idx = m_top + i;
       ColorIndex bc;
-      if ( (m_cursor - m_top) == i ) {
-        bc = ColorIndex::blue;
+      if ( ((m_cursor - m_top) == i) && (m_itemnum) ) {
+//        bc = ColorIndex::blue;
         bc = ColorIndex::darkgray;
       } else {
-        bc = (idx & 1) ? ColorIndex::darkblue : ColorIndex::darkgray;
+//        bc = (idx & 1) ? ColorIndex::darkblue : ColorIndex::darkgray;
         bc = ColorIndex::black;
       }
       gb.display.setColor( bc );
@@ -655,6 +645,7 @@ bool initMenuItem()
 {
   PLSTAT& ps = plGetStat();
   g_miselect = new MenuItemSelect( "Item", 20, 4, MAX_PLITEM, ps.items );
+  g_miselect->rebuild( MAX_PLITEM, ps.items );
   if ( g_miselect->getItemNum() == 0 ) return false; //アイテムが無いと開けない
   g_miselect->open();
   g_miphase = MIPHASE_SELECT;
@@ -987,8 +978,10 @@ class MenuObjDropItemSelect : public MenuItemSelect
     inline int8_t getItemNum() {
       return m_itemnum;
     }
+
+    void delDropObjItem( ITEM* item );
+    
   protected:
-    ITEM* m_itemlist[ITEMMAX];
     ObjBase* m_dropitemlist[ITEMMAX];
     char m_title[12];
     ObjBase* m_parent;
@@ -998,26 +991,50 @@ MenuObjDropItemSelect::MenuObjDropItemSelect( const char* title, uint8_t w, int8
   : MenuItemSelect( title, w, vline, itemlistsize, NULL ) //一旦空の状態で作成
   , m_parent( parent )
 {
-  rebuild( itemlistsize, itemlist );
+//  rebuild( itemlistsize, itemlist );
 }
 
 
 void MenuObjDropItemSelect::rebuild( int8_t itemlistsize, ObjBase** itemlist )
 {
   //一旦 ObjDropItem を全部コピー
-  memcpy( m_dropitemlist, itemlist, sizeof(ObjBase*)*itemlistsize );
+//  memcpy( m_dropitemlist, itemlist, sizeof(ObjBase*)*itemlistsize );
+  for( int8_t i=0; i<itemlistsize; i++ ) m_dropitemlist[i] = itemlist[i];
 
   //m_item へアイテム取り出し
-  m_itemnum = itemlistsize;
+  m_itemnum = 0; //実際に有効なアイテム
   memset( m_itemlist, 0, sizeof(ITEM*)*itemlistsize );
   for ( int8_t i = 0; i < itemlistsize; i++ ) {
-    m_itemlist[i] = static_cast<ObjDropItem*>(itemlist[i])->getItem();
+    if( m_dropitemlist[i] ) {
+      m_itemlist[m_itemnum++] = static_cast<ObjDropItem*>(m_dropitemlist[i])->getItem();
+    }
   }
 
   //カーソル位置補正
   fixCursor();
 }
 
+void MenuObjDropItemSelect::delDropObjItem( ITEM* item )
+{
+  ObjDropItem* odi;
+  for( int8_t i=0; i<m_itemlistsize; i++ ) {
+    if( m_dropitemlist[i] ) {
+      odi = static_cast<ObjDropItem*>(m_dropitemlist[i]);
+      if( odi->getItem() == item ) {
+        if( m_parent ) { //コンテナ内の場合は中身から削除
+          ObjContainer* oc = static_cast<ObjContainer*>(m_parent);
+          oc->delObj( odi );
+        }
+        
+        DUNMAP()->getCurArea()->removeObj( odi ); //ObjDropItem を削除
+        m_dropitemlist[i] = NULL;
+        rebuild( m_itemlistsize, m_dropitemlist );
+      }
+    }
+  }
+
+  rebuild( m_itemlistsize, m_dropitemlist );       
+}
 
 /*
  * 複数 ObjDropItem 取得メニュー
@@ -1030,6 +1047,7 @@ void takeObjDropItemMenu( const char* title, ObjBase* parent, uint8_t cnt, ObjBa
 {
   //g_win 流用。MainMenu と同時に動かないので。
   g_win = new MenuObjDropItemSelect( title, 20, 4, parent, cnt, list );
+  static_cast<MenuObjDropItemSelect*>( g_win )->rebuild( cnt, list );
   g_win->open();
 
   g_nextphase = PHASE_MENU_OBJDROPITEM;
@@ -1045,7 +1063,30 @@ bool updateMenuObjDropItem()
   g_win->update();
   if( g_win->isDecide() ) {
     g_win->resetDecide();
+    int8_t tgt = g_win->getResult();
+    if( tgt < 0 ) {
+      //終わる
+      g_win->close();
+      return true;
+    } else {
+      //入手
+      if( plIsItemFull() ) { //もう持てない？
+        showModalInfoDlg( "Item is full" ); //閉じるまで進行停止する
+        return false;
+      }
+
+      MenuObjDropItemSelect* sel = static_cast<MenuObjDropItemSelect*>( g_win );
+
+      //持ち物に追加
+      ITEM* item = sel->getItem( tgt );
+      plAddItem( item );
+
+      //リストから削除
+      sel->delDropObjItem( item );
+    }
   }
+
+  return false;
 }
 
 void drawMenuObjDropItem()

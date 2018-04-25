@@ -13,7 +13,7 @@
 enum : uint8_t {
   OBJID_TORCH,
   OBJID_CANDLE,
-  OBJID_BOX,
+  OBJID_CHEST,
   OBJID_TABLE,
   OBJID_UPSTAIR,
   OBJID_DOWNSTAIR,
@@ -109,7 +109,7 @@ class ObjContainer : public NotContainable //コンテナはコンテナに入�
 {
   typedef NotContainable super;
 public:
-  static const uint8_t MAX_CONTENTS = 8; //中身最大数
+  static const uint8_t MAX_CONTENTS = 6; //中身最大数
   
 public:
   ObjContainer();
@@ -183,12 +183,12 @@ private:
 };
 
 //-----------------------------------------------
-class ObjBox : public ObjContainer
+class ObjChest : public ObjContainer
 {
   typedef ObjContainer super;
 public:
-  ObjBox();
-  virtual ~ObjBox();
+  ObjChest();
+  virtual ~ObjChest();
    
   virtual void init();
   virtual void update();

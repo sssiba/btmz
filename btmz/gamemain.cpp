@@ -393,18 +393,18 @@ void WinSelect::update()
   if( !m_visible ) return;
 
   if( (m_stat == STAT_SELECTING) && isFocus() ) { //focus 有る時だけ操作可能
-    if( gamemain.isRepeat( BUTTON_DOWN ) ) {
+    if( gamemain.isRepeat( BUTTON_DOWN ) && m_itemnum ) {
       ++m_cursor;
     } else
-    if( gamemain.isRepeat( BUTTON_UP ) ) {
+    if( gamemain.isRepeat( BUTTON_UP ) && m_itemnum ) {
       --m_cursor;
     } else
-    if( gamemain.isTrigger( BUTTON_B ) ) {
+    if( gamemain.isTrigger( BUTTON_B ) ) { //キャンセルだけはいつでも可能
       //cancel
       m_stat = STAT_DONESELECT;
       m_result = -1;
     } else
-    if( gamemain.isTrigger( BUTTON_A ) ) {
+    if( gamemain.isTrigger( BUTTON_A ) && m_itemnum ) {
       m_result = m_cursor;
       m_stat = STAT_DONESELECT;
     }
@@ -450,7 +450,9 @@ void WinSelect::draw()
     }
 
     //x!x! focus ある時だけカーソル表示の方が良い？
-    gb.display.drawChar( x - 4, y+((m_cursor-m_top)*FONTY), ((m_curanm/8) == 0) ? '>' : '-', 1 );
+    if( m_itemnum ) {
+      gb.display.drawChar( x - 4, y+((m_cursor-m_top)*FONTY), ((m_curanm/8) == 0) ? '>' : '-', 1 );
+    }
     if( isFocus() ) {
       //フォーカス中のみアニメーション更新
       m_curanm = (m_curanm + 1) & 0xf;

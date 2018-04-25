@@ -20,6 +20,8 @@
 
 //#define DBG_MAP //デバッグ用マップ情報表示
 
+#define DBG_SHOW_HITRECT //当たり判定矩形表示
+
 
 #define SCRW 80
 #define SCRH 64
@@ -108,7 +110,6 @@ extern void showModelInfoDlg( int16_t x, int16_t y, int8_t w, int8_t h, int16_t 
  */
 class ObjBase;
 extern void takeObjDropItemMenu( const char* title, ObjBase* parent, uint8_t cnt, ObjBase** objlist );
-
 
 extern FLOWFUNCSET fsMain;
 
