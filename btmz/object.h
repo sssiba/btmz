@@ -37,7 +37,7 @@ public:
   };
 public:
   ObjBase();
-  ~ObjBase();
+  virtual ~ObjBase();
 
   virtual void init() {}
   virtual void update() {}
@@ -275,12 +275,12 @@ public:
  */
 class ObjDropItem : public Containable
 {
-  typedef NotContainable super;
+  typedef Containable super;
 
 public:
   explicit ObjDropItem();
-  virtual ~ObjDropItem() {}
-
+  virtual ~ObjDropItem();
+  
   virtual void draw();
   virtual int8_t getOfstX();
   virtual int8_t getOfstY();
@@ -288,8 +288,13 @@ public:
   virtual uint8_t getAction() const { return UICtrl::BCMD_GET; }
   virtual int8_t getActionRegionW() const;
 
-  inline void setItem( ITEM* item ) { m_item = item; }
-  inline ITEM* getItem() const { return m_item; }
+  inline void attachItem( ITEM* item ) { m_item = item; }
+  inline ITEM* peekItem() const { return m_item; }
+  inline ITEM* detachItem() { //アイテムの割当を解除。解除しないとデストラクタで削除されてしまう。
+    ITEM* ret = m_item;
+    m_item = NULL;
+    return ret;
+  }
 
 private:
   ITEM* m_item;

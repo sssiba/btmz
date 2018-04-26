@@ -2,6 +2,12 @@
 
 #include "pic.h"
 
+#include "dungeon.h"
+
+static const int8_t FONTW = 4;
+static const int8_t FONTH = 6;
+
+
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -14,6 +20,7 @@ UICtrl::UICtrl()
   : m_btncmd(BCMD_EMPTY)
 {
   for( int8_t i=0; i<BCSLOTMAX; i++ ) m_btncmdslot[i] = BCMD_EMPTY;
+  memset( m_dispnum, 0, sizeof(m_dispnum) );
 }
 
 UICtrl::~UICtrl()
@@ -23,6 +30,8 @@ UICtrl::~UICtrl()
 
 void UICtrl::update()
 {
+  //disp num
+//  updateDispNum();
 }
 
 
@@ -30,8 +39,54 @@ void UICtrl::draw()
 {
   //A/B command
   drawBtnCmd();
+
+  //dispnum
+  drawDispNum();
 }
 
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+void UICtrl::entryDispNum( ColorIndex c, int16_t v, int8_t x, int8_t y, int8_t my )
+{
+  int8_t i;
+  if( v > 30000 ) v = 30000;
+  for( i=0; i<MAX_DISPNUM; i++ ) {
+    if( !m_dispnum[i].duration ) {
+      m_dispnum[i].duration = 3;
+      m_dispnum[i].my = my;
+      m_dispnum[i].c = c;
+      sprintf( m_dispnum[i].v, "%d", v );
+
+      int8_t d = strlen(m_dispnum[i].v);
+      d *= FONTW;
+
+      m_dispnum[i].x = DUNMAP()->toScrX(x) - (d>>1);
+      m_dispnum[i].y = DUNMAP()->toScrY(y);
+    
+    }
+  }
+}
+
+void UICtrl::drawDispNum()
+{
+  for( int8_t i=0; i<MAX_DISPNUM; i++ ) {
+    DISPNUM* dn = &m_dispnum[i];
+    if( dn->duration ) {
+      dn->y += dn->my;
+
+      gb.display.setColor( dn->c );
+      gb.display.setCursor( dn->x, dn->y );
+      gb.display.println( dn->v );
+      dn->duration--;
+    }
+  }
+}
+
+
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------
 void UICtrl::openBtnCmd( int btn, uint8_t slotup, uint8_t slotright, uint8_t slotdown, uint8_t slotleft )
 {
   m_btncmd = btn;

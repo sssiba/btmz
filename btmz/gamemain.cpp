@@ -42,6 +42,7 @@ void GameMain::setup()
   SERIALPORT.begin( 115200 );
   SERIALPORT.println( F("serial comm start") ); //GamebuinoMeta は Serial じゃなくて SerialUSB じゃないと駄目みたい
 #endif
+
   
   btnState = btnPrvState = btnTrg = btnRep = 0;
   btnRepStartFrm = FRAMERATE * 0.4;

@@ -394,6 +394,7 @@ Area::~Area()
 
   for ( int i = 0; i < MAX_OBJECT; i++ ) {
     if ( m_obj[i] ) {
+      m_obj[i]->finish();
       delete m_obj[i];
     }
   }
@@ -417,7 +418,7 @@ void Area::setup( CellMaker* cm, uint8_t id )
 
 #if 01
     //object 配置test
-    if ( random(100) < 40 ) {
+    if ( random(100) < 45 ) {
       if ( random(100) < 75 ) {
         ObjBase* o = createObj( i, OBJID_TORCH );
         m_blk[i]->setObjWall( o ); //壁に配置
@@ -427,10 +428,12 @@ void Area::setup( CellMaker* cm, uint8_t id )
       }
     }
 #if 01 //container
-    if ( random(100) < 20 ) {
+    if ( random(100) < 15 ) {
       if ( random(100) < 30 ) {
         ObjBase* o = createObj( i, OBJID_CHEST );
+#if 01
         setupContainer( static_cast<ObjContainer*>(o), plGetFloor(), 0 ); //中身を入れる
+#endif
         m_blk[i]->setObjGround( o );
       } else {
         ObjTable* tbl = static_cast<ObjTable*>( createObj( i, OBJID_TABLE ) );
@@ -444,11 +447,11 @@ void Area::setup( CellMaker* cm, uint8_t id )
     }
 #endif
 #if 01 //item
-    if( random(100) < 80 ) {
+    if( random(100) < 7 ) {
       ObjDropItem* o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
       if( o ) {
         ITEM* item = itGenerateFloor( plGetFloor() );
-        o->setItem( item );
+        o->attachItem( item );
         m_blk[i]->setObjCenter( o ); //通路上に置く
       }
 #if 0
@@ -456,7 +459,7 @@ void Area::setup( CellMaker* cm, uint8_t id )
        o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
       if( o ) {
         ITEM* item = itGenerateFloor( plGetFloor() );
-        o->setItem( item );
+        o->attachItem( item );
         m_blk[i]->setObjCenter( o ); //通路上に置く
       }
 #endif
@@ -631,7 +634,7 @@ void Area::setupContainer( ObjContainer* objc, uint8_t mapfloor, uint8_t droplvl
     ObjDropItem* o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
     if( o ) {
       ITEM* item = itGenerateFloor( plGetFloor() );
-      o->setItem( item );
+      o->attachItem( item );
 
       //コンテナに格納
       objc->addObj( o );
@@ -640,7 +643,6 @@ void Area::setupContainer( ObjContainer* objc, uint8_t mapfloor, uint8_t droplvl
       break;
     }
   }
-  
 }
 
 //--------------------------------------------------------------------------

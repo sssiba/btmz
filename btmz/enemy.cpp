@@ -273,6 +273,9 @@ int16_t enCalcDamage( EnemyData* ed )
  */
 bool enDamage( EnemyData* ed, int16_t dmg )
 {
+  //x!x! 高さは取り敢えずプレイヤーの武器っぽい、足元から -12 位にしておく
+  //x!x! x も当たり判定辺りにしてしまう？
+  UIC().dispNumUp( ColorIndex::red, dmg, TOINT(ed->x), TOINT(ed->y)-12  ); 
   
   ed->hp -= dmg;
   if( ed->hp <= 0 ) {

@@ -20,7 +20,7 @@
 
 //#define DBG_MAP //デバッグ用マップ情報表示
 
-#define DBG_SHOW_HITRECT //当たり判定矩形表示
+//#define DBG_SHOW_HITRECT //当たり判定矩形表示
 
 
 #define SCRW 80
@@ -103,7 +103,16 @@ extern void showModalInfoDlg( const char* msg );
  * ・表示中動作停止板
  * ・サイズ・位置指定版
  */
-extern void showModelInfoDlg( int16_t x, int16_t y, int8_t w, int8_t h, int16_t bufsz, const char* msg );
+extern void showModalInfoDlg( int16_t x, int16_t y, int8_t w, int8_t h, int16_t bufsz, const char* msg );
+
+/*
+ * 画面最下部情報表示
+ * ・表示中動作停止しない
+ * ・一定時間で消える
+ * ・基本的に１行用
+ */
+extern void showModelessInfo( const char* msg );
+
 
 /*
  * 複数 ObjDropItem 取得メニュー

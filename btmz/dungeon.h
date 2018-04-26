@@ -191,6 +191,10 @@ public:
   uint8_t DBGgetSY() { return m_DBGsy; }
 #endif
 
+  /*
+   * Object の生成
+   * x!x! Object は全てこれを使用して生成する事。勝手に作ると、Area 削除時に自動で削除されない事になるかも。
+   */
   ObjBase* createObj( uint8_t blk, uint8_t objid );
   bool entryObj( uint8_t blk, ObjBase* obj );
   ObjBase* getObj( uint8_t idx );

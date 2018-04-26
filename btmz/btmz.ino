@@ -84,7 +84,7 @@ void loop() {
     }
     gb.display.setColor( ColorIndex::gray );
     gb.display.setCursor( 0, 58 );
-    char s[64];
+    char s[16];
     sprintf( s, PSTR("%d"), g_fps );
     gb.display.print( s );
   }
@@ -164,6 +164,17 @@ void showModalInfoDlg( int16_t x, int16_t y, int8_t w, int8_t h, int16_t bufsz, 
   g_dlginfo->setBaseColor( ColorIndex::darkgray );
   g_dlginfo->setFrameColor( ColorIndex::red );
   g_dlginfo->open();
+}
+
+/*
+ * 画面最下部情報表示
+ * ・表示中動作停止しない
+ * ・一定時間で消える
+ * ・基本的に１行用
+ */
+void showModelessInfo( const char* msg )
+{
+  
 }
 
 
@@ -1006,7 +1017,7 @@ void MenuObjDropItemSelect::rebuild( int8_t itemlistsize, ObjBase** itemlist )
   memset( m_itemlist, 0, sizeof(ITEM*)*itemlistsize );
   for ( int8_t i = 0; i < itemlistsize; i++ ) {
     if( m_dropitemlist[i] ) {
-      m_itemlist[m_itemnum++] = static_cast<ObjDropItem*>(m_dropitemlist[i])->getItem();
+      m_itemlist[m_itemnum++] = static_cast<ObjDropItem*>(m_dropitemlist[i])->peekItem();
     }
   }
 
@@ -1020,11 +1031,14 @@ void MenuObjDropItemSelect::delDropObjItem( ITEM* item )
   for( int8_t i=0; i<m_itemlistsize; i++ ) {
     if( m_dropitemlist[i] ) {
       odi = static_cast<ObjDropItem*>(m_dropitemlist[i]);
-      if( odi->getItem() == item ) {
+      if( odi->peekItem() == item ) {
         if( m_parent ) { //コンテナ内の場合は中身から削除
           ObjContainer* oc = static_cast<ObjContainer*>(m_parent);
           oc->delObj( odi );
         }
+
+        //ObjDropItem から ITEM の割当を解除
+        odi->detachItem();
         
         DUNMAP()->getCurArea()->removeObj( odi ); //ObjDropItem を削除
         m_dropitemlist[i] = NULL;

@@ -140,18 +140,10 @@ void plInit()
   g_plfloor = 0; //1F
 
   //x!x! 適当な武器を装備させておく
-  ITEM* weapon = itGenerate( IBI_SHORTSWORD, ITRANK_MAGIC, 10 );
+  ITEM* weapon = itGenerate( IBI_SHORTSWORD, ITRANK_NORMAL, 10 );
   plEquip( weapon );
   ITEM* armor = itGenerate( IBI_LEATHERARMOR, ITRANK_NORMAL, 10 );
   plEquip( armor );
-
-  plAddItem( itGenerateFloor(0) );
-  plAddItem( itGenerateFloor(2) );
-  plAddItem( itGenerateFloor(4) );
-  plAddItem( itGenerateFloor(6) );
-  plAddItem( itGenerateFloor(8) );
-  plAddItem( itGenerateFloor(10) );
-  plAddItem( itGenerate( IBI_HELM, ITRANK_NORMAL, 10 ) );
 }
 
 void plUpdate()
@@ -451,6 +443,8 @@ void modeAction()
         case UICtrl::BCMD_GET: actGet(); break;
         case UICtrl::BCMD_LOOT: actLoot(); break;
       }
+      //一旦ボタンコマンド解除
+      enterMode( PLMODE_MOVE );
     }
   }
 }
@@ -575,12 +569,13 @@ void actGet()
 
   if( cnt == 1 ) { //１つだけならそのまま拾う
     ObjDropItem* odi = static_cast<ObjDropItem*>( tgt[0] );
-    ITEM* item = odi->getItem();
+    ITEM* item = odi->peekItem();
 
     if( plIsItemFull() ) {
       showModalInfoDlg( "Item is full" ); //閉じるまで進行停止する
     } else {
       plAddItem( item );
+      odi->detachItem(); //ITEM の割当を解除。解除しないとデストラクタで削除されてしまう。
       DUNMAP()->getCurArea()->removeObj( odi ); //この中で Object が削除される
     }
   } else { //二つ以上あれば選択画面を出す
@@ -601,6 +596,9 @@ void actLoot()
     ObjContainer* oc = static_cast<ObjContainer*>( tgt[0] );
     takeObjDropItemMenu( "Loot", oc, ObjContainer::MAX_CONTENTS, oc->getContentsList() );
   } else { //二つ以上あればコンテナ選択
+    //コンテナが複数ある
+    //x!x! コンテナが２個同時にアクセスできる場所に存在する事ある？
+    //x!x! 生成時に気をつける？
   }
 }
 

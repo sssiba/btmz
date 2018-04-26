@@ -31,13 +31,13 @@ ITEMBASE g_itembasetbl[] = {
 
   //-- IT_SHEILD -----
   { //IBI_WOODSHIELD
-    IT_SHIELD, &ipLongSword, NULL,
+    IT_SHIELD, &ipWoodShield, NULL,
     "Wood Shield",
     0, 0, 1,
     IUE_NOTHING, 0
   },
   { //IBI_ROUNDSHIELD
-    IT_SHIELD, &ipLongSword, NULL,
+    IT_SHIELD, &ipRoundShield, NULL,
     "RoundShield",
     0, 0, 1,
     IUE_NOTHING, 0
@@ -59,13 +59,13 @@ ITEMBASE g_itembasetbl[] = {
 
   //-- IT_ARMOR -----
   { //IBI_LEATHERARMOR
-    IT_ARMOR, &ipLongSword, NULL,
+    IT_ARMOR, &ipLeatherArmor, NULL,
     "LeatherArmor",
     0, 0, 3,
     IUE_NOTHING, 0
   },
   { //IBI_CHAINMAIL
-    IT_ARMOR, &ipLongSword, NULL,
+    IT_ARMOR, &ipChainMail, NULL,
     "Chain Mail",
     0, 0, 4,
     IUE_NOTHING, 0
@@ -73,13 +73,13 @@ ITEMBASE g_itembasetbl[] = {
 
   //-- IT_FOOT -----
   { //IBI_LEATHERBOOTS
-    IT_FOOT, &ipLongSword, NULL,
+    IT_FOOT, &ipLeatherBoots, NULL,
     "LeatherBoots",
     0, 0, 1,
     IUE_NOTHING, 0
   },
   { //IBI_SHOES
-    IT_FOOT, &ipLongSword, NULL,
+    IT_FOOT, &ipShoes, NULL,
     "Shoes",
     0, 0, 1,
     IUE_NOTHING, 0
@@ -87,13 +87,13 @@ ITEMBASE g_itembasetbl[] = {
 
   //-- IT_HAND -----
   { //IBI_LEATHERGLOVE
-    IT_HAND, &ipLongSword, NULL,
+    IT_HAND, &ipLeatherGlove, NULL,
     "LeatherGlove",
     0, 0, 1,
     IUE_NOTHING, 0
   },
   { //IBI_CHAINGLOVE
-    IT_HAND, &ipLongSword, NULL,
+    IT_HAND, &ipChainGlove, NULL,
     "Chain Glove",
     0, 0, 1,
     IUE_NOTHING, 0
@@ -101,13 +101,13 @@ ITEMBASE g_itembasetbl[] = {
 
   //-- IT_RING -----
   { //IBI_WOODRING
-    IT_RING, &ipLongSword, NULL,
+    IT_RING, &ipWoodRing, NULL,
     "Wood Ring",
     0, 0, 0,
     IUE_NOTHING, 0
   },
   { //IBI_IRONRING
-    IT_RING, &ipLongSword, NULL,
+    IT_RING, &ipIronRing, NULL,
     "Iron Ring",
     0, 0, 0,
     IUE_NOTHING, 0
@@ -115,13 +115,13 @@ ITEMBASE g_itembasetbl[] = {
 
   //-- IT_AMULET -----
   { //IBI_STONEAMULET
-    IT_AMULET, &ipLongSword, NULL,
+    IT_AMULET, &ipStoneAmulet, NULL,
     "Stone Amulet",
     0, 0, 0,
     IUE_NOTHING, 0
   },
   { //IBI_AMULET
-    IT_AMULET, &ipLongSword, NULL,
+    IT_AMULET, &ipAmulet, NULL,
     "Amulet",
     0, 0, 0,
     IUE_NOTHING, 0

@@ -38,9 +38,33 @@ extern ItemPic ipEqShortSword; //装備時
 extern ItemPic ipLongSword;
 extern ItemPic ipEqLongSword;
 
+//SHIELD
+extern ItemPic ipWoodShield;
+extern ItemPic ipRoundShield;
+
 //HEAD
 extern ItemPic ipLeatherHelm;
 extern ItemPic ipHelm;
+
+//ARMOR
+extern ItemPic ipLeatherArmor;
+extern ItemPic ipChainMail;
+
+//FOOT
+extern ItemPic ipLeatherBoots;
+extern ItemPic ipShoes;
+
+//HAND
+extern ItemPic ipLeatherGlove;
+extern ItemPic ipChainGlove;
+
+//AMULET
+extern ItemPic ipStoneAmulet;
+extern ItemPic ipAmulet;
+
+//RING
+extern ItemPic ipWoodRing;
+extern ItemPic ipIronRing;
 
 //-------------------------------------------------------
 //-------------------------------------------------------

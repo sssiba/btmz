@@ -42,6 +42,16 @@ public:
     BCMD_LOOT,
   };
 
+private:
+  typedef struct {
+    int8_t duration;
+    int8_t my;
+    int8_t x, y;
+    char v[6];
+    ColorIndex c;
+  } DISPNUM;
+
+  static const int8_t MAX_DISPNUM = 16;
 
 public:
   UICtrl();
@@ -49,6 +59,16 @@ public:
 
   void update();
   void draw();
+
+
+  //num
+  inline void dispNumUp( ColorIndex c, int16_t v, int8_t x, int8_t y ) {
+    entryDispNum( c, v, x, y, -2 );
+  }
+  inline void dispNumDown( ColorIndex c, int16_t v, int8_t x, int8_t y ) {
+    entryDispNum( c, v, x, y, 2 );
+  }
+
 
   /*
    * activate ButtonCommand
@@ -63,9 +83,15 @@ public:
 private:
   void drawBtnCmd();
 
+  //dispnum
+  void entryDispNum( ColorIndex c, int16_t v, int8_t x, int8_t y, int8_t my );
+//  void updateDispNum();
+  void drawDispNum();
+
 private:
   int8_t m_btncmd; //BCMD_EMPTY:not active   BCMD_A: button_a   BCMD_B: button_b
   uint8_t m_btncmdslot[BCSLOTMAX];
+  DISPNUM m_dispnum[ MAX_DISPNUM ];
 };
 
 extern UICtrl g_uictrl;

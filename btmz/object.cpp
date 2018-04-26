@@ -40,7 +40,8 @@ void ObjContainer::init()
  */
 void ObjContainer::finish()
 {
-  //入っている中身削除
+#if 0 //x!x! Object は全て class Area で管理し、破棄もそっちでやるのでここは何もしないて良い感じ。
+   //入っている中身削除
   for( int8_t i=0; i<MAX_CONTENTS; i++ ) {
     if( m_contents[i] ) {
       m_contents[i]->finish();
@@ -48,6 +49,7 @@ void ObjContainer::finish()
       m_contents[i] = NULL;
     }
   }
+#endif
 }
 
 bool ObjContainer::addObj( ObjBase* obj )
@@ -118,6 +120,7 @@ void ObjHook::draw()
  */
 void ObjHook::finish()
 {
+#if 0 //x!x! Object は全て class Area で管理し、破棄もそっちでやるのでここは何もしないて良い感じ。
   //入っている中身削除
   for( int8_t i=0; i<MAX_HOOKS; i++ ) {
     if( m_hooks[i] ) {
@@ -126,6 +129,7 @@ void ObjHook::finish()
       m_hooks[i] = NULL;
     }
   }
+#endif
 }
 
 bool ObjHook::addObj( ObjBase* obj )
@@ -412,6 +416,13 @@ void ObjDownStair::draw()
 ObjDropItem::ObjDropItem()
   : m_item( NULL )
 {
+}
+
+ObjDropItem::~ObjDropItem()
+{
+  if( m_item ) { //アイテムが接続されたままの場合はここで破棄する
+    delete m_item;
+  }
 }
 
 void ObjDropItem::draw()
