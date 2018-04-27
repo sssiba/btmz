@@ -289,6 +289,7 @@ bool enDamage( EnemyData* ed, int16_t dmg )
 
 void enDead( EnemyData* ed )
 {
+  showModelessInfo ("Killed slime", 20 );
   ed->type = ENTYPE_UNDEFINED;
 }
 

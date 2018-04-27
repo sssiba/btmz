@@ -159,6 +159,12 @@ public:
     STAT_CLOSING,
     STAT_CLOSE,
   };
+  enum {
+    ATTR_VISIBLE = (1<<0),  //true:表示する
+    ATTR_NOFRAME = (1<<1),  //true:フレーム無し
+    ATTR_TRANSBASE = (1<<2), //true:半透過ベース
+    ATTR_NOFOCUS = (1<<3),   //true:フォーカスされない
+  };
 public:
   WinBase( uint8_t w, uint8_t h );
   virtual ~WinBase();
@@ -172,9 +178,16 @@ public:
   virtual bool isClosed() { return !isOpened(); }
 //  virtual void onOpened();
 
+  inline bool isAttr( uint8_t a ) { return m_attr & a; }
+  inline void setAttr( uint8_t a ) { m_attr |= a; }
+  inline void clrAttr( uint8_t a ) { m_attr &= ~a; }
+
   inline void setBaseColor( ColorIndex c ) { m_basecol = c; }
   inline void setFrameColor( ColorIndex c ) { m_framecol = c; }
-  inline void setVisible( bool f ) { m_visible = f; }
+  inline void setVisible( bool f ) { f ? setAttr( ATTR_VISIBLE ) : clrAttr( ATTR_VISIBLE ); }
+  inline bool isVisible() { return isAttr( ATTR_VISIBLE ); }
+  inline bool isFocusable() { return !isAttr( ATTR_NOFOCUS ); } //フォーカス可能か
+
 
   inline void setPosX( int16_t x ) {
     m_x = x;
@@ -198,6 +211,11 @@ public:
     setPosCenteringV();
   }
 
+  inline void setMargin( uint8_t xm, uint8_t ym ) {
+    m_xmargin = xm;
+    m_ymargin = ym;
+  }
+
   //x!x! focus 持たない設定が必要になる予感も…
   void setFocus();
   bool isFocus();
@@ -214,7 +232,8 @@ protected:
   uint8_t m_h;
   uint8_t m_xmargin;
   uint8_t m_ymargin;
-  bool    m_visible;
+//  bool    m_visible;
+  uint8_t m_attr;
   ColorIndex m_basecol;
   ColorIndex m_framecol;
   WinBase* m_prevfocus; //メモリもったいないかな…
@@ -272,7 +291,6 @@ public:
   WinMsg( uint8_t w, uint8_t h, uint16_t sz = 80 );
   virtual ~WinMsg();
 
-  virtual void update();
   virtual void draw();
 
   inline void setFontColor( ColorIndex c ) { m_fontcol = c; }
@@ -299,6 +317,28 @@ public:
   virtual void update();
 };
 
+/*
+ * modeless info dialog
+ * 一定時間で自動消滅
+ */
+class ModelessDlgInfo : public WinMsg
+{
+  typedef WinMsg super;
+
+public:
+  ModelessDlgInfo( uint8_t w, uint8_t h, uint16_t sz );
+  virtual ~ModelessDlgInfo() {}
+
+  virtual void update();
+  inline void setDuration( int16_t dfrm ) {
+    m_duration = dfrm;
+  }
+  inline bool isFinish() const { return !m_duration; }
+
+
+private:
+  int16_t m_duration; //表示期間(frame)
+};
 
 #endif // USE_WINDOW
 

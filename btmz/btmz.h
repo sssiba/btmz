@@ -16,7 +16,7 @@
 #endif
 
 
-#define DBG_SHOW_FPS
+//#define DBG_SHOW_FPS
 
 //#define DBG_MAP //デバッグ用マップ情報表示
 
@@ -111,7 +111,7 @@ extern void showModalInfoDlg( int16_t x, int16_t y, int8_t w, int8_t h, int16_t 
  * ・一定時間で消える
  * ・基本的に１行用
  */
-extern void showModelessInfo( const char* msg );
+extern ModelessDlgInfo* showModelessInfo( const char* msg, uint16_t dfrm );
 
 
 /*

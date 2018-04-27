@@ -107,6 +107,7 @@ static uint8_t g_phase;
 static uint8_t g_nextphase;
 static WinSelect* g_win;
 static DlgInfo* g_dlginfo;
+static ModelessDlgInfo* g_modelessdlginfo;
 
 static void enterMainMenu();
 static bool updateMainMenu();
@@ -172,9 +173,23 @@ void showModalInfoDlg( int16_t x, int16_t y, int8_t w, int8_t h, int16_t bufsz, 
  * ・一定時間で消える
  * ・基本的に１行用
  */
-void showModelessInfo( const char* msg )
+ModelessDlgInfo* showModelessInfo( const char* msg, uint16_t dfrm )
 {
-  
+  if( !g_modelessdlginfo ) {
+    g_modelessdlginfo = new ModelessDlgInfo( 80, 6, 21 );
+
+    g_modelessdlginfo->setPos( 0, SCRH - 6 );
+    gamemain.addAutoWindow( g_modelessdlginfo );
+    //枠が無く、背景は半透過で、フォーカスを持たない
+    g_modelessdlginfo->setAttr( WinBase::ATTR_NOFRAME|WinBase::ATTR_TRANSBASE|WinBase::ATTR_NOFOCUS );
+    g_modelessdlginfo->setBaseColor( ColorIndex::darkgray );
+    g_modelessdlginfo->setMargin( 0, 0 );
+    g_modelessdlginfo->open();
+  }
+  g_modelessdlginfo->setDuration( dfrm );
+  g_modelessdlginfo->setMsg( msg );
+
+  return g_modelessdlginfo;
 }
 
 
@@ -193,6 +208,7 @@ void MainInit()
   DUNMAP()->enterFloor( true );
 
   g_dlginfo = NULL;
+  g_modelessdlginfo = NULL;
 
   g_phase = PHASE_GAME;
   g_nextphase = PHASE_NONE;
@@ -205,6 +221,8 @@ void MainUpdate()
     if ( g_dlginfo->isClosed() ) {
       delete g_dlginfo;
       g_dlginfo = NULL;
+      //閉じた直後に動作すると閉じるキーがそのままの状態なので、１フレーム何もしない事にする
+      return;
     }
   }
 
@@ -277,6 +295,8 @@ void MainDraw()
         FBL().apply();
 
         UIC().draw();
+
+        if( g_modelessdlginfo ) g_modelessdlginfo->draw(); //UIC に入れる？
       }
       break;
     case PHASE_MENU_ITEM:
@@ -291,6 +311,12 @@ void MainDraw()
     case PHASE_MENU_OBJDROPITEM:
       drawMenuObjDropItem();
       break;
+  }
+  if( g_modelessdlginfo ) {
+    if( g_modelessdlginfo->isFinish() ) {
+      delete g_modelessdlginfo;
+      g_modelessdlginfo = NULL;
+    }
   }
 }
 
@@ -577,7 +603,7 @@ void MenuItemSelect::rebuild( int8_t itemlistsize, ITEM** itemlist )
 void MenuItemSelect::draw()
 {
   static const int8_t LINEH = FONTH;
-  if ( !m_visible ) return;
+  if ( !isVisible() ) return;
 
   if ( m_stat == STAT_SELECTING || m_stat == STAT_DONESELECT ) {
     char str[48];
@@ -807,7 +833,7 @@ void MenuEquipSelect::rebuild( int8_t itemmax, ITEM** itemlist )
 void MenuEquipSelect::draw()
 {
   static const int8_t LINEH = FONTH;
-  if ( !m_visible ) return;
+  if ( !isVisible() ) return;
 
   if ( m_stat == STAT_SELECTING || m_stat == STAT_DONESELECT ) {
     char str[48];

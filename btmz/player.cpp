@@ -577,6 +577,12 @@ void actGet()
       plAddItem( item );
       odi->detachItem(); //ITEM の割当を解除。解除しないとデストラクタで削除されてしまう。
       DUNMAP()->getCurArea()->removeObj( odi ); //この中で Object が削除される
+
+      char s[21];
+      sprintf( s, "Got %s", itGetBaseName(item) );
+      ModelessDlgInfo* mdi = showModelessInfo( s, 25 );
+      mdi->setFontColor( itGetRankColor( item ) );
+      
     }
   } else { //二つ以上あれば選択画面を出す
     takeObjDropItemMenu( "Take", NULL, cnt, tgt ); //title, parent container, count, list

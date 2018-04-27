@@ -228,6 +228,7 @@ extern void itMakeName( ITEM* item, char* buf );
 extern const char* itGetPrefixName( ITEM* item );
 extern const char* itGetSuffixName( ITEM* item );
 extern const char* itGetBaseName( ITEM* item );
+extern ColorIndex itGetRankColor( ITEM* item );
 
 
 //--------------------------------------------------------------------------------------------------------

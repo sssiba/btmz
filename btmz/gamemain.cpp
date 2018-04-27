@@ -197,7 +197,7 @@ WinBase::WinBase( uint8_t w, uint8_t h )
   , m_ymargin( 2 )
   , m_w( w )
   , m_h( h )
-  , m_visible( true )
+  , m_attr( ATTR_VISIBLE )
   , m_prevfocus( NULL )
   , m_nextfocus( NULL )
 {
@@ -226,6 +226,8 @@ bool WinBase::isFocus()
  */
 void WinBase::setFocus()
 {
+  if( !isFocusable() ) return;
+  
   WinBase* cur = gamemain.getFocusWindow();
 
   //x!x! ポインタで見ると削除・作成を連続した時にまずい予感
@@ -269,20 +271,39 @@ void WinBase::unlinkFocus()
 
 void WinBase::update()
 {
-//  if( !m_visible ) return;
+//  if( !isVisible() ) return;
 }
 
 void WinBase::draw()
 {
-  if( !m_visible ) return;
+  if( !isVisible() ) return;
+
+  int8_t frmsize;
+  if( isAttr( ATTR_NOFRAME ) ){
+    frmsize = 0;
+  } else {
+    frmsize = 1;
+  }
+  
   if( m_stat != STAT_CLOSE ) {
     int16_t w, h;
     w = m_w + m_xmargin * 2;
     h = m_h + m_ymargin * 2;
     gb.display.setColor( m_basecol );
-    gb.display.fillRect( m_x, m_y, w-1, h-1 );
-    gb.display.setColor( m_framecol );
-    gb.display.drawRect( m_x, m_y, w, h );
+    if( !isAttr( ATTR_TRANSBASE ) ) {
+      //普通の塗りつぶし背景
+      gb.display.fillRect( m_x+frmsize, m_y+frmsize, w-frmsize-frmsize, h-frmsize-frmsize );
+    } else {
+      //１ラインおきに塗る背景
+      for( int8_t i=frmsize; i<h-frmsize-frmsize; i+=2 ) {
+        gb.display.drawFastHLine( m_x+frmsize, m_y+ i, w-frmsize-frmsize );
+      }
+    }
+
+    if( frmsize ) {
+      gb.display.setColor( m_framecol );
+      gb.display.drawRect( m_x, m_y, w, h );
+    }
   }
 }
 
@@ -320,18 +341,11 @@ void WinMsg::setMsg( const char* msg )
   m_msg[m_bufsz-1] = '\0';
 }
 
-void WinMsg::update()
-{
-  super::update();
-
-  if( !m_visible ) return;
-}
-
 void WinMsg::draw()
 {
   super::draw();
 
-  if( !m_visible ) return;
+  if( !isVisible() ) return;
   if( m_stat != STAT_CLOSE ) {
     gb.display.setColor( m_fontcol );
     gb.display.setCursor( m_x + m_xmargin, m_y + m_ymargin );
@@ -357,6 +371,19 @@ void DlgInfo::update()
   }
 }
 
+//-----------------------------------------------
+//-----------------------------------------------
+//-----------------------------------------------
+ModelessDlgInfo::ModelessDlgInfo( uint8_t w, uint8_t h, uint16_t sz )
+ : WinMsg( w, h, sz )
+ , m_duration( 25 )
+{
+}
+
+void ModelessDlgInfo::update()
+{
+  if( m_duration > 0 ) m_duration--;
+}
 
 //-----------------------------------------------
 //-----------------------------------------------
@@ -391,7 +418,7 @@ void WinSelect::update()
 {
   super::update();
 
-  if( !m_visible ) return;
+  if( !isVisible() ) return;
 
   if( (m_stat == STAT_SELECTING) && isFocus() ) { //focus 有る時だけ操作可能
     if( gamemain.isRepeat( BUTTON_DOWN ) && m_itemnum ) {
@@ -437,7 +464,7 @@ void WinSelect::draw()
 {
   super::draw();
 
-  if( !m_visible ) return;
+  if( !isVisible() ) return;
 
   static const int8_t FONTY = 6;
   
