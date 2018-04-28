@@ -318,6 +318,14 @@ void MainDraw()
       g_modelessdlginfo = NULL;
     }
   }
+
+  if( !g_dlginfo ) {
+    gb.display.setColor( ColorIndex::gray );
+    gb.display.setCursor( 0, 58 );
+    gb.display.print( "*" );
+  }
+
+  
 }
 
 void MainFinish()
@@ -347,7 +355,6 @@ void changePhase()
       case PHASE_MENU:
         if( g_nextphase == PHASE_GAME ) {
           //ゲームに戻る際には破棄
-          gamemain.delAutoWindow( g_win );
           delete g_win;
           g_win = NULL;
         } else {
@@ -580,14 +587,16 @@ MenuItemSelect::MenuItemSelect( const char* title, uint8_t w, int8_t vline, int8
   m_itemlist = new ITEM*[itemlistsize];
   
   strncpy( m_title, title, 11 );
-//  rebuild( itemlistsize, itemlist );
+  rebuild( itemlistsize, itemlist );
 }
 
 
 void MenuItemSelect::rebuild( int8_t itemlistsize, ITEM** itemlist )
 {
   m_itemnum = 0;
-  memset( m_itemlist, 0, sizeof(ITEM*)*itemlistsize );
+  for( int8_t i=0; i<itemlistsize; i++ ) {
+    m_itemlist[i] = NULL;
+  }
   if( itemlist ) {
     for ( int8_t i = 0; i < itemlistsize; i++ ) {
       if ( itemlist[i] ) {
@@ -772,19 +781,19 @@ bool updateMenuItem()
 
 void drawMenuItem()
 {
-  g_miselect->draw();
+    g_miselect->draw();
 
-  char str[32];
-  sprintf( str, "%d/%d", plGetItemCount(), MAX_PLITEM );
-  gb.display.setColor( ColorIndex::white );
-  gb.display.setCursor( 13 * 4, 4 );
-  gb.display.print( str );
+    char str[32];
+    sprintf( str, "%d/%d", plGetItemCount(), MAX_PLITEM );
+    gb.display.setColor( ColorIndex::white );
+    gb.display.setCursor( 13 * 4, 4 );
+    gb.display.print( str );
 }
 
 void finishMenuItem()
 {
-  delete g_miselect;
-  g_miselect = NULL;
+    delete g_miselect;
+    g_miselect = NULL;
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -821,7 +830,9 @@ MenuEquipSelect::MenuEquipSelect( uint8_t w, int8_t vline, int8_t itemmax, ITEM*
 
 void MenuEquipSelect::rebuild( int8_t itemmax, ITEM** itemlist )
 {
-  memset( m_itemlist, 0, sizeof(ITEM*)*ITEMMAX );
+  for( int8_t i=0; i<itemmax; i++ ) {
+    m_itemlist[i] = NULL;
+  }
   for ( m_itemnum = 0; m_itemnum < itemmax; m_itemnum++ ) {
     m_itemlist[m_itemnum] = itemlist[m_itemnum];
   }
@@ -1040,7 +1051,9 @@ void MenuObjDropItemSelect::rebuild( int8_t itemlistsize, ObjBase** itemlist )
 
   //m_item へアイテム取り出し
   m_itemnum = 0; //実際に有効なアイテム
-  memset( m_itemlist, 0, sizeof(ITEM*)*itemlistsize );
+  for( int8_t i=0; i<itemlistsize; i++ ) {
+    m_itemlist[i] = NULL;
+  }
   for ( int8_t i = 0; i < itemlistsize; i++ ) {
     if( m_dropitemlist[i] ) {
       m_itemlist[m_itemnum++] = static_cast<ObjDropItem*>(m_dropitemlist[i])->peekItem();

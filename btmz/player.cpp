@@ -21,6 +21,9 @@ static uint8_t g_plphase;
 static uint8_t g_plmode;
 static uint8_t g_plwait;
 static uint8_t g_plwkflag; //ワーク的に使用するフラグ
+static uint16_t g_plentermx, g_plentermy;
+static uint8_t g_plenterfrm;
+static BlockDir g_plenterdir;
 Rect8 g_plmvrect;
 Rect8 g_platrect;
 Rect8 g_pldfrect;
@@ -32,6 +35,7 @@ enum : uint8_t {
   PLMODE_MOVE, //移動モード
   PLMODE_ATTACK, //攻撃モード
   PLMODE_ACTION, //行動モード
+  PLMODE_ENTER, //マップ切替時自動移動
 };
 
 //ワーク的なフラグ。処理中に一時的に必要なフラグ。
@@ -74,6 +78,10 @@ static void modeAction();
 static void modeActionInit();
 static void modeActionFinish();
 static void modeActionDraw();
+static void modeEnter();
+static void modeEnterInit();
+static void modeEnterFinish();
+static void modeEnterDraw();
 
 static void enterMode( uint8_t newmode );
 
@@ -88,6 +96,8 @@ static bool checkActionTarget( ObjBase* obj );
 static void actStair( bool descend );
 static void actGet();
 static void actLoot();
+
+static void updateScroll();
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -148,19 +158,22 @@ void plInit()
 
 void plUpdate()
 {
-  if( gamemain.isPress( BUTTON_A ) ) {
-    enterMode( PLMODE_ATTACK );
-  } else
-  if( gamemain.isPress( BUTTON_B ) ) {
-    enterMode( PLMODE_ACTION );
-  } else {
-    enterMode( PLMODE_MOVE );
+  if( g_plmode != PLMODE_ENTER ) { //PLMODE_ENTER 時は自動移動なので操作出来ない
+    if( gamemain.isPress( BUTTON_A ) ) {
+      enterMode( PLMODE_ATTACK );
+    } else
+    if( gamemain.isPress( BUTTON_B ) ) {
+      enterMode( PLMODE_ACTION );
+    } else {
+      enterMode( PLMODE_MOVE );
+    }
   }
   
   switch( g_plmode ) {
     case PLMODE_MOVE: modeMove(); break;
     case PLMODE_ATTACK: modeAttack(); break;
     case PLMODE_ACTION: modeAction(); break;
+    case PLMODE_ENTER: modeEnter(); break;
   }
 }
 
@@ -173,6 +186,7 @@ void enterMode( uint8_t newmode )
     case PLMODE_MOVE: modeMoveFinish(); break;
     case PLMODE_ATTACK: modeAttackFinish(); break;
     case PLMODE_ACTION: modeActionFinish(); break;
+    case PLMODE_ENTER: modeEnterFinish(); break;
   }
 
   //新しいモードの初期化
@@ -180,6 +194,7 @@ void enterMode( uint8_t newmode )
     case PLMODE_MOVE: modeMoveInit(); break;
     case PLMODE_ATTACK: modeAttackInit(); break;
     case PLMODE_ACTION: modeActionInit(); break;
+    case PLMODE_ENTER: modeEnterInit(); break;
   }
   
 }
@@ -199,14 +214,12 @@ void modeMoveFinish()
 
 void modeMove()
 {
-  int16_t hx, hy;
   uint8_t plact = g_plphase; //プレイヤーの挙動。待機中、右移動中、左移動中、...
   int16_t cx, cy;
   cx = g_plx;
   cy = g_ply;
   cx += g_plflip ? TOFIX(-PLCX) : TOFIX(PLCX); //判定を行う位置は、画像の進行方向側の端。
 
-  DUNMAP()->getHome( hx, hy );
 
   if( gamemain.isTrigger( BUTTON_UP ) ) {
     if( enter( BDIR_FAR, cx, cy ) ) return; //奥の入口に入る
@@ -289,15 +302,7 @@ void modeMove()
 #define SCROLLMARGIN 16
 
   //背景スクロール
-  int16_t scrx = DUNMAP()->toScrX( plGetX() );
-  if( scrx >= (80-SCROLLMARGIN)-4 ) {
-    hx += scrx - ((80-SCROLLMARGIN)-4 - 1);
-    DUNMAP()->setHomeX( hx );
-  } else
-  if( scrx < (SCROLLMARGIN)+4 ) {
-    hx -= (SCROLLMARGIN+4) - scrx;
-    DUNMAP()->setHomeX( hx );
-  }
+  updateScroll();
 
   //animation
   //左右は反転使う？
@@ -322,6 +327,22 @@ void modeMove()
   }
   
 }
+
+void updateScroll()
+{
+  int16_t hx, hy;
+  DUNMAP()->getHome( hx, hy );
+  int16_t scrx = DUNMAP()->toScrX( plGetX() );
+  if( scrx >= (80-SCROLLMARGIN)-4 ) {
+    hx += scrx - ((80-SCROLLMARGIN)-4 - 1);
+    DUNMAP()->setHomeX( hx );
+  } else
+  if( scrx < (SCROLLMARGIN)+4 ) {
+    hx -= (SCROLLMARGIN+4) - scrx;
+    DUNMAP()->setHomeX( hx );
+  }
+}
+
 
 //------------------------------------------
 void modeAttackInit()
@@ -609,6 +630,74 @@ void actLoot()
 }
 
 
+//------------------------------------------
+void modeEnterInit()
+{
+//#define ENTERV 4 //上下は 4 ずらしてる
+#define ENTERV 8 //上下は移動速度を半分にして同じ時間にしてみる
+#define ENTERH 8 //左右は 8 にしてみる
+
+  //x!x! どうも通路のつながりがおかしくて、ドア同士でつながって無い場合があるもよう。
+  //x!x! その場合 frm とか mx, my が初期化されず不定な値でおかしくなってる
+  //x!x! つうろのつながりおかしいのなおさないと駄目
+  
+  switch( g_plenterdir ) {
+    case BDIR_FAR:
+      g_plentermx = 0;
+      g_plentermy = TOFIX(0.5);
+      g_plenterfrm = ENTERV;
+      break;
+    case BDIR_RIGHT:
+      g_plentermx = TOFIX(-0.75);
+      g_plentermy = 0;
+      g_plenterfrm = ENTERH;
+      break;
+    case BDIR_NEAR:
+      g_plentermx = 0;
+      g_plentermy = TOFIX(-0.5);
+      g_plenterfrm = ENTERV;
+      break;
+    case BDIR_LEFT:
+      g_plentermx = TOFIX(0.75);
+      g_plentermy = 0;
+      g_plenterfrm = ENTERH;
+      break;
+  }
+  g_planm = 0;
+  g_planmwait = 1; //アニメーションがすぐ起こる様にすすめておく
+  g_plmode = PLMODE_ENTER;
+}
+
+void modeEnterFinish()
+{
+}
+
+void modeEnter()
+{
+  g_plx += g_plentermx;
+  g_ply += g_plentermy;
+  if( g_plentermx ) {
+    g_plflip = (g_plentermx < 0) ? true : false;
+  }
+  if( --g_plenterfrm == 0 ) {
+    enterMode( PLMODE_MOVE );
+  }
+  
+  //animation
+  //左右は反転使う？
+    if( ++g_planmwait == 3 ) {
+      if( g_plentermx >= 0 ) g_planm = (g_planm + 1) & 0x3;
+      if( g_plentermx < 0) g_planm = (g_planm +1) &0x3;
+      g_planmwait = 0;
+    }
+
+    updateScroll();
+}
+
+void modeEnterDraw()
+{
+  modeMoveDraw();
+}
 
 
 //------------------------------------------
@@ -618,6 +707,7 @@ void plDraw()
     case PLMODE_MOVE: modeMoveDraw(); break;
     case PLMODE_ATTACK: modeAttackDraw(); break;
     case PLMODE_ACTION: modeActionDraw(); break;
+    case PLMODE_ENTER: modeEnterDraw(); break;
   }
 
   plDrawStat();
@@ -887,7 +977,11 @@ bool enter( uint8_t bdir, int16_t cx, int16_t cy )
     }
 #endif
 
-    DUNMAP()->enter( a, b );
+    g_plenterdir = DUNMAP()->enter(
+      a, b, //行き先の area, blk
+      DUNMAP()->getCurAreaIdx(), blk->getDist() //今いる area, blk
+    );
+    enterMode( PLMODE_ENTER );
 
     return true;
   }

@@ -12,6 +12,7 @@
 ObjBase::ObjBase()
  : m_id( MAX_OBJID )
  , m_flag( 0 )
+ , m_layer( DRAWLYR_FAR )
 {
 }
 
@@ -386,6 +387,7 @@ void ObjCandle::draw()
 ObjUpStair::ObjUpStair()
 {
   setID( OBJID_UPSTAIR );
+  setDrawLayer( DRAWLYR_NORMAL );
 }
 void ObjUpStair::draw()
 {
@@ -399,6 +401,7 @@ void ObjUpStair::draw()
 ObjDownStair::ObjDownStair()
 {
   setID( OBJID_DOWNSTAIR );
+  setDrawLayer( DRAWLYR_NORMAL );
 }
 
 void ObjDownStair::draw()
@@ -416,6 +419,7 @@ void ObjDownStair::draw()
 ObjDropItem::ObjDropItem()
   : m_item( NULL )
 {
+  setDrawLayer( DRAWLYR_NEAR );
 }
 
 ObjDropItem::~ObjDropItem()
@@ -442,7 +446,7 @@ int8_t ObjDropItem::getOfstX()
 {
   ItemPic* ip = itGetItemBase( m_item->base )->pic;
   return -ip->w/2;
-}
+} 
 
 int8_t ObjDropItem::getOfstY()
 {

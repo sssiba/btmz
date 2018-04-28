@@ -372,7 +372,27 @@ void Block::setObjCeiling( ObjBase* obj )
   x += obj->getOfstX();
   y += obj->getOfstY();
   obj->setPos( x, y );
+}
 
+BlockDir Block::findConnectDir( int8_t area, int8_t blk )
+{
+  for( uint8_t i=BDIR_FAR; i<BDIRMAX; i++ ) {
+    //その方向はドアか通路ならつながっている可能性がある
+    int8_t a = 1, b = -1;
+    switch( m_dirinfo[i] ) {
+      case BDINFO_DOOR:
+        a = m_bdidata[i].door.toArea;
+        b = m_bdidata[i].door.toBlock;
+        break;
+      case BDINFO_CORRIDOR:
+        a = m_bdidata[i].corridor.toArea;
+        b = m_bdidata[i].corridor.toBlock;
+        break;
+    }
+    if( a == area && b == blk ) return BlockDir(i);
+  }
+
+  return BDIRMAX; //見つからなかった
 }
 
 //--------------------------------------------------------------------------
@@ -506,9 +526,15 @@ void Area::draw()
 #if 01
   //x!x! object 間の描画のプライオリティを付けないとまずい。階段とたいまつの位置関係等がおかしくなる。 x!x!
   //object
-  for ( int i = 0; i < MAX_OBJECT; i++ ) {
-    if ( m_obj[i] ) {
-      m_obj[i]->draw();
+  //レイヤー毎に分けて描く
+  //x!x! プレイヤーと敵もまとめて管理しないと駄目かも…
+  for( int8_t lyr=0; lyr<MAX_DRAWLYR; lyr++ ) {
+    for ( int8_t i = 0; i < MAX_OBJECT; i++ ) {
+      if ( m_obj[i] ) {
+        if( m_obj[i]->getDrawLayer() == lyr ) {
+          m_obj[i]->draw();
+        }
+      }
     }
   }
 #endif
@@ -526,10 +552,36 @@ void Area::update()
 #endif
 }
 
-void Area::getEnterPos( uint8_t blk, int16_t& x, int16_t& y )
+
+
+BlockDir Area::getEnterPos( uint8_t blk, int8_t prvarea, int8_t prvblk, int16_t& x, int16_t& y )
 {
+  BlockDir bd;
+  
+  //指定ブロックの中央
   x = blk * BLKTILEW * TILEW + (BLKTILEW * TILEW / 2);
   y = (BLKTILEH - 2) * TILEH + (TILEH / 2);
+
+  //指定ブロックの、以前のブロックとつながっている方向を取得
+  bd = m_blk[blk]->findConnectDir( prvarea, prvblk );
+
+  //進入方向によってずらす
+  switch( bd ) {
+    case BDIR_FAR:
+      y -= 4;
+      break;
+    case BDIR_RIGHT:
+      x += TILEW + (TILEW/2)-2;
+      break;
+    case BDIR_NEAR:
+      y += 4;
+      break;
+    case BDIR_LEFT:
+      x -= TILEW + (TILEW/2)-2;
+      break;
+  }
+
+  return bd;
 }
 
 /*
@@ -765,14 +817,14 @@ void Map::enterFloor( bool descend )
   m_curareaidx = area;
 }
 
-void Map::enter( int8_t area, int8_t blk )
+BlockDir Map::enter( int8_t area, int8_t blk, int8_t prvarea, int8_t prvblk )
 {
   int16_t x, y;
 
   //入るエリアの BG マップ作成
   m_area[ area ]->makeBG( m_areaBG );
 
-  m_area[ area ]->getEnterPos( blk, x, y );
+  BlockDir ed = m_area[ area ]->getEnterPos( blk, prvarea, prvblk, x, y );
 
   plSetPos( x, y );
 
@@ -780,6 +832,8 @@ void Map::enter( int8_t area, int8_t blk )
   m_homex = (x + 4) - (80 / 2);
 
   m_curareaidx = area;
+
+  return ed;
 }
 
 void Map::update()

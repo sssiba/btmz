@@ -21,7 +21,7 @@
 
 #define MAX_AREABLOCK 10 //１エリア当たりの最大ブロック数
 
-enum BlcokDir : uint8_t {
+enum BlockDir : uint8_t {
   BDIR_FAR,   //奥
   BDIR_RIGHT, //右
   BDIR_NEAR,  //手前
@@ -147,7 +147,9 @@ public:
   void setObjCenter( ObjBase* obj ); //床（中央）に置く
   void setObjCeiling( ObjBase* obj ); //天井（中央）に置く
 
-  
+  //指定のエリア：ブロックと接続されている方向を返す
+  //BDIRMAX が返った場合は見つからなかった。
+  BlockDir findConnectDir( int8_t area, int8_t blk );
 
 private:
   void writeBGparts( const uint8_t* parts, uint8_t* out );
@@ -178,7 +180,7 @@ public:
   Block* getBlock( uint8_t blk ) { return m_blk[blk]; }
   inline uint8_t getBlockCnt() { return m_blkcnt; }
 
-  void getEnterPos( uint8_t blk, int16_t& x, int16_t& y );
+  BlockDir getEnterPos( uint8_t blk, int8_t prvarea, int8_t prvblk, int16_t& x, int16_t& y );
 
   void makeBG( uint8_t* out );
 
@@ -269,8 +271,20 @@ public:
    */
   ObjBase* findObject( OBJFINDER& of );
 
+  /*
+   * 別フロアからマップに入る
+   */
   void enterFloor( bool descend );
-  void enter( int8_t area, int8_t blk );
+
+  /*
+   * 指定エリアの指定ブロックに入る
+   * area 新たに入るエリア
+   * blk 新たに入るブロック
+   * prvarea 以前にいたエリア
+   * prvblk 以前にいたブロック
+   * return 0:奥側から進入 1:右から進入 2:手前から進入 3:左から進入
+   */
+  BlockDir enter( int8_t area, int8_t blk, int8_t prvarea, int8_t prvblk );
 
   //マップ上の X 座標を画面座標に変換
   inline int16_t toScrX( int16_t x )

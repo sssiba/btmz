@@ -23,6 +23,13 @@ enum : uint8_t {
   MAX_OBJID = OBJID_ALL
 };
 
+enum : uint8_t { //描画順番
+  DRAWLYR_FAR, //一番最初に描く
+  DRAWLYR_NORMAL, //２番めに描く
+  DRAWLYR_NEAR, //最後に描く
+  MAX_DRAWLYR
+};
+
 
 class ObjBase
 {
@@ -65,6 +72,9 @@ public:
   inline bool isHookable() const { return isFlag( FLAG_HOOKABLE ); } //何かに接続出来るか
   inline bool isHooked() const { return isFlag( FLAG_HOOKED ); } //何かに接続中か
 
+  inline void setDrawLayer( uint8_t lyr ) { m_layer = lyr; }
+  inline uint8_t getDrawLayer() { return m_layer; }
+
   virtual int8_t getOfstY() const { return 0; } //マップ配置時のオフセット
   virtual int8_t getOfstX() const { return 0; }
   virtual uint8_t getAction() const { return UICtrl::BCMD_EMPTY; } //object に対して行える cmd を返す。
@@ -80,6 +90,7 @@ protected:
   int16_t m_y;
   PICID m_picid;
   uint8_t m_flag;
+  uint8_t m_layer;
 };
 
 class Containable : public ObjBase //入るもの
