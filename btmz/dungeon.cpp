@@ -1022,24 +1022,6 @@ void CellMaker::make()
      #####
      のAとBをつないでワープ通路とかあり？
   */
-
-#if 0
-  {
-    m_areacnt = 1;
-    m_cell[0].id = 1;
-    m_cell[0].dist = 1;
-
-    m_areabase[0].sx = 0;
-    m_areabase[0].sy = 0;
-    m_areabase[0].dir = DIR_N;
-    m_areabase[0].len = 1;
-
-
-    return;
-  }
-#endif
-
-
   m_areacnt = 3 + random(MAX_AREA - 3); //試行する回数
   uint8_t id = 1;
   int8_t sx = random(TMAPW);

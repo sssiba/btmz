@@ -884,9 +884,10 @@ void plDrawStat()
   
 
 
-
+#if !defined( DBG_MAP )
   gb.display.setColor( Color::green );
   gb.display.drawFastHLine( 0, 15, SCRW ); 
+#endif
 }
 
 void plFinish()

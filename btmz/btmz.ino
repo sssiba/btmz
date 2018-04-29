@@ -17,7 +17,6 @@
 GameMain gamemain;
 fbIllumination fbl;
 
-
 //方向ベクトル
 const int8_t g_dirstepx[DIRMAX] = {
   0, 1, 0, -1
