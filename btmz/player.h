@@ -56,6 +56,7 @@ extern Rect8 g_pldfrect;
 extern PLSTAT g_plstat;
 extern uint8_t g_plfloor;
 
+extern int16_t g_wzx, g_wzy;
 
 extern void plInit();
 extern void plUpdate();
@@ -65,9 +66,12 @@ extern void plFinish();
 
 
 extern void plSetPos( int16_t x, int16_t y );
+extern void wzSetPos( int16_t x, int16_t y );
 extern bool plCheckMvRect( int16_t x, int16_t y, Rect8& rect, bool flip );
 extern bool plCheckDfRect( int16_t x, int16_t y, Rect8& rect, bool flip );
 
+//player が別フロア or 別エリアに入った際の位置初期化
+extern void plSetEnterPos( int16_t x, int16_t y );
 
 inline int16_t plGetX() { return TOINT( g_plx ); }
 inline int16_t plGetY() { return TOINT( g_ply ); }
@@ -80,6 +84,8 @@ inline PLSTAT& plGetStat() { return g_plstat; }
 inline uint8_t plGetFloor() { return g_plfloor; }
 inline void plSetFloor( uint8_t f ) { g_plfloor = f; }
 
+inline int16_t wzGetX() { return TOINT(g_wzx); }
+inline int16_t wzGetY() { return TOINT(g_wzy); }
 
 extern int16_t plCalcDamage( EnemyData* ed );
 extern bool plDamage( EnemyData* ed, int16_t dmg );

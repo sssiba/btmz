@@ -149,6 +149,49 @@ void GameMain::shuffle( uint8_t* ary, uint8_t sz )
   
   delete[] tmp;
 }
+
+/*
+ * fix16 の sin を返す
+ * a 角度 (fixではない通常の整数)
+ */
+int16_t GameMain::fixSin( int16_t a )
+{
+  static const int16_t stbl[] = { //sin0 - 90 (91)
+    TOFIX(0.000000f), TOFIX(0.017452f), TOFIX(0.034899f), TOFIX(0.052336f), TOFIX(0.069756f), TOFIX(0.087156f), TOFIX(0.104528f), TOFIX(0.121869f), TOFIX(0.139173f), TOFIX(0.156434f), TOFIX(0.173648f), TOFIX(0.190809f), TOFIX(0.207912f), TOFIX(0.224951f), TOFIX(0.241922f), TOFIX(0.258819f),
+    TOFIX(0.275637f), TOFIX(0.292372f), TOFIX(0.309017f), TOFIX(0.325568f), TOFIX(0.342020f), TOFIX(0.358368f), TOFIX(0.374607f), TOFIX(0.390731f), TOFIX(0.406737f), TOFIX(0.422618f), TOFIX(0.438371f), TOFIX(0.453990f), TOFIX(0.469472f), TOFIX(0.484810f), TOFIX(0.500000f), TOFIX(0.515038f),
+    TOFIX(0.529919f), TOFIX(0.544639f), TOFIX(0.559193f), TOFIX(0.573576f), TOFIX(0.587785f), TOFIX(0.601815f), TOFIX(0.615662f), TOFIX(0.629320f), TOFIX(0.642788f), TOFIX(0.656059f), TOFIX(0.669131f), TOFIX(0.681998f), TOFIX(0.694658f), TOFIX(0.707107f), TOFIX(0.719340f), TOFIX(0.731354f),
+    TOFIX(0.743145f), TOFIX(0.754710f), TOFIX(0.766044f), TOFIX(0.777146f), TOFIX(0.788011f), TOFIX(0.798636f), TOFIX(0.809017f), TOFIX(0.819152f), TOFIX(0.829038f), TOFIX(0.838671f), TOFIX(0.848048f), TOFIX(0.857167f), TOFIX(0.866025f), TOFIX(0.874620f), TOFIX(0.882948f), TOFIX(0.891007f),
+    TOFIX(0.898794f), TOFIX(0.906308f), TOFIX(0.913545f), TOFIX(0.920505f), TOFIX(0.927184f), TOFIX(0.933580f), TOFIX(0.939693f), TOFIX(0.945519f), TOFIX(0.951057f), TOFIX(0.956305f), TOFIX(0.961262f), TOFIX(0.965926f), TOFIX(0.970296f), TOFIX(0.974370f), TOFIX(0.978148f), TOFIX(0.981627f),
+    TOFIX(0.984808f), TOFIX(0.987688f), TOFIX(0.990268f), TOFIX(0.992546f), TOFIX(0.994522f), TOFIX(0.996195f), TOFIX(0.997564f), TOFIX(0.998630f), TOFIX(0.999391f), TOFIX(0.999848f), TOFIX(1.000000f)
+  };
+
+  while( a < 0 ) a += 360;
+  a %= 360;
+
+  if( a <= 90 ) {
+    return stbl[a];
+  } else
+  if( a <= 180 ) {
+    return stbl[180-a];
+  } else
+  if( a <= 270 ) {
+    return -stbl[a-180];
+  }
+  
+  return -stbl[360-a];
+}
+
+/*
+ * fix16 の cos を返す
+ * a 角度 (fixではない通常の整数)
+ */
+int16_t GameMain::fixCos( int16_t a )
+{
+  return fixSin( a + 90 );
+}
+
+
+
 //-------------------------------------------
 //window
 #if defined( USE_WINDOW )
@@ -257,6 +300,8 @@ void WinBase::unFocus()
     if( m_nextfocus ) m_nextfocus->setFocus(); //フォーカスのあるものはリンクの最後にあるはずなので、こっちは無いと思うけど一応
     else
     if( m_prevfocus ) m_prevfocus->setFocus();
+    else
+    gamemain.setFocusWindow( NULL ); //誰ともリンクしていなければフォーカスはどこにも無くなる
   }
   unlinkFocus(); //自分をフォーカスのリンクから外す
   m_nextfocus = m_prevfocus = NULL;

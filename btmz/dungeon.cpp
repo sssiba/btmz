@@ -491,7 +491,7 @@ void Area::setup( CellMaker* cm, uint8_t id )
 
 #if 01 //敵配置 test
     if( m_blkcnt > 1 ) {
-      enCreate( ENTYPE_SLIME, 0, id, random(m_blkcnt-1) + 1 );
+      enCreate( ENTYPE( ENTYPE_SLIME + random(ENTYPEMAX-1) ), 0, id, random(m_blkcnt-1) + 1 );
     }
 #endif
 
@@ -568,16 +568,16 @@ BlockDir Area::getEnterPos( uint8_t blk, int8_t prvarea, int8_t prvblk, int16_t&
   //進入方向によってずらす
   switch( bd ) {
     case BDIR_FAR:
-      y -= 4;
+      y -= ENTEROFSTV;
       break;
     case BDIR_RIGHT:
-      x += TILEW + (TILEW/2)-2;
+      x += ENTEROFSTH;
       break;
     case BDIR_NEAR:
-      y += 4;
+      y += ENTEROFSTV;
       break;
     case BDIR_LEFT:
-      x -= TILEW + (TILEW/2)-2;
+      x -= ENTEROFSTH;
       break;
   }
 
@@ -809,7 +809,7 @@ void Map::enterFloor( bool descend )
   x = obj->getX() + 6;
   y = (BLKTILEH - 2) * TILEH + (TILEH / 2);
 
-  plSetPos( x, y );
+  plSetEnterPos( x, y );
 
   //プレイヤーが中心に来る様にホーム修正
   m_homex = (x + 4) - (80 / 2);
@@ -826,7 +826,7 @@ BlockDir Map::enter( int8_t area, int8_t blk, int8_t prvarea, int8_t prvblk )
 
   BlockDir ed = m_area[ area ]->getEnterPos( blk, prvarea, prvblk, x, y );
 
-  plSetPos( x, y );
+  plSetEnterPos( x, y );
 
   //プレイヤーが中心に来る様にホーム修正
   m_homex = (x + 4) - (80 / 2);

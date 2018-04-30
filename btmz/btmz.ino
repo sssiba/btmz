@@ -318,13 +318,15 @@ void MainDraw()
     }
   }
 
+#if 0
   if( !g_dlginfo ) {
     gb.display.setColor( ColorIndex::gray );
     gb.display.setCursor( 0, 58 );
-    gb.display.print( "*" );
+    char s[48];
+    sprintf( s, "* %08x", gamemain.getFocusWindow() );
+    gb.display.print( s );
   }
-
-  
+#endif
 }
 
 void MainFinish()
@@ -586,6 +588,7 @@ MenuItemSelect::MenuItemSelect( const char* title, uint8_t w, int8_t vline, int8
   m_itemlist = new ITEM*[itemlistsize];
   
   strncpy( m_title, title, 11 );
+  m_title[11] = '\0';
   rebuild( itemlistsize, itemlist );
 }
 

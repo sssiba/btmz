@@ -18,6 +18,10 @@
 #define TMAPW 10
 #define TMAPH 10
 
+//エリア切替時の入口方向による位置オフセット
+#define ENTEROFSTH (TILEW + (TILEW/2)-2)
+#define ENTEROFSTV 4
+
 
 #define MAX_AREABLOCK 10 //１エリア当たりの最大ブロック数
 

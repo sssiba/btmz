@@ -10,6 +10,8 @@
 enum PICID {
   PIC_DUNGEONBG,
   PIC_CHARACTER,
+  PIC_WIZARD,
+  PIC_EFFECT8x8,
   PIC_OBJECT, //8x8
   PIC_OBJECT16x8, //16x8
   PIC_OBJECT12x16, //12x16
@@ -79,6 +81,9 @@ typedef struct EnemyPic {
 };
 
 extern EnemyPic epSlime;
+extern EnemyPic epGhost;
+extern EnemyPic epOrc;
+
 
 
 //-------------------------------------------------------

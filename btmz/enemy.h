@@ -78,7 +78,8 @@ typedef struct EnemyTemplate {
 enum ENTYPE : uint8_t {
   ENTYPE_UNDEFINED,
   ENTYPE_SLIME,
-
+  ENTYPE_GHOST,
+  ENTYPE_ORC,
   ENTYPEMAX
 };
 

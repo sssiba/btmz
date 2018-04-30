@@ -2,7 +2,7 @@
 
 #include <Gamebuino-Meta.h>
 
-#define DBG_ENABLE_SERIAL_COMM
+//#define DBG_ENABLE_SERIAL_COMM
 
 //#define SERIALPORT Serial
 #define SERIALPORT SerialUSB //GamebuinoMeta は Serial じゃなくて SerialUSB じゃないと駄目みたい
@@ -16,9 +16,9 @@
 #endif
 
 
-//#define DBG_SHOW_FPS
+#define DBG_SHOW_FPS
 
-#define DBG_MAP //デバッグ用マップ情報表示
+//#define DBG_MAP //デバッグ用マップ情報表示
 
 //#define DBG_SHOW_HITRECT //当たり判定矩形表示
 

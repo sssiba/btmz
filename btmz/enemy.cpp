@@ -18,6 +18,17 @@ static void enSlimeInit(EnemyData*);
 static void enSlimeUpdate(EnemyData*);
 static void enSlimeDraw(EnemyData*);
 static void enSlimeFinish(EnemyData*);
+
+static void enGhostInit(EnemyData*);
+static void enGhostUpdate(EnemyData*);
+static void enGhostDraw(EnemyData*);
+static void enGhostFinish(EnemyData*);
+
+static void enOrcInit(EnemyData*);
+static void enOrcUpdate(EnemyData*);
+static void enOrcDraw(EnemyData*);
+static void enOrcFinish(EnemyData*);
+
 /*
  * 敵データテンプレート
  */
@@ -39,6 +50,34 @@ EnemyTemplate g_enTemplate[ ENTYPEMAX ] = {
     {  8, -6,  4, 3 }, //攻撃当たり判定
     { -8, -8, 16, 8 }, //ダメージ当たり判定
   },  
+  { //ghost
+    enGhostInit,
+    enGhostUpdate,
+    enGhostDraw,
+    enGhostFinish,
+    "Ghost", //name
+    2, //lvl
+    20, //hpmax
+    3, //str
+    5, //def
+    { -3, -16, 6, 16 }, //移動当たり判定
+    {  3, -10, 5, 4 },  //攻撃当たり判定
+    { -4, -16, 8, 16 }, //ダメージ当たり判定
+  },
+  { //orc
+    enOrcInit,
+    enOrcUpdate,
+    enOrcDraw,
+    enOrcFinish,
+    "Orc", //name
+    3, //lvl
+    30, //hpmax
+    8, //str
+    8, //def
+    { -6, -16, 12, 16 }, //移動当たり判定
+    {  6, -9,  6, 4 }, //攻撃当たり判定
+    { -6, -16, 12, 16 }, //ダメージ当たり判定
+  }
 };
 
 
@@ -289,7 +328,10 @@ bool enDamage( EnemyData* ed, int16_t dmg )
 
 void enDead( EnemyData* ed )
 {
-  showModelessInfo ("Killed slime", 20 );
+  EnemyTemplate* et = ENTPL( ed->type );
+  char s[22];
+  sprintf( s, "Killed %s", et->name );
+  showModelessInfo (s, 20 );
   ed->type = ENTYPE_UNDEFINED;
 }
 
@@ -302,6 +344,7 @@ void enSlimeInit( EnemyData* ed )
 
 void enSlimeUpdate( EnemyData* ed )
 {
+  EnemyPic* ep = &epSlime;//ENTPL( ed->type )->pic;
   int16_t mv = 0;
   int16_t cx, cy;
 
@@ -330,7 +373,7 @@ void enSlimeUpdate( EnemyData* ed )
 
     cx = ed->x;
     cy = ed->y;
-    cx += ed->flip ? TOFIX(-8) : TOFIX(8);
+    cx += ed->flip ? TOFIX(-ep->w/2) : TOFIX(ep->w/2);
   
     cx += mv;
     bool movable = true;
@@ -376,7 +419,7 @@ void enSlimeDraw( EnemyData* ed )
 
     if( ed->phase == ENPHASE_ATTACK ||
         ed->phase == ENPHASE_COOLDOWN ) {
-      ep->img->setFrame( 2 );
+      ep->img->setFrame( ep->attack );
       gb.display.drawImage( DUNMAP()->toScrX(TOINT(ed->x))-(ep->w / 2),
                             DUNMAP()->toScrY(TOINT(ed->y))-(ep->h),
                             *ep->img, ed->flip ? -ep->w : ep->w, ep->h );
@@ -396,6 +439,221 @@ void enSlimeDraw( EnemyData* ed )
 
 void enSlimeFinish( EnemyData* ed )
 {
+}
+
+
+//---------------------------------------------------------------------
+//---------------------------------------------------------------------
+//---------------------------------------------------------------------
+void enGhostInit( EnemyData* ed )
+{
+}
+
+void enGhostUpdate( EnemyData* ed )
+{
+  EnemyPic* ep = &epGhost;//ENTPL( ed->type )->pic;
+  int16_t mv = 0;
+  int16_t cx, cy;
+
+  if( ed->phase == ENPHASE_COOLDOWN ) {
+    //攻撃後待機中
+    if( ed->phasewait == 0 ) {
+      ed->phase = ENPHASE_MOVE;
+    } else {
+      ed->phasewait--;
+    }
+  } else
+  if( ed->phase == ENPHASE_ATTACK ) {
+    ed->phase = ENPHASE_COOLDOWN;
+    ed->phasewait = 13;
+  } else {
+    if( enGetPlayerDist( ed ) < TOFIX(30) ) {
+      if( ed->x < plGetFixX() ) {
+        mv = TOFIX( 0.5f );
+        ed->flip = false;
+      } else
+      if( ed->x > plGetFixX() ) {
+        mv = TOFIX( -0.5f );
+        ed->flip = true;
+      }
+    }
+
+    cx = ed->x;
+    cy = ed->y;
+    cx += ed->flip ? TOFIX(-ep->w/2) : TOFIX(ep->w/2);
+  
+    cx += mv;
+    bool movable = true;
+    uint8_t bg = 0;
+    bg = DUNMAP()->getMapBG( TOINT(cx), TOINT(cy) );
+    movable = (bg == 0 );
+
+    EnemyTemplate* et = ENTPL( ed->type );
+    { //移動当たり判定
+      int16_t tx = TOINT(ed->x + mv);
+      int16_t ty = TOINT(ed->y);
+      if( plCheckMvRect( tx, ty, et->mvrect, ed->flip ) ) {
+        movable = false;
+      }
+
+      //x!x! 他の敵ともやる？
+    }
+
+    //攻撃する？
+    {
+      if( plCheckDfRect( TOINT(ed->x), TOINT(ed->y), et->atrect, ed->flip ) ) {
+        //自分の攻撃範囲にプレイヤーがいたら攻撃
+        ed->phase = ENPHASE_ATTACK;
+
+        int16_t dmg = plCalcDamage( ed );
+        plDamage( ed, dmg );
+
+        //攻撃の際は移動しない
+        movable = false;
+      }
+    }
+  
+    if( movable ) {
+      ed->x += mv; 
+      ed->phase = ENPHASE_MOVE;
+    }
+  }
+}
+
+void enGhostDraw( EnemyData* ed )
+{
+    EnemyPic* ep = &epGhost;//ENTPL( ed->type )->pic;
+
+    if( ed->phase == ENPHASE_ATTACK ||
+        ed->phase == ENPHASE_COOLDOWN ) {
+      ep->img->setFrame( ep->attack );
+      gb.display.drawImage( DUNMAP()->toScrX(TOINT(ed->x))-(ep->w / 2),
+                            DUNMAP()->toScrY(TOINT(ed->y))-(ep->h),
+                            *ep->img, ed->flip ? -ep->w : ep->w, ep->h );
+    } else {
+      ep->img->setFrame( ep->move[ed->anm] );
+      gb.display.drawImage( DUNMAP()->toScrX(TOINT(ed->x))-(ep->w / 2),
+                            DUNMAP()->toScrY(TOINT(ed->y))-(ep->h),
+                            *ep->img, ed->flip ? -ep->w : ep->w, ep->h );
+      if( ed->anmwait == 0 ) {
+        ed->anm ^= 1;
+        ed->anmwait = 5;
+      } else {
+        ed->anmwait--;
+      }
+    }
+}
+
+void enGhostFinish( EnemyData* ed )
+{
+}
+
+//---------------------------------------------------------------------
+//---------------------------------------------------------------------
+//---------------------------------------------------------------------
+void enOrcInit( EnemyData* ed )
+{
+  
+}
+
+void enOrcUpdate( EnemyData* ed )
+{
+  EnemyPic* ep = &epOrc;//ENTPL( ed->type )->pic;
+  int16_t mv = 0;
+  int16_t cx, cy;
+
+  if( ed->phase == ENPHASE_COOLDOWN ) {
+    //攻撃後待機中
+    if( ed->phasewait == 0 ) {
+      ed->phase = ENPHASE_MOVE;
+    } else {
+      ed->phasewait--;
+    }
+  } else
+  if( ed->phase == ENPHASE_ATTACK ) {
+    ed->phase = ENPHASE_COOLDOWN;
+    ed->phasewait = 13;
+  } else {
+    if( enGetPlayerDist( ed ) < TOFIX(30) ) {
+      if( ed->x < plGetFixX() ) {
+        mv = TOFIX( 0.5f );
+        ed->flip = false;
+      } else
+      if( ed->x > plGetFixX() ) {
+        mv = TOFIX( -0.5f );
+        ed->flip = true;
+      }
+    }
+
+    cx = ed->x;
+    cy = ed->y;
+    cx += ed->flip ? TOFIX(-ep->w/2) : TOFIX(ep->w/2);
+  
+    cx += mv;
+    bool movable = true;
+    uint8_t bg = 0;
+    bg = DUNMAP()->getMapBG( TOINT(cx), TOINT(cy) );
+    movable = (bg == 0 );
+
+    EnemyTemplate* et = ENTPL( ed->type );
+    { //移動当たり判定
+      int16_t tx = TOINT(ed->x + mv);
+      int16_t ty = TOINT(ed->y);
+      if( plCheckMvRect( tx, ty, et->mvrect, ed->flip ) ) {
+        movable = false;
+      }
+
+      //x!x! 他の敵ともやる？
+    }
+
+    //攻撃する？
+    {
+      if( plCheckDfRect( TOINT(ed->x), TOINT(ed->y), et->atrect, ed->flip ) ) {
+        //自分の攻撃範囲にプレイヤーがいたら攻撃
+        ed->phase = ENPHASE_ATTACK;
+
+        int16_t dmg = plCalcDamage( ed );
+        plDamage( ed, dmg );
+
+        //攻撃の際は移動しない
+        movable = false;
+      }
+    }
+  
+    if( movable ) {
+      ed->x += mv; 
+      ed->phase = ENPHASE_MOVE;
+    }
+  }
+}
+
+void enOrcDraw( EnemyData* ed )
+{
+    EnemyPic* ep = &epOrc;//ENTPL( ed->type )->pic;
+
+    if( ed->phase == ENPHASE_ATTACK ||
+        ed->phase == ENPHASE_COOLDOWN ) {
+      ep->img->setFrame( ep->attack );
+      gb.display.drawImage( DUNMAP()->toScrX(TOINT(ed->x))-(ep->w / 2),
+                            DUNMAP()->toScrY(TOINT(ed->y))-(ep->h),
+                            *ep->img, ed->flip ? -ep->w : ep->w, ep->h );
+    } else {
+      ep->img->setFrame( ep->move[ed->anm] );
+      gb.display.drawImage( DUNMAP()->toScrX(TOINT(ed->x))-(ep->w / 2),
+                            DUNMAP()->toScrY(TOINT(ed->y))-(ep->h),
+                            *ep->img, ed->flip ? -ep->w : ep->w, ep->h );
+      if( ed->anmwait == 0 ) {
+        ed->anm ^= 1;
+        ed->anmwait = 5;
+      } else {
+        ed->anmwait--;
+      }
+    }
+}
+
+void enOrcFinish( EnemyData* ed )
+{
+  
 }
 
 
