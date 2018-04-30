@@ -16,7 +16,7 @@
 #endif
 
 
-#define DBG_SHOW_FPS
+//#define DBG_SHOW_FPS
 
 //#define DBG_MAP //デバッグ用マップ情報表示
 

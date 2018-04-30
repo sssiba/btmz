@@ -1420,12 +1420,12 @@ void lbUpdate()
   //揺れ
   g_lbfy = -FIXSIN( TOINT( g_lbang ) );
   g_lbfy *= 3;
-  g_lbang += TOFIX(10.0f);
+  g_lbang += TOFIX(8.0f);
   if ( g_lbang >= TOFIX(360.0f) ) g_lbang -= TOFIX(360.0f);
 
-  //x!x! 進行方向の先とプレイヤーの位置辺りを行ったり来たりさせる予定
-  tgtx = g_plx + (g_plflip ? TOFIX(-(0)) : TOFIX(0));
-  tgty = g_ply - 8;
+  //x!x! 進行方向の先とプレイヤーの位置辺りを行ったり来たりさせる？
+  tgtx = g_plx + (g_plflip ? TOFIX(-(30)) : TOFIX(30));
+  tgty = g_ply - TOFIX(6);
 
   //Y 方向は確実に合わせる
   int16_t d = tgty - g_lby;
@@ -1442,13 +1442,13 @@ void lbUpdate()
     }
   }
 
-  //y 移動中は横移動しない
+  //X
   d = tgtx - g_lbx;
   d = TOINT(d);
   if ( d < 0 ) d = -d;
   //目的地と一定以上離れたら移動開始
   if ( d > 6 ) {
-    d = TOFIX(d) / 5;
+    d = TOFIX(d) / 22;
     if( d > TOFIX(1.5f) ) d = TOFIX(1.5f);
     
     if ( tgtx < g_lbx ) {
@@ -1468,8 +1468,8 @@ void lbDraw()
   static const uint8_t frmtbl[] = { 0, 1 };
 
   int16_t x, y;
-  x = DUNMAP()->toScrX(TOINT(g_lbx));
-  y = DUNMAP()->toScrY(TOINT(g_lby + g_lbfy));
+  x = DUNMAP()->toScrX(TOINT(g_lbx)) - 4;
+  y = DUNMAP()->toScrY(TOINT(g_lby + g_lbfy)) - 4;
 
   uint8_t frm = frmtbl[g_lbanm];
   if ( --g_lbanmwait == 0 ) {
@@ -1479,7 +1479,7 @@ void lbDraw()
 
 
   getPic( PIC_EFFECT8x8 )->setFrame( frm );
-  gb.display.drawImage( x - 4, y - 4, *getPic( PIC_EFFECT8x8 ) );
+  gb.display.drawImage( x, y, *getPic( PIC_EFFECT8x8 ) );
 
   //光る
   FBL().setLight( x, y, g_lbanm ? 16 : 20 );
