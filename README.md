@@ -7,4 +7,5 @@ Gamebuino Meta rpg [working slowly]
 ![2](https://github.com/sssiba/btmz/raw/master/2.gif "fight")
 ![3](https://github.com/sssiba/btmz/raw/master/3.gif "item")
 ![4](https://github.com/sssiba/btmz/raw/master/4.gif "equipment")
+![5](https://github.com/sssiba/btmz/raw/master/5.gif "light spell")
 
