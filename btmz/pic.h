@@ -16,6 +16,8 @@ enum PICID {
   PIC_OBJECT16x8, //16x8
   PIC_OBJECT12x16, //12x16
   PIC_ICON6x5, //icon
+  PIC_TITLE, //title
+  PIC_TITLEFIRE, //タイトルのろうそくの火。わざわざここに入れなくても良い感じ
 };
 
 extern Image* g_pictbl[];

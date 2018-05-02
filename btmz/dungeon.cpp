@@ -685,7 +685,7 @@ void Area::setupContainer( ObjContainer* objc, uint8_t mapfloor, uint8_t droplvl
   for( int8_t i=0; i<num; i++ ) {
     ObjDropItem* o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
     if( o ) {
-      ITEM* item = itGenerateFloor( plGetFloor() );
+      ITEM* item = itGenerateFloor( mapfloor );
       o->attachItem( item );
 
       //コンテナに格納

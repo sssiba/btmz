@@ -9,6 +9,8 @@
 #include "dungeon.h"
 #include "item.h"
 
+#include "title.h"
+
 //-------------------------------------------
 //-------------------------------------------
 //-------------------------------------------
@@ -41,10 +43,15 @@ void setup() {
 
   gb.setFrameRate( FRAMERATE );
 
+  //save data 準備
+  gb.save.config(100, NULL, 0 ); //maxblock(slot), defaultvars, defaultvarnum
+
+
   gamemain.setup();
 
+
+
   FBL().reset();
-  FBL().setClipArea( 0, 16, 79, 63 ); //画面上部はステータス的な所。マップじゃないので適用しない。
 
 #if defined( DBG_SHOW_FPS )
   g_prvms = millis();
@@ -197,8 +204,6 @@ ModelessDlgInfo* showModelessInfo( const char* msg, uint16_t dfrm )
 //-------------------------------------------
 void MainInit()
 {
-  plInit();
-
   enInit();
 
   dunInit();
@@ -208,6 +213,10 @@ void MainInit()
 
   g_dlginfo = NULL;
   g_modelessdlginfo = NULL;
+
+  //明かり範囲設定
+  FBL().setClipArea( 0, 16, 79, 63 ); //画面上部はステータス的な所。マップじゃないので適用しない。
+
 
   g_phase = PHASE_GAME;
   g_nextphase = PHASE_NONE;
@@ -466,7 +475,7 @@ bool updateMainMenu()
           return false;
         //DBG:restart
         case MMITEM_RESTART:
-          gamemain.getFlow().setFlow( &fsMain );
+          gamemain.getFlow().setFlow( &fsTitle );
           g_nextphase = PHASE_GAME; //現在の phase を終わらせ、window を破棄する為に PHASE_GAME で為に呼んでおく
           changePhase(); //直ぐに反映
           break;
@@ -512,7 +521,7 @@ void drawMenuStatus()
   PLSTAT& ps = plGetStat();
 
   //Name[12], Level[99]
-  sprintf( s, "%s", "Name88889ABC" );
+  sprintf( s, "%s", ps.name );
   gb.display.setCursor( 0, TOPLINE );
   gb.display.print( s );
   sprintf( s, "L:%-2d", ps.lvl );
@@ -692,8 +701,8 @@ static uint8_t g_miphase;
 bool initMenuItem()
 {
   PLSTAT& ps = plGetStat();
-  g_miselect = new MenuItemSelect( "Item", 20, 4, MAX_PLITEM, ps.items );
-  g_miselect->rebuild( MAX_PLITEM, ps.items );
+  g_miselect = new MenuItemSelect( "Item", 20, 4, MAX_PLITEM, g_plitems );
+  g_miselect->rebuild( MAX_PLITEM, g_plitems );
   if ( g_miselect->getItemNum() == 0 ) return false; //アイテムが無いと開けない
   g_miselect->open();
   g_miphase = MIPHASE_SELECT;
@@ -753,7 +762,7 @@ bool updateMenuItem()
                   plEquip( item ); //装備
                   plOverwriteItem( item, eqitem ); //装備したアイテム(item)があった場所に外した装備(eqitem)上書き
                 }
-                g_miselect->rebuild( MAX_PLITEM, plGetStat().items );
+                g_miselect->rebuild( MAX_PLITEM, g_plitems );
               }
               break;
             case 2: //drop
@@ -763,7 +772,7 @@ bool updateMenuItem()
                 if ( item ) {
                   plDelItem( item ); //持ち物から削除
                   delete item;
-                  g_miselect->rebuild( MAX_PLITEM, plGetStat().items );
+                  g_miselect->rebuild( MAX_PLITEM, g_plitems );
                 }
               }
               break;
@@ -927,7 +936,7 @@ static MenuEquipSelect* g_meselect = NULL;
 void initMenuEquip()
 {
   PLSTAT& ps = plGetStat();
-  g_meselect = new MenuEquipSelect( 20, 4, EQMAX, ps.equip );
+  g_meselect = new MenuEquipSelect( 20, 4, EQMAX, g_plequip );
   g_meselect->open();
   g_miphase = MIPHASE_SELECT;
 }
@@ -978,7 +987,7 @@ bool updateMenuEquip()
                 } else {
                   ITEM* item = plUnequip( g_mitgt ); //装備を外して
                   plAddItem( item ); //アイテムに移す
-                  g_meselect->rebuild( EQMAX, plGetStat().equip );
+                  g_meselect->rebuild( EQMAX, g_plequip );
                 }
               }
               break;
@@ -1155,6 +1164,38 @@ void finishMenuObjDropItem()
   g_win = NULL;
 }
 
+//-------------------------------------------
+//-------------------------------------------
+//-------------------------------------------
+void btmzSave()
+{
+  plSave();
+
+  //x!x! map もセーブする？
+  //x!x! 現状ではロードすると以前いたフロアの最初から再開。マップは作り直されるので前と違う。
+  
+  gb.save.set( SDS_VER, VER_SAVEDATA );
+  
+}
+
+bool btmzLoad()
+{
+  if( btmzIsSaved() ) {
+    plLoad();
+
+    //x!x! map もロードする？
+    //x!x! 現状ではロードすると以前いたフロアの最初から再開。マップは作り直されるので前と違う。
+
+    return true;
+  }
+
+  return false;
+}
+
+bool btmzIsSaved()
+{
+  return (gb.save.get( SDS_VER ) == VER_SAVEDATA);
+}
 
 //-------------------------------------------
 //-------------------------------------------

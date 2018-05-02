@@ -190,7 +190,7 @@ ITEM* itGenerateFloor( uint8_t mapfloor )
 {
   uint8_t itrank = ITRANK_NORMAL;
 
-  uint8_t flvl = mapfloor / 2;
+  uint8_t flvl = (mapfloor-1) / 2;
   if( flvl >= (sizeof(g_floordrop)/sizeof(ITEMDROP)) )
     flvl = (sizeof(g_floordrop)/sizeof(ITEMDROP)) - 1;
 
@@ -361,6 +361,36 @@ ColorIndex itGetRankColor( uint8_t itrank )
 ColorIndex itGetRankColor( ITEM* item ) 
 {
   return itGetRankColor( item->rank );
+}
+
+//--------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------
+bool itSave( int16_t svslot, ITEM* item )
+{
+  if( item ) {
+    gb.save.set( svslot, item, sizeof(ITEM) );
+  } else {
+    ITEM t;
+    t.base = IBI_UNDEFINED;
+    gb.save.set( svslot, &t, sizeof(ITEM) );
+  }
+
+  return true;
+}
+
+ITEM* itLoad( int16_t svslot )
+{
+  ITEM* it = new ITEM;
+
+  gb.save.get( svslot, it, sizeof(ITEM) );
+  if( it->base == IBI_UNDEFINED ) {
+    //アイテムの無い場所 or 無効なアイテム
+    delete it;
+    it = NULL;
+  }
+
+  return it;
 }
 
 //--------------------------------------------------------------------------------------------------------

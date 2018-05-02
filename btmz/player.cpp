@@ -29,7 +29,8 @@ Rect8 g_plmvrect;
 Rect8 g_platrect;
 Rect8 g_pldfrect;
 PLSTAT g_plstat;
-uint8_t g_plfloor;
+ITEM* g_plequip[EQMAX];
+ITEM* g_plitems[MAX_PLITEM];
 
 //wizard
 int16_t g_wzx, g_wzy;
@@ -174,10 +175,10 @@ void plInit()
   g_plstat.mpmax = 0;
   g_plstat.ex = 0;
   for ( int8_t i = 0; i < EQMAX; i++ ) {
-    g_plstat.equip[i] = NULL;
+    g_plequip[i] = NULL;
   }
   for ( int8_t i = 0; i < MAX_PLITEM; i++ ) {
-    g_plstat.items[i] = NULL;
+    g_plitems[i] = NULL;
   }
 
   g_plstat.minatk = 0;
@@ -185,7 +186,7 @@ void plInit()
   g_plstat.def = 0;
   g_plstat.healhp = 0;
 
-  g_plfloor = 0; //1F
+  g_plstat.curfloor = 1; //1F
 
   //x!x! 適当な武器を装備させておく
   ITEM* weapon = itGenerate( IBI_SHORTSWORD, ITRANK_NORMAL, 10 );
@@ -607,9 +608,9 @@ void actStair( bool descend )
 
   uint8_t f = plGetFloor();
   if ( descend ) {
-    if ( f < 99 ) f++;
+    if ( f < 100 ) f++;
   } else {
-    if ( f > 0 ) f--;
+    if ( f > 1 ) f--;
   }
   plSetFloor( f );
 
@@ -924,7 +925,7 @@ void plDrawStat()
   //Floor
   gb.display.setColor( Color::white );
   gb.display.setCursor( 0, 6 );
-  sprintf( s, PSTR("B%dF"), g_plfloor + 1 );
+  sprintf( s, PSTR("B%dF"), g_plstat.curfloor );
   gb.display.print(s);
 
 
@@ -938,15 +939,15 @@ void plDrawStat()
 void plFinish()
 {
   for ( int8_t i = 0; i < EQMAX; i++ ) {
-    if ( g_plstat.equip[i] ) {
-      delete g_plstat.equip[i];
-      g_plstat.equip[i] = NULL;
+    if ( g_plequip[i] ) {
+      delete g_plequip[i];
+      g_plequip[i] = NULL;
     }
   }
   for ( int8_t i = 0; i < MAX_PLITEM; i++ ) {
-    if ( g_plstat.items[i] ) {
-      delete g_plstat.items[i];
-      g_plstat.items[i] = NULL;
+    if ( g_plitems[i] ) {
+      delete g_plitems[i];
+      g_plitems[i] = NULL;
     }
   }
 
@@ -1115,7 +1116,7 @@ bool plCheckDfRect( int16_t x, int16_t y, Rect8& rect, bool flip )
 
 ITEM* plGetEqWeapon()
 {
-  return g_plstat.equip[ EQ_WEAPON ];
+  return g_plequip[ EQ_WEAPON ];
 }
 
 bool plEquip( ITEM* item )
@@ -1124,8 +1125,8 @@ bool plEquip( ITEM* item )
 
   if ( eqpos < EQMAX ) {
     //既に装備されていれば出来ない
-    if ( !g_plstat.equip[eqpos] ) {
-      g_plstat.equip[eqpos] = item;
+    if ( !g_plequip[eqpos] ) {
+      g_plequip[eqpos] = item;
       //パラメータ反映
       applyItem( item );
 
@@ -1158,7 +1159,7 @@ int8_t plCheckEquipPos( ITEM* item )
 
 ITEM* plGetEquipItem( int8_t eqpos )
 {
-  return g_plstat.equip[ eqpos ];
+  return g_plequip[ eqpos ];
 }
 
 /*
@@ -1166,12 +1167,12 @@ ITEM* plGetEquipItem( int8_t eqpos )
 */
 ITEM* plUnequip( int8_t eqpos )
 {
-  ITEM* item = g_plstat.equip[eqpos];
+  ITEM* item = g_plequip[eqpos];
 
   //パラメータ反映
   if ( item ) {
     removeItem( item );
-    g_plstat.equip[eqpos] = NULL;
+    g_plequip[eqpos] = NULL;
   }
 
   return item;
@@ -1180,8 +1181,8 @@ ITEM* plUnequip( int8_t eqpos )
 ITEM* plUnequip( ITEM* item )
 {
   for ( int8_t i = 0; i < EQMAX; i++ ) {
-    if ( g_plstat.equip[i] == item ) {
-      g_plstat.equip[i] = NULL;
+    if ( g_plequip[i] == item ) {
+      g_plequip[i] = NULL;
 
       //パラメータ反映
       removeItem( item );
@@ -1221,8 +1222,8 @@ void removeItem( ITEM* item )
 bool plAddItem( ITEM* item )
 {
   for ( int8_t i = 0; i < MAX_PLITEM; i++ ) {
-    if ( !plGetStat().items[i] ) {
-      plGetStat().items[i] = item;
+    if ( !g_plitems[i] ) {
+      g_plitems[i] = item;
       return true;
     }
   }
@@ -1237,12 +1238,12 @@ bool plAddItem( ITEM* item )
 bool plDelItem( ITEM* item )
 {
   for ( int8_t i = 0; i < MAX_PLITEM; i++ ) {
-    if ( plGetStat().items[i] == item ) {
+    if ( g_plitems[i] == item ) {
       //後ろを前に詰める
       for ( ; i < MAX_PLITEM - 1; i++ ) {
-        plGetStat().items[i] = plGetStat().items[i + 1];
+        g_plitems[i] = g_plitems[i + 1];
       }
-      plGetStat().items[MAX_PLITEM - 1] = NULL; //一番最後をクリア
+      g_plitems[MAX_PLITEM - 1] = NULL; //一番最後をクリア
 
       return true;
     }
@@ -1257,7 +1258,7 @@ int8_t plGetItemCount()
 {
   int8_t ret = 0;
   for ( int8_t i = 0; i < MAX_PLITEM; i++ ) {
-    if ( plGetStat().items[i] ) ret++;
+    if ( g_plitems[i] ) ret++;
   }
 
   return ret;
@@ -1271,8 +1272,8 @@ int8_t plGetItemCount()
 void plOverwriteItem( ITEM* olditem, ITEM* newitem )
 {
   for ( int8_t i = 0; i < MAX_PLITEM; i++ ) {
-    if ( plGetStat().items[i] == olditem ) {
-      plGetStat().items[i] = newitem;
+    if ( g_plitems[i] == olditem ) {
+      g_plitems[i] = newitem;
       break;
     }
   }
@@ -1326,6 +1327,16 @@ void wzUpdate()
   tgtx = g_plx + (g_plflip ? TOFIX(8 + PLPICW) : TOFIX(-(8 + PLPICW)));
   tgty = g_ply;
 
+  int16_t aw = TOFIX(DUNMAP()->getCurArea()->getWidth()-WZPICW/2);
+  if( tgtx < TOFIX(WZPICW/2) ) {
+    tgtx = TOFIX(WZPICW/2);
+  } else
+  if( tgtx > aw ) {
+    tgtx = aw;
+  }
+
+
+
   //Y 方向は確実に合わせる
   if ( tgty != g_wzy ) my = g_plentermy;
 
@@ -1356,10 +1367,8 @@ void wzUpdate()
     }
   }
 
-
   g_wzx += mx;
   g_wzy += my;
-
 
   //animation
   if ( mx || my ) {
@@ -1459,7 +1468,15 @@ void lbUpdate()
     }
   }
 
-  g_lbx += mx;
+  int16_t cx = g_lbx + mx;
+  int16_t aw = TOFIX(DUNMAP()->getCurArea()->getWidth()-4);
+  if( cx < TOFIX(4) ) {
+    cx = TOFIX(4);
+  } else
+  if( cx > aw ) {
+    cx = aw;
+  }
+  g_lbx = cx;
   g_lby += my;
 }
 
@@ -1490,6 +1507,38 @@ void lbFinish()
 }
 
 
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+void plSave()
+{
+  //status
+  gb.save.set( SDS_PLSTAT, &g_plstat, sizeof(g_plstat) );
+
+  //item
+  for( int8_t i=0; i<MAX_PLITEM; i++ ) {
+    itSave( SDS_PLITEM_TOP+i, g_plitems[i] );
+  }
+
+  //equip
+  for( int8_t i=0; i<EQMAX; i++ ) {
+    itSave( SDS_PLEQUIP_TOP+i, g_plequip[i] );
+  }
+}
+
+void plLoad()
+{
+  gb.save.get( SDS_PLSTAT, &g_plstat, sizeof(g_plstat) );
+
+  //item
+  for( int8_t i=0; i<MAX_PLITEM; i++ ) {
+    g_plitems[i] = itLoad( SDS_PLITEM_TOP+i );
+  }
+  //equip
+  for( int8_t i=0; i<EQMAX; i++ ) {
+    g_plequip[i] = itLoad( SDS_PLEQUIP_TOP+i );
+  }
+}
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------

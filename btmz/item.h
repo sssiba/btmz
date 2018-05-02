@@ -230,6 +230,9 @@ extern const char* itGetSuffixName( ITEM* item );
 extern const char* itGetBaseName( ITEM* item );
 extern ColorIndex itGetRankColor( ITEM* item );
 
+extern bool itSave( int16_t svslot, ITEM* item );
+extern ITEM* itLoad( int16_t svslot );
+
 
 //--------------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------------

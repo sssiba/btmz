@@ -10,26 +10,15 @@
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 
-#define MAX_PLITEM 16 //プレイヤーの持てるアイテム数
-enum { //装備可能箇所
-  EQ_HEAD,      //頭
-  EQ_WEAPON,    //武器
-  EQ_SHIELD,    //盾
-  EQ_BODY,      //体
-  EQ_HAND,      //手
-  EQ_FOOT,      //靴
-  EQ_AMULET,    //首飾り
-  EQ_RING,      //指輪
-  EQMAX
-};
 
 /*
  * プレイヤーステータス
  */
 typedef struct PLSTAT {
+  char name[13];
+  uint8_t lvl;
   int16_t hpmax;
   int16_t hp;
-  uint8_t lvl;
   int16_t str;
   int16_t dex;
   int16_t intl;
@@ -43,18 +32,17 @@ typedef struct PLSTAT {
   int16_t maxatk;
   int16_t def;
   int16_t healhp; //体力回復量(FIX)
-
-  ITEM* equip[EQMAX];
-  ITEM* items[MAX_PLITEM];
+  uint8_t curfloor; //現在居るフロア(0:地上)
 };
 
+extern ITEM* g_plequip[EQMAX];
+extern ITEM* g_plitems[MAX_PLITEM];
 
 extern int16_t g_plx, g_ply; //固定小数点
 extern Rect8 g_plmvrect;
 extern Rect8 g_platrect;
 extern Rect8 g_pldfrect;
 extern PLSTAT g_plstat;
-extern uint8_t g_plfloor;
 
 extern int16_t g_wzx, g_wzy;
 
@@ -81,8 +69,8 @@ inline Rect8& plGetMvRect() { return g_plmvrect; }
 inline Rect8& plGetAtRect() { return g_platrect; }
 inline Rect8& plGetDfRect() { return g_pldfrect; }
 inline PLSTAT& plGetStat() { return g_plstat; }
-inline uint8_t plGetFloor() { return g_plfloor; }
-inline void plSetFloor( uint8_t f ) { g_plfloor = f; }
+inline uint8_t plGetFloor() { return g_plstat.curfloor; }
+inline void plSetFloor( uint8_t f ) { g_plstat.curfloor = f; }
 
 inline int16_t wzGetX() { return TOINT(g_wzx); }
 inline int16_t wzGetY() { return TOINT(g_wzy); }
@@ -150,6 +138,10 @@ extern ITEM* plGetEquipItem( int8_t eqpos );
 #if defined( DBG_MAP )
 extern uint8_t DBGtoarea, DBGtoblock;
 #endif
+
+
+extern void plSave();
+extern void plLoad();
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------

@@ -2,7 +2,7 @@
  */
 #include "btmz.h"
 #include "gamemain.h"
-
+#include "title.h"
 
 #include "utility/Misc.h"
 
@@ -60,8 +60,8 @@ void GameMain::setup()
   flow.setup();
 
 
-//  flow.setFlow( &fsTitle );
-flow.setFlow( &fsMain );
+  flow.setFlow( &fsTitle );
+//flow.setFlow( &fsMain );
 }
 
 void GameMain::checkButton()

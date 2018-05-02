@@ -16,7 +16,7 @@
 #endif
 
 
-//#define DBG_SHOW_FPS
+#define DBG_SHOW_FPS
 
 //#define DBG_MAP //デバッグ用マップ情報表示
 
@@ -30,7 +30,20 @@
 #define MAX_BLOCK 8   //１エリア内の最大 block 数
 #define MAX_OBJECT 24 //１エリア内の最大 object 数
 
+#define VER_SAVEDATA 1
 
+#define MAX_PLITEM 16 //プレイヤーの持てるアイテム数
+enum { //装備可能箇所
+  EQ_HEAD,      //頭
+  EQ_WEAPON,    //武器
+  EQ_SHIELD,    //盾
+  EQ_BODY,      //体
+  EQ_HAND,      //手
+  EQ_FOOT,      //靴
+  EQ_AMULET,    //首飾り
+  EQ_RING,      //指輪
+  EQMAX
+};
 
 //-------------------------------------------
 //-------------------------------------------
@@ -119,6 +132,27 @@ extern ModelessDlgInfo* showModelessInfo( const char* msg, uint16_t dfrm );
  */
 class ObjBase;
 extern void takeObjDropItemMenu( const char* title, ObjBase* parent, uint8_t cnt, ObjBase** objlist );
+
+//-------------------------------------------
+//-------------------------------------------
+//-------------------------------------------
+enum { //save data slot
+   SDS_VER,
+   SDS_PLSTAT,
+   SDS_PLITEM_TOP,
+   SDS_PLEQUIP_TOP = SDS_PLITEM_TOP + MAX_PLITEM,
+   SDS_PLFLOOR = SDS_PLEQUIP_TOP + EQMAX,
+};
+extern void btmzSave();
+
+extern bool btmzLoad();
+
+extern bool btmzIsSaved();
+
+
+//-------------------------------------------
+//-------------------------------------------
+//-------------------------------------------
 
 extern FLOWFUNCSET fsMain;
 
