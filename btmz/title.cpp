@@ -150,11 +150,7 @@ void Title::updateNew()
   PLSTAT& ps = plGetStat();
   gb.getDefaultName( ps.name );
 
-#if 0 //lib 1.1.0 が emulator で動かない…
   gb.gui.keyboard( "Your name", ps.name );
-#else
-  gb.keyboard( ps.name, 13 );
-#endif  
   
   gamemain.getFlow().setFlow( &fsMain );
 

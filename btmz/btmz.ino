@@ -33,6 +33,7 @@ uint8_t g_updcnt;
 uint8_t g_fps;
 #endif
 
+bool g_clrfb;
 
 //-------------------------------------------
 //-------------------------------------------
@@ -46,6 +47,7 @@ void setup() {
   //save data 準備
   gb.save.config(100, NULL, 0 ); //maxblock(slot), defaultvars, defaultvarnum
 
+  enableClrFrameBuffer( true );
 
   gamemain.setup();
 
@@ -64,18 +66,18 @@ void loop() {
   // put your main code here, to run repeatedly:
   while ( !gb.update() );
 
-  //クリア
-  //clear display
-  gb.display.clear();
   //clear back light
   //  gb.lights.clear();
 
-
-
   //入力
   gamemain.checkButton();
+
   //更新
   gamemain.update();
+
+  //clear display
+  gb.display.clear();
+  
   //描画
   gamemain.draw();
 
@@ -108,12 +110,14 @@ enum {
   PHASE_MENU_EQUIP,
   PHASE_MENU_STATUS,
   PHASE_MENU_OBJDROPITEM,
+  PHASE_MENU_EXIT,
 };
 static uint8_t g_phase;
 static uint8_t g_nextphase;
 static WinSelect* g_win;
-static DlgInfo* g_dlginfo;
+static WinMsg* g_modaldlg;
 static ModelessDlgInfo* g_modelessdlginfo;
+static int8_t g_queryres;
 
 static void enterMainMenu();
 static bool updateMainMenu();
@@ -147,6 +151,7 @@ static void changePhase();
  * ・表示中動作停止版
  * ・文字列の長さによって自動でサイズ計算＆センタリング
  * ・基本的に１行以内用
+ * ・showModalQueryDlg とどちらかしか同時に存在できないので同時に使わない事。
  */
 void showModalInfoDlg( const char* msg )
 {
@@ -154,23 +159,72 @@ void showModalInfoDlg( const char* msg )
   int8_t w = sz * FONTW;
 
   showModalInfoDlg( 0, 0, w, FONTH, sz+1, msg );
-  g_dlginfo->setPosCentering();
+  g_modaldlg->setPosCentering();
 }
 
 /*
  * 情報表示
  * ・表示中動作停止板
  * ・サイズ・位置指定版
+ * ・showModalQueryDlg とどちらかしか同時に存在できないので同時に使わない事。
  */
 void showModalInfoDlg( int16_t x, int16_t y, int8_t w, int8_t h, int16_t bufsz, const char* msg )
 {
-  g_dlginfo = new DlgInfo( w, h, bufsz );
-  g_dlginfo->setPos( x, y );
-  gamemain.addAutoWindow( g_dlginfo );
-  g_dlginfo->setMsg( msg );
-  g_dlginfo->setBaseColor( ColorIndex::darkgray );
-  g_dlginfo->setFrameColor( ColorIndex::red );
-  g_dlginfo->open();
+  g_modaldlg = new DlgInfo( w, h, bufsz );
+  g_modaldlg->setPos( x, y );
+  gamemain.addAutoWindow( g_modaldlg );
+  g_modaldlg->setMsg( msg );
+  g_modaldlg->setBaseColor( ColorIndex::darkgray );
+  g_modaldlg->setFrameColor( ColorIndex::red );
+  g_modaldlg->open();
+}
+
+/*
+ * ２択選択表示
+ * ・表示中動作停止版
+ * ・文字列の長さによって自動でサイズ計算＆センタリング
+ * ・showModalInfoDlg とどちらかしか同時に存在できないので、結果を取る前に showModalInfoDlg を呼ばない事＆同時に使わない事。
+ */
+int8_t showModalQueryDlg( const char* title, const char* sel1, const char* sel2 )
+{
+  int8_t sz = strlen( title );
+  int8_t w = sz * FONTW;
+  int8_t selsz = strlen(sel1) + strlen(sel2) + 2;
+  int8_t selw = selsz * FONTW;
+
+  DlgQuery* qd;
+
+  g_modaldlg = new DlgQuery( (w > selw) ? w : selw, FONTH*2, (sz > selsz) ? sz : selsz );
+  g_modaldlg->setPosCentering();
+//  gamemain.addAutoWindow( g_modaldlg );
+
+  qd = static_cast<DlgQuery*>( g_modaldlg );
+
+  qd->setMsg( title );
+  qd->setBaseColor( ColorIndex::black );
+  qd->setSel( 0, sel1 );
+  qd->setSel( 1, sel2 );
+  qd->open();
+
+//  enableClrFrameBuffer( false );
+
+  for(;;) {//while( !qd->isDecide() ) {
+    while( !gb.update() );
+    qd->update();
+    qd->draw();
+  }
+
+//  enableClrFrameBuffer( true );
+  
+  return qd->getResult();  
+}
+
+int8_t getQueryDlgResult()
+{
+  DlgQuery* dq;
+  dq = static_cast<DlgQuery*>( g_modaldlg );
+
+  return dq->getResult();
 }
 
 /*
@@ -211,7 +265,7 @@ void MainInit()
   //プレイヤー配置
   DUNMAP()->enterFloor( true );
 
-  g_dlginfo = NULL;
+  g_modaldlg = NULL;
   g_modelessdlginfo = NULL;
 
   //明かり範囲設定
@@ -224,22 +278,31 @@ void MainInit()
 
 void MainUpdate()
 {
-  if ( g_dlginfo ) {
-    //中断警告表示中は処理は他の処理やらない
-    if ( g_dlginfo->isClosed() ) {
-      delete g_dlginfo;
-      g_dlginfo = NULL;
+/*
+  if ( g_modaldlg ) {
+    //中断警告表示中・選択ヒョうじ中は処理は他の処理やらない
+    if ( g_modaldlg->isClosed() ) {
+      if( g_modaldlg->isAttr( WinBase::ATTR_QUERY ) ) {
+        //選択表示だったら結果取得
+        g_queryres = static_cast<DlgQuery*>(g_modaldlg)->getResult();
+      }
+      
+      delete g_modaldlg;
+      g_modaldlg = NULL;
       //閉じた直後に動作すると閉じるキーがそのままの状態なので、１フレーム何もしない事にする
       return;
     }
   }
+*/
 
   //phase 切り替え
   if( g_nextphase != PHASE_NONE ) {
     changePhase();
   }
   
-  if ( !g_dlginfo ) {
+  if ( /*!g_modaldlg &&*/
+      !gamemain.flow.isRequestChange() //別フローへの切り替えが発生していれば何もしない
+    ) {
     switch ( g_phase ) {
       case PHASE_GAME:
         dunUpdate(); //map update
@@ -288,6 +351,7 @@ void MainDraw()
   switch ( g_phase ) {
     case PHASE_GAME:
     case PHASE_MENU:
+    case PHASE_MENU_EXIT:
       {
         //フレームバッファ書き換え。フレームバッファが rgb565 の時のみ対応。
         FBL().reset( fbIllumination::LVL_3 );
@@ -328,7 +392,7 @@ void MainDraw()
   }
 
 #if 0
-  if( !g_dlginfo ) {
+  if( !g_modaldlg ) {
     gb.display.setColor( ColorIndex::gray );
     gb.display.setCursor( 0, 58 );
     char s[48];
@@ -344,9 +408,13 @@ void MainFinish()
   enFinish();
   plFinish();
 
-  if ( g_dlginfo ) {
-    delete g_dlginfo;
-    g_dlginfo = NULL;
+/*  if ( g_modaldlg ) {
+    delete g_modaldlg;
+    g_modaldlg = NULL;
+  }*/
+  if( g_win ) {
+    delete g_win;
+    g_win = NULL;
   }
 }
 FLOWFUNCSET fsMain = {
@@ -367,25 +435,31 @@ void changePhase()
           //ゲームに戻る際には破棄
           delete g_win;
           g_win = NULL;
-        } else {
+        } else
+        if( g_nextphase != PHASE_MENU_EXIT ) {
           //item, equip, status に行く際は非表示にするだけ
           g_win->setVisible( false );
         }
         break;
       case PHASE_MENU_ITEM:
         finishMenuItem();
-        g_win->setVisible( true );
         break;
       case PHASE_MENU_EQUIP:
         finishMenuEquip();
-        g_win->setVisible( true );
         break;
       case PHASE_MENU_STATUS:
-        g_win->setVisible( true );
         break;
       case PHASE_MENU_OBJDROPITEM:
         finishMenuObjDropItem();
         break;
+      case PHASE_MENU_EXIT:
+        if( g_queryres == DlgQuery::RES_1 ) {
+          //やめるの決定
+          btmzSave(); //save
+          gamemain.getFlow().setFlow( &fsTitle );
+          //flow 切り替えるまでに、今回の 1frame だけ menu が動いちゃうかも
+        }
+        break;      
   }
 
   g_phase = g_nextphase;
@@ -414,6 +488,15 @@ void changePhase()
       case PHASE_MENU_OBJDROPITEM:
         initMenuObjDropItem();
         break;
+      case PHASE_MENU_EXIT:
+        if( showModalQueryDlg( "Save & Exit", "no", "yes" ) == DlgQuery::RES_1 ) {
+            //やめるの決定
+            btmzSave(); //save
+            gamemain.getFlow().setFlow( &fsTitle );
+        }
+        g_nextphase = PHASE_MENU; //取りやめたら menu に戻す
+//        changePhase(); //直ぐに反映
+        break;
   }
 }
 
@@ -425,19 +508,22 @@ enum {
   MMITEM_ITEM,
   MMITEM_EQUIP,
   MMITEM_STATUS,
-  MMITEM_RESTART,
+  MMITEM_EXIT,
   MMITEM_LIGHT,
   MMITEM_CLOSE,
 };
 void enterMainMenu()
 {
-  if( g_win ) return; //既に作成済みなら何もしない
+  if( g_win ) {
+    g_win->setVisible( true );
+    return; //既に作成済みなら表示をonにするだけ
+  }
   g_win = new WinSelect( 32, 4, 6 ); //gamemain.createWinSelect( 40, 4, 6 );
   gamemain.addAutoWindow( g_win );
   g_win->addItem( "Item" );
   g_win->addItem( "Equip" );
   g_win->addItem( "Status" );
-  g_win->addItem( "Restart" );
+  g_win->addItem( "Exit" );
   g_win->addItem( "Light" );
   g_win->addItem( "Close" );
   g_win->setPosY( 20 );
@@ -473,12 +559,19 @@ bool updateMainMenu()
           g_nextphase = PHASE_MENU_STATUS;
           //後で戻る様に finish はしない
           return false;
-        //DBG:restart
-        case MMITEM_RESTART:
-          gamemain.getFlow().setFlow( &fsTitle );
-          g_nextphase = PHASE_GAME; //現在の phase を終わらせ、window を破棄する為に PHASE_GAME で為に呼んでおく
-          changePhase(); //直ぐに反映
-          break;
+        //Exit (save & exit)
+        case MMITEM_EXIT:
+//          g_nextphase = PHASE_MENU_EXIT;
+          //後で戻る様に finish はしない
+          {
+          int8_t res = showModalQueryDlg( "Save & Exit", "no", "yes" );
+          if( res == DlgQuery::RES_1 ) {
+            btmzSave(); //save
+            gamemain.getFlow().setFlow( &fsTitle );
+          }
+          g_nextphase = PHASE_MENU;
+          }
+          return false;
         //DBG:light
         case MMITEM_LIGHT: FBL().setEnable( FBL().isEnable() ? false : true ); break;
         //DBG:cancel

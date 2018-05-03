@@ -41,6 +41,11 @@ public:
     nextfuncs = fs;
   }
 
+  // 別 flow への切り替え要求がされていれば true
+  inline bool isRequestChange() {
+    return nextfuncs != NULL;
+  }
+
   void update() {
     if( nextfuncs ) {
       if( funcs ) {

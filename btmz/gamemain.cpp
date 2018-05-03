@@ -419,6 +419,79 @@ void DlgInfo::update()
 //-----------------------------------------------
 //-----------------------------------------------
 //-----------------------------------------------
+DlgQuery::DlgQuery( uint8_t w, uint8_t h, uint16_t sz )
+  : WinMsg( w, h, sz+1 )
+  , m_result( RES_0 )
+  , m_decide( false )
+{
+  setAttr( ATTR_NOFRAME|ATTR_QUERY );
+}
+
+void DlgQuery::setSel( int8_t idx, const char* msg )
+{
+  strncpy( &m_sel[idx][0], msg, MAXSELSTR );
+  m_sel[idx][MAXSELSTR] = '\0';
+}
+
+void DlgQuery::draw()
+{
+  super::draw();
+
+  if( !isVisible() ) return;
+
+  static const int8_t FONTH = 6;
+
+  int8_t w = (m_w - (m_xmargin*2)) / 2;
+  int16_t x, y;
+  if( m_stat != STAT_CLOSE ) {
+    for( int8_t i=0; i<RESMAX; i++ ) {
+      ColorIndex ci;
+
+      x = m_x + m_xmargin + i*(w + 2);
+      y = m_y + m_ymargin + FONTH;
+      
+      if( i == m_result ) {
+        ci = ColorIndex::white;
+
+        //cursor line
+        gb.display.setColor( Color::orange );
+        gb.display.drawFastHLine( x-1, y + FONTH, w+2 );
+      } else {
+        ci = ColorIndex::gray;
+      }
+      gb.display.setColor( ci );
+      gb.display.setCursor( x, y );
+      gb.display.print( m_sel[i] );
+    }
+  }
+  
+  
+}
+
+void DlgQuery::update()
+{
+  if( isFocus() ) {
+    if( gamemain.isRepeat( BUTTON_LEFT ) ) {
+      if( --m_result < 0 ) m_result = 0;
+    } else
+    if( gamemain.isRepeat( BUTTON_RIGHT ) ){
+      if( ++m_result >= RESMAX ) m_result = RESMAX-1;
+    } else
+    if( gamemain.isTrigger( BUTTON_B ) ) {
+      m_result = -1; //cancel
+      m_decide = true;
+      close();
+    } else
+    if( gamemain.isTrigger( BUTTON_A ) ){
+      m_decide = true;
+      close();
+    }
+  }
+}
+
+//-----------------------------------------------
+//-----------------------------------------------
+//-----------------------------------------------
 ModelessDlgInfo::ModelessDlgInfo( uint8_t w, uint8_t h, uint16_t sz )
  : WinMsg( w, h, sz )
  , m_duration( 25 )

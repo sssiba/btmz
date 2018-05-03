@@ -99,6 +99,15 @@ inline void getDirV( uint8_t dir, int8_t& x, int8_t& y ) {
   x = getDirX( dir );
   y = getDirY( dir );
 }
+
+//-------------------------------------------
+//-------------------------------------------
+//-------------------------------------------
+extern bool g_clrfb;
+inline void enableClrFrameBuffer( bool f ) {
+  g_clrfb = f;
+}
+
 //-------------------------------------------
 //-------------------------------------------
 //-------------------------------------------
@@ -108,6 +117,7 @@ inline void getDirV( uint8_t dir, int8_t& x, int8_t& y ) {
  * ・表示中動作停止版
  * ・文字列の長さによって自動でサイズ計算＆センタリング
  * ・基本的に１行以内用
+ * ・showModalQueryDlg とどちらかしか同時に存在できないので同時に使わない事。
  */
 extern void showModalInfoDlg( const char* msg );
 
@@ -115,6 +125,7 @@ extern void showModalInfoDlg( const char* msg );
  * 情報表示
  * ・表示中動作停止板
  * ・サイズ・位置指定版
+ * ・showModalQueryDlg とどちらかしか同時に存在できないので同時に使わない事。
  */
 extern void showModalInfoDlg( int16_t x, int16_t y, int8_t w, int8_t h, int16_t bufsz, const char* msg );
 
@@ -125,6 +136,15 @@ extern void showModalInfoDlg( int16_t x, int16_t y, int8_t w, int8_t h, int16_t 
  * ・基本的に１行用
  */
 extern ModelessDlgInfo* showModelessInfo( const char* msg, uint16_t dfrm );
+
+/*
+ * ２択選択表示
+ * ・表示中動作停止版
+ * ・文字列の長さによって自動でサイズ計算＆センタリング
+ * ・showModalInfoDlg とどちらかしか同時に存在できないので、結果を取る前に showModalInfoDlg を呼ばない事＆同時に使わない事。
+ */
+extern int8_t showModalQueryDlg( const char* title, const char* sel1, const char* sel2 );
+extern int8_t getQueryDlgResult();
 
 
 /*

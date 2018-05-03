@@ -220,6 +220,7 @@ public:
     ATTR_NOFRAME = (1<<1),  //true:フレーム無し
     ATTR_TRANSBASE = (1<<2), //true:半透過ベース
     ATTR_NOFOCUS = (1<<3),   //true:フォーカスされない
+    ATTR_QUERY = (1<<4),    //true:query dialog
   };
 public:
   WinBase( uint8_t w, uint8_t h );
@@ -371,6 +372,37 @@ public:
   virtual ~DlgInfo() {}
 
   virtual void update();
+};
+
+/*
+ * query dialog
+ * ２択選択
+ */
+class DlgQuery : public WinMsg
+{
+  typedef WinMsg super;
+  static const int8_t MAXSELSTR = 18;
+public:
+  enum : int8_t {
+    RES_CANCEL = -1,
+    RES_0 = 0,
+    RES_1 = 1,
+    RESMAX
+  };
+public:
+  DlgQuery( uint8_t w, uint8_t h, uint16_t sz = 48 );
+  virtual ~DlgQuery() {}
+
+  virtual void draw();
+  virtual void update();
+
+  void setSel( int8_t idx, const char* msg );
+  int8_t getResult() { return m_result; }
+  bool isDecide() { return m_decide; }
+private:
+  char m_sel[RESMAX][MAXSELSTR+1];
+  int8_t m_result;
+  bool m_decide;
 };
 
 /*
