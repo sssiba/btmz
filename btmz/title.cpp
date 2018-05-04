@@ -68,7 +68,7 @@ void Title::updateMainMenu()
 
   int16_t r;
   ++m_flicker;
-  r = ((m_flicker/6)&1) ? 52 : 48;
+  r = ((m_flicker/6)&1) ? 52 : 48; //overflow する辺りで間隔がおかしくなるけど、ゆらぎと言う事で気にしない。
   r -= 12;
   FBL().setLight( 32, 24, r, fbIllumination::LVL_12 );
 }
@@ -78,7 +78,7 @@ void Title::drawMainMenu()
   //画像
   gb.display.drawImage( 0, 0, *getPic( PIC_TITLE ) ); //ほとんど暗いから一枚絵じゃなくてパーツに分けたほうが良いかも
   //炎アニメーション
-  int8_t a = (m_flicker/5) % 3;
+  int8_t a = (m_flicker/5) % 3; //overflow する辺りで間隔がおかしくなるけど、ゆらぎと言う事で気にしない。
   getPic( PIC_TITLEFIRE )->setFrame( a );
   gb.display.drawImage( 33, 16, *getPic( PIC_TITLEFIRE ) );
 

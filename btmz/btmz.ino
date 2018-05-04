@@ -145,6 +145,7 @@ static const int8_t FONTH = 6;
 
 static void changePhase();
 
+static void processModalInfoDlg();
 //-------------------------------------------
 /*
  * 情報表示
@@ -158,8 +159,11 @@ void showModalInfoDlg( const char* msg )
   int8_t sz = strlen(msg);
   int8_t w = sz * FONTW;
 
-  showModalInfoDlg( 0, 0, w, FONTH, sz+1, msg );
+  g_modaldlg = new DlgInfo( w, FONTH, sz+1 );
   g_modaldlg->setPosCentering();
+  g_modaldlg->setMsg( msg );
+
+  processModalInfoDlg();
 }
 
 /*
@@ -172,11 +176,25 @@ void showModalInfoDlg( int16_t x, int16_t y, int8_t w, int8_t h, int16_t bufsz, 
 {
   g_modaldlg = new DlgInfo( w, h, bufsz );
   g_modaldlg->setPos( x, y );
-  gamemain.addAutoWindow( g_modaldlg );
   g_modaldlg->setMsg( msg );
+
+  processModalInfoDlg();
+}
+
+void processModalInfoDlg()
+{
   g_modaldlg->setBaseColor( ColorIndex::darkgray );
   g_modaldlg->setFrameColor( ColorIndex::red );
   g_modaldlg->open();
+
+  while( !g_modaldlg->isClosed() ) {
+    while( !gb.update() );
+    g_modaldlg->update();
+    g_modaldlg->draw();
+  }
+
+  delete g_modaldlg;
+  g_modaldlg = NULL;
 }
 
 /*
@@ -202,29 +220,25 @@ int8_t showModalQueryDlg( const char* title, const char* sel1, const char* sel2 
 
   qd->setMsg( title );
   qd->setBaseColor( ColorIndex::black );
+  qd->setFrameColor( ColorIndex::lightgreen );
   qd->setSel( 0, sel1 );
   qd->setSel( 1, sel2 );
   qd->open();
 
 //  enableClrFrameBuffer( false );
 
-  for(;;) {//while( !qd->isDecide() ) {
+  while( !qd->isDecide() ) {
     while( !gb.update() );
     qd->update();
     qd->draw();
   }
 
-//  enableClrFrameBuffer( true );
-  
-  return qd->getResult();  
-}
+  int8_t ret = qd->getResult();
 
-int8_t getQueryDlgResult()
-{
-  DlgQuery* dq;
-  dq = static_cast<DlgQuery*>( g_modaldlg );
+  delete qd;
+  g_modaldlg = NULL;
 
-  return dq->getResult();
+  return ret;
 }
 
 /*

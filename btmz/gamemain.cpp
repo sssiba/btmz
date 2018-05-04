@@ -423,8 +423,9 @@ DlgQuery::DlgQuery( uint8_t w, uint8_t h, uint16_t sz )
   : WinMsg( w, h, sz+1 )
   , m_result( RES_0 )
   , m_decide( false )
+  , m_curax(0)
 {
-  setAttr( ATTR_NOFRAME|ATTR_QUERY );
+  //setAttr( ATTR_NOFRAME);
 }
 
 void DlgQuery::setSel( int8_t idx, const char* msg )
@@ -455,7 +456,10 @@ void DlgQuery::draw()
 
         //cursor line
         gb.display.setColor( Color::orange );
-        gb.display.drawFastHLine( x-1, y + FONTH, w+2 );
+        if( !((m_curax / 8) & 1) ) {
+          gb.display.drawFastHLine( x-1, y+FONTH, w+2 );
+        }
+        if( ++m_curax > 15 ) m_curax = 0;
       } else {
         ci = ColorIndex::gray;
       }

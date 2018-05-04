@@ -142,9 +142,9 @@ extern ModelessDlgInfo* showModelessInfo( const char* msg, uint16_t dfrm );
  * ・表示中動作停止版
  * ・文字列の長さによって自動でサイズ計算＆センタリング
  * ・showModalInfoDlg とどちらかしか同時に存在できないので、結果を取る前に showModalInfoDlg を呼ばない事＆同時に使わない事。
+ * ・ブロックするので、通常の update(), draw() は行なわれなくなる
  */
 extern int8_t showModalQueryDlg( const char* title, const char* sel1, const char* sel2 );
-extern int8_t getQueryDlgResult();
 
 
 /*

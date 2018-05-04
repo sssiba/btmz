@@ -220,7 +220,6 @@ public:
     ATTR_NOFRAME = (1<<1),  //true:フレーム無し
     ATTR_TRANSBASE = (1<<2), //true:半透過ベース
     ATTR_NOFOCUS = (1<<3),   //true:フォーカスされない
-    ATTR_QUERY = (1<<4),    //true:query dialog
   };
 public:
   WinBase( uint8_t w, uint8_t h );
@@ -403,6 +402,7 @@ private:
   char m_sel[RESMAX][MAXSELSTR+1];
   int8_t m_result;
   bool m_decide;
+  int8_t m_curax;
 };
 
 /*
