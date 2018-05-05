@@ -1260,12 +1260,14 @@ void btmzSave()
   gb.save.set( SDS_VER, VER_SAVEDATA );
 
 
+#if 0
   {
     File f = SD.open( "MAP.SAV", FILE_WRITE );
     char s[128];
     f.write( s,128 );
     f.flush();
   }
+#endif
   
 }
 
