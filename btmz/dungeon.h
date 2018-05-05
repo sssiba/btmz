@@ -23,8 +23,6 @@
 #define ENTEROFSTV 4
 
 
-#define MAX_AREABLOCK 10 //１エリア当たりの最大ブロック数
-
 enum BlockDir : uint8_t {
   BDIR_FAR,   //奥
   BDIR_RIGHT, //右
@@ -332,7 +330,7 @@ protected:
    * 06: 111111
    * 0c: 222222
    */
-  uint8_t m_areaBG[BLKTILEW*BLKTILEH*MAX_AREABLOCK]; //x!x! 引数で渡さなくても良い様にグローバル変数にする？
+  uint8_t m_areaBG[BLKTILEW*BLKTILEH*MAX_BLOCK]; //x!x! 引数で渡さなくても良い様にグローバル変数にする？
 };
 
 

@@ -26,6 +26,9 @@
 #define SCRW 80
 #define SCRH 64
 
+#define FONTW 4
+#define FONTH 6
+
 #define MAX_AREA 24   //１マップ内の最大エリア数
 #define MAX_BLOCK 8   //１エリア内の最大 block 数
 #define MAX_OBJECT 24 //１エリア内の最大 object 数

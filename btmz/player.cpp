@@ -321,25 +321,6 @@ void modeMove()
 
 
 
-#if 1
-  {
-#if defined( DBG_MAP )
-    gb.display.setColor( ColorIndex::gray );
-    gb.display.setCursor( 0, 6 );
-    char s[64];
-    sprintf( s, PSTR("%d[%d]"), bg, movable );
-    gb.display.print( s );
-
-    {
-      Area* ca = DUNMAP()->getCurArea();
-      sprintf( s, PSTR("%d,%d->%d"), ca->DBGgetSX(), ca->DBGgetSY(), ca->DBGgetDir() );
-      gb.display.setCursor( 40, 6 );
-      gb.display.print( s );
-    }
-#endif
-
-  }
-#endif
 
   if ( movable ) {
     g_plx += mv;
@@ -852,6 +833,20 @@ void modeMoveDraw()
     //    FBL().setLight( lx, ly-PLCY, 20, fbIllumination::LVL_8 );
   }
 
+#if 1
+  {
+#if defined( DBG_MAP )
+    {
+      char s[64];
+      Area* ca = DUNMAP()->getCurArea();
+      sprintf( s, PSTR("%d,%d->%d"), ca->DBGgetSX(), ca->DBGgetSY(), ca->DBGgetDir() );
+      gb.display.setCursor( 40, 6 );
+      gb.display.print( s );
+    }
+#endif
+
+  }
+#endif
 }
 
 void modeAttackDraw()

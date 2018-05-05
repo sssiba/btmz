@@ -92,7 +92,7 @@ void loop() {
     }
     gb.display.setColor( ColorIndex::gray );
     gb.display.setCursor( 0, 58 );
-    char s[16];
+    char s[8];
     sprintf( s, PSTR("%d"), g_fps );
     gb.display.print( s );
   }
@@ -104,20 +104,19 @@ void loop() {
 //-------------------------------------------
 enum {
   PHASE_NONE,
-  PHASE_GAME,
-  PHASE_MENU,
-  PHASE_MENU_ITEM,
-  PHASE_MENU_EQUIP,
-  PHASE_MENU_STATUS,
-  PHASE_MENU_OBJDROPITEM,
-  PHASE_MENU_EXIT,
+  PHASE_GAME,              //通常ゲーム中
+  PHASE_MENU,              //メインメニュー
+  PHASE_MENU_ITEM,         //所持アイテム選択中
+  PHASE_MENU_EQUIP,        //装備選択中
+  PHASE_MENU_STATUS,       //ステータス画面
+  PHASE_MENU_OBJDROPITEM,  //ドロップアイテム選択中
 };
 static uint8_t g_phase;
 static uint8_t g_nextphase;
 static WinSelect* g_win;
 static WinMsg* g_modaldlg;
 static ModelessDlgInfo* g_modelessdlginfo;
-static int8_t g_queryres;
+//static int8_t g_queryres;
 
 static void enterMainMenu();
 static bool updateMainMenu();
@@ -139,9 +138,6 @@ static void initMenuObjDropItem();
 static bool updateMenuObjDropItem();
 static void drawMenuObjDropItem();
 static void finishMenuObjDropItem();
-
-static const int8_t FONTW = 4;
-static const int8_t FONTH = 6;
 
 static void changePhase();
 
@@ -365,7 +361,6 @@ void MainDraw()
   switch ( g_phase ) {
     case PHASE_GAME:
     case PHASE_MENU:
-    case PHASE_MENU_EXIT:
       {
         //フレームバッファ書き換え。フレームバッファが rgb565 の時のみ対応。
         FBL().reset( fbIllumination::LVL_3 );
@@ -449,8 +444,7 @@ void changePhase()
           //ゲームに戻る際には破棄
           delete g_win;
           g_win = NULL;
-        } else
-        if( g_nextphase != PHASE_MENU_EXIT ) {
+        } else {
           //item, equip, status に行く際は非表示にするだけ
           g_win->setVisible( false );
         }
@@ -466,14 +460,6 @@ void changePhase()
       case PHASE_MENU_OBJDROPITEM:
         finishMenuObjDropItem();
         break;
-      case PHASE_MENU_EXIT:
-        if( g_queryres == DlgQuery::RES_1 ) {
-          //やめるの決定
-          btmzSave(); //save
-          gamemain.getFlow().setFlow( &fsTitle );
-          //flow 切り替えるまでに、今回の 1frame だけ menu が動いちゃうかも
-        }
-        break;      
   }
 
   g_phase = g_nextphase;
@@ -501,15 +487,6 @@ void changePhase()
         break;
       case PHASE_MENU_OBJDROPITEM:
         initMenuObjDropItem();
-        break;
-      case PHASE_MENU_EXIT:
-        if( showModalQueryDlg( "Save & Exit", "no", "yes" ) == DlgQuery::RES_1 ) {
-            //やめるの決定
-            btmzSave(); //save
-            gamemain.getFlow().setFlow( &fsTitle );
-        }
-        g_nextphase = PHASE_MENU; //取りやめたら menu に戻す
-//        changePhase(); //直ぐに反映
         break;
   }
 }
@@ -575,7 +552,6 @@ bool updateMainMenu()
           return false;
         //Exit (save & exit)
         case MMITEM_EXIT:
-//          g_nextphase = PHASE_MENU_EXIT;
           //後で戻る様に finish はしない
           {
           int8_t res = showModalQueryDlg( "Save & Exit", "no", "yes" );
@@ -1282,6 +1258,14 @@ void btmzSave()
   //x!x! 現状ではロードすると以前いたフロアの最初から再開。マップは作り直されるので前と違う。
   
   gb.save.set( SDS_VER, VER_SAVEDATA );
+
+
+  {
+    File f = SD.open( "MAP.SAV", FILE_WRITE );
+    char s[128];
+    f.write( s,128 );
+    f.flush();
+  }
   
 }
 

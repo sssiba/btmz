@@ -440,7 +440,6 @@ void DlgQuery::draw()
 
   if( !isVisible() ) return;
 
-  static const int8_t FONTH = 6;
 
   int8_t w = (m_w - (m_xmargin*2)) / 2;
   int16_t x, y;
