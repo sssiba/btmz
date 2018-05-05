@@ -335,6 +335,20 @@ void enDead( EnemyData* ed )
   ed->type = ENTYPE_UNDEFINED;
 }
 
+void enSave( File& f )
+{
+  f.write( &g_endata, sizeof(g_endata) );
+}
+
+bool enLoad( File& f )
+{
+  f.read( &g_endata, sizeof(g_endata) );
+
+  return true;
+}
+
+
+
 //---------------------------------------------------------------------
 //---------------------------------------------------------------------
 //---------------------------------------------------------------------

@@ -122,6 +122,9 @@ extern bool enDamage( EnemyData* ed, int16_t dmg);
 extern EnemyData* enCheckMvRect( int16_t x, int16_t y, Rect8& rect, bool flip );
 extern EnemyData* enCheckDfRect( int16_t x, int16_t y, Rect8& rect, bool flip );
 
+extern void enSave( File& f);
+extern bool enLoad( File& f);
+
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------

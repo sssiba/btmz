@@ -379,11 +379,36 @@ bool itSave( int16_t svslot, ITEM* item )
   return true;
 }
 
+bool itSave( File& f, ITEM* item )
+{
+  if( item ) {
+    f.write( item, sizeof(*item) );
+  } else {
+    ITEM t;
+    t.base = IBI_UNDEFINED;
+    f.write( &t, sizeof(t));
+  }
+}
+
 ITEM* itLoad( int16_t svslot )
 {
   ITEM* it = new ITEM;
 
   gb.save.get( svslot, it, sizeof(ITEM) );
+  if( it->base == IBI_UNDEFINED ) {
+    //アイテムの無い場所 or 無効なアイテム
+    delete it;
+    it = NULL;
+  }
+
+  return it;
+}
+
+ITEM* itLoad( File& f )
+{
+  ITEM* it = new ITEM;
+
+  f.read( it, sizeof(*it) );
   if( it->base == IBI_UNDEFINED ) {
     //アイテムの無い場所 or 無効なアイテム
     delete it;

@@ -231,7 +231,9 @@ extern const char* itGetBaseName( ITEM* item );
 extern ColorIndex itGetRankColor( ITEM* item );
 
 extern bool itSave( int16_t svslot, ITEM* item );
+extern bool itSave( File& f, ITEM* item ); //x!x! まとめたい…
 extern ITEM* itLoad( int16_t svslot );
+extern ITEM* itLoad( File& f );
 
 
 //--------------------------------------------------------------------------------------------------------

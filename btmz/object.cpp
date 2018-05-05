@@ -6,6 +6,9 @@
 
 #include "ui.h"
 
+#define FS( V ) f.write( &V, sizeof(V) )
+#define FL( V ) f.read( &V, sizeof(V) )
+
 //-----------------------------------------------
 //-----------------------------------------------
 //-----------------------------------------------
@@ -18,6 +21,76 @@ ObjBase::ObjBase()
 
 ObjBase::~ObjBase()
 {
+}
+
+bool ObjBase::save( File& f )
+{
+  FS( m_id );
+  FS( m_uid );
+  FS( m_blk );
+  FS( m_x );
+  FS( m_y );
+  FS( m_picid );
+  FS( m_flag );
+  FS( m_layer );
+
+  return true;
+}
+
+bool ObjBase::load( File& f )
+{
+//  FL( m_id ); x!x! loadIDs() で読む
+//  FL( m_uid ); x!x! loadIDs() で読む
+  FL( m_blk );
+  FL( m_x );
+  FL( m_y );
+  FL( m_picid );
+  FL( m_flag );
+  FL( m_layer );
+
+  return true;
+}
+
+bool ObjBase::saveInvalidIDs( File& f )
+{
+  uint16_t d = 0xffff;
+  f.write( &d, sizeof(d) );
+  return true;
+}
+
+bool ObjBase::loadIDs( File& f, uint8_t& id, uint8_t& uid )
+{
+  //先にこれだけ読んで object 生成に利用
+  f.read( &id, sizeof(id) );
+  f.read( &uid, sizeof(uid) );
+  return true;
+}
+
+  /*
+    area のobject全てをロードした後、リンクしている object のポインタの参照を解決する。
+    別objectと結びつくものにだけ必要。
+    area の全 object を生成後に呼ぶ事。
+
+    areaobj ... area の管理している object の配列
+    tbl ... 変換対象となる object のリスト
+    cnt ... tbl のサイズ
+   */
+bool ObjBase::resolve( ObjBase** areaobj, ObjBase** tbl, int8_t cnt )
+{
+  uint8_t uid;
+
+  for( int8_t i=0; i<cnt; i++ ) {
+    uid = (uint8_t)((uintptr_t)tbl[i]); //UID として格納されている
+    if( uid == INVALID_UID ) {
+      tbl[i] = NULL; //無効な UID の場所は NULL だった場所なので戻す
+    } else {
+      ObjBase* o = areaobj[ uid ]; //Area が管理している場所からポインタを取得
+      if( !o ) return false; //自分があるべき場所が NULL だったらおかしいので失敗
+      tbl[i] = o;
+    }
+  }
+
+  return true;
 }
 
 //-----------------------------------------------
@@ -80,6 +153,39 @@ bool ObjContainer::delObj( ObjBase* obj )
   }
 
   return false;
+}
+
+bool ObjContainer::save( File& f )
+{
+  if( !super::save( f ) ) return false;
+
+  FS( m_objnum );
+  for( uint8_t i=0; i<MAX_CONTENTS; i++ ) {
+    uint8_t uid;
+    if( m_contents[i] ) {
+      uid = m_contents[i]->getUID(); //UID を記録しておく
+    } else {
+      //無い場合は無効ID
+      uid = INVALID_UID;
+    }
+    FS( uid );
+  }
+  
+  return true;
+}
+
+bool ObjContainer::load( File& f )
+{
+  if( !super::load( f ) ) return false;
+
+  FL( m_objnum );
+  for( int8_t i=0; i<MAX_CONTENTS; i++ ) {
+    uint8_t uid;
+    FL( uid );
+    m_contents[i] = (ObjBase*)uid; //一旦 uid を格納
+  }
+
+  return true;
 }
 
 //-----------------------------------------------
@@ -173,6 +279,38 @@ bool ObjHook::delObj( ObjBase* obj )
   }
 
   return false;
+}
+bool ObjHook::save( File& f )
+{
+  if( !super::save( f ) ) return false;
+
+  FS( m_hooknum );
+  for( uint8_t i=0; i<MAX_HOOKS; i++ ) {
+    uint8_t uid;
+    if( m_hooks[i] ) {
+      uid = m_hooks[i]->getUID(); //UID を記録しておく
+    } else {
+      //無い場合は無効ID
+      uid = INVALID_UID;
+    }
+    FS( uid );
+  }
+  
+  return true;
+}
+
+bool ObjHook::load( File& f )
+{
+  if( !super::load( f ) ) return false;
+
+  FL( m_hooknum );
+  for( int8_t i=0; i<MAX_HOOKS; i++ ) {
+    uint8_t uid;
+    FL( uid );
+    m_hooks[i] = (ObjBase*)uid; //一旦 uid を格納
+  }
+
+  return true;
 }
 
 //-----------------------------------------------
@@ -460,6 +598,23 @@ int8_t ObjDropItem::getActionRegionW() const
   return ip->w;
 }
 
+bool ObjDropItem::save( File& f )
+{
+  if( !super::save( f ) ) return false;
+
+  itSave( f, m_item );
+  
+  return true;
+}
+
+bool ObjDropItem::load( File& f )
+{
+  if( !super::load( f ) ) return false;
+
+  m_item = itLoad( f );
+  
+  return true;
+}
 
 //-----------------------------------------------
 //-----------------------------------------------

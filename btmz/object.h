@@ -9,6 +9,12 @@
 //-----------------------------------------------
 //-----------------------------------------------
 //-----------------------------------------------
+/*
+ * x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!
+ * ・Object は Area 毎に管理され、Area をまたいで移動する事はない。
+ * ・Object の生成・破棄は、必ず Area::createObj(), Area::removeObj() を使用して行う。
+ * x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!
+ */
 
 enum : uint8_t {
   OBJID_TORCH,
@@ -30,9 +36,11 @@ enum : uint8_t { //描画順番
   MAX_DRAWLYR
 };
 
+static const uint8_t INVALID_UID = 0xff;
 
 class ObjBase
 {
+  friend class Area;
 public:
   enum {
     FLAG_CONTAINER   = 1 << 0, //コンテナである
@@ -42,16 +50,18 @@ public:
     FLAG_HOOKABLE    = 1 << 4, //何かに接続出来る
     FLAG_HOOKED      = 1 << 5, //何かに接続されている
   };
-public:
+protected:
   ObjBase();
   virtual ~ObjBase();
 
+public:
   virtual void init() {}
   virtual void update() {}
   virtual void draw() {}
   virtual void finish() {}
 
   inline uint8_t getID() const { return m_id; }
+  inline uint8_t getUID() { return m_uid; }
   inline uint8_t getBlock() const { return m_blk; }
   inline int16_t getX() const { return m_x; }
   inline int16_t getY() const { return m_y; }
@@ -80,11 +90,27 @@ public:
   virtual uint8_t getAction() const { return UICtrl::BCMD_EMPTY; } //object に対して行える cmd を返す。
   virtual int8_t getActionRegionW() const { return 0; } //action に反応する幅。この幅内に player がいたら対象となる。
 
+  virtual bool save( File& f );
+  virtual bool load( File& f );
+  /*
+    area のobject全てをロードした後、リンクしている object のポインタの参照を解決する。
+    別objectと結びつくものにだけ必要。
+    area の全 object を生成後に呼ぶ事。
+
+    areaobj ... area の管理している object の配列
+   */
+  virtual bool resolvePtr( ObjBase** areaobj ) {}
+  static bool saveInvalidIDs( File& f ); //null の Object 用に無効な id, uid のみを書き込み
+  static bool loadIDs( File& f, uint8_t& id, uint8_t& uid ); //m_id, m_uid だけ先に読む。先に読んで object 生成に利用
+
 protected:
   inline void setID( uint8_t objid ) { m_id = objid; }
+  inline void setUID( uint8_t uid ) { m_uid = uid; }
+  bool resolve( ObjBase** areaobj, ObjBase** tbl, int8_t cnt );
 
 protected:
   uint8_t m_id; //object id  (OBJID_xxx)
+  uint8_t m_uid; //unique id (実際は Area::m_obj[] の index の流用)。object は area 単位で管理されるので、これで同エリア内でかぶる事は無いはず。
   uint8_t m_blk;
   int16_t m_x;
   int16_t m_y;
@@ -96,7 +122,7 @@ protected:
 class Containable : public ObjBase //入るもの
 {
   typedef ObjBase super;
-public:
+protected:
   Containable()
   {
     setFlag( FLAG_CONTAINABLE );
@@ -107,7 +133,7 @@ public:
 class NotContainable : public ObjBase //入らないもの
 {
   typedef ObjBase super;
-public:
+protected:
   NotContainable()
   {
   }
@@ -119,13 +145,15 @@ public:
 class ObjContainer : public NotContainable //コンテナはコンテナに入らない
 {
   typedef NotContainable super;
+  friend class Area;
 public:
   static const uint8_t MAX_CONTENTS = 6; //中身最大数
   
-public:
+protected:
   ObjContainer();
   virtual ~ObjContainer();
 
+public:
   inline uint8_t getObjNum() { return m_objnum; }
   inline ObjBase** getContentsList() { return m_contents; }
   bool addObj( ObjBase* );
@@ -136,17 +164,22 @@ public:
 
   virtual uint8_t getAction() const { return UICtrl::BCMD_LOOT; }
   
+  virtual bool save( File& f );
+  virtual bool load( File& f );
+  virtual bool resolvePtr( ObjBase** areaobj ) {
+    return resolve( areaobj, m_contents, MAX_CONTENTS );
+  }
+  
 protected:
   uint8_t m_objnum; //中身の数
   ObjBase* m_contents[ MAX_CONTENTS ]; //中身Object
-
-
 };
 
 //-----------------------------------------------
 class ObjHook : public NotContainable //何かをフック可能なものはコンテナに入らない
-{
+{ //x!x! Container を流用した方がいい？
   typedef NotContainable super;
+  friend class Area;
 public:
   static const uint8_t MAX_HOOKS = 2; //フック可能最大数
   
@@ -168,6 +201,12 @@ public:
     x = y = 0;
   }
   
+  virtual bool save( File& f );
+  virtual bool load( File& f );
+  virtual bool resolvePtr( ObjBase** areaobj ) {
+    return resolve( areaobj, m_hooks, MAX_HOOKS );
+  }
+  
 protected:
   uint8_t m_hooknum; //中身の数
   ObjBase* m_hooks[ MAX_HOOKS ]; //中身Object
@@ -180,10 +219,13 @@ protected:
 class ObjTorch : public NotContainable
 {
   typedef NotContainable super;
-public:
+  friend class Area;
+
+protected:
   ObjTorch();
   virtual ~ObjTorch();
 
+public:
   virtual void init();
   virtual void update();
   virtual void draw();
@@ -197,10 +239,13 @@ private:
 class ObjChest : public ObjContainer
 {
   typedef ObjContainer super;
-public:
+  friend class Area;
+  
+protected:
   ObjChest();
   virtual ~ObjChest();
    
+public:
   virtual void init();
   virtual void update();
   virtual void draw();
@@ -215,10 +260,13 @@ public:
 class ObjTable : public ObjHook //テーブルの上に物が置けるので、フック可能とする
 {
   typedef ObjHook super;
-public:
+  friend class Area;
+  
+protected:
   ObjTable();
   virtual ~ObjTable();
    
+public:
   virtual void init();
   virtual void update();
   virtual void draw();
@@ -235,10 +283,13 @@ public:
 class ObjCandle : public Containable
 {
   typedef Containable super;
-public:
+  friend class Area;
+
+protected:
   ObjCandle();
   virtual ~ObjCandle();
 
+public:
   virtual void init();
   virtual void update();
   virtual void draw();
@@ -252,10 +303,13 @@ private:
 class ObjUpStair : public NotContainable
 {
   typedef NotContainable super;
-public:
+  friend class Area;
+  
+protected:
   ObjUpStair();
   virtual ~ObjUpStair() {}
 
+public:
   virtual void draw();
   virtual int8_t getOfstX() const { return -6; }
   virtual int8_t getOfstY() const { return 0; }
@@ -268,10 +322,13 @@ public:
 class ObjDownStair : public NotContainable
 {
   typedef NotContainable super;
-public:
+  friend class Area;
+  
+protected:
   ObjDownStair();
   virtual ~ObjDownStair() {}
 
+public:
   virtual void draw();
   virtual int8_t getOfstX() const { return -6; }
   virtual int8_t getOfstY() const { return 0; }
@@ -287,11 +344,13 @@ public:
 class ObjDropItem : public Containable
 {
   typedef Containable super;
+  friend class Area;
 
-public:
+protected:
   explicit ObjDropItem();
   virtual ~ObjDropItem();
   
+public:
   virtual void draw();
   virtual int8_t getOfstX();
   virtual int8_t getOfstY();
@@ -307,6 +366,9 @@ public:
     return ret;
   }
 
+  virtual bool save( File& f );
+  virtual bool load( File& f );
+  
 private:
   ITEM* m_item;
 };

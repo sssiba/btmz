@@ -395,6 +395,26 @@ BlockDir Block::findConnectDir( int8_t area, int8_t blk )
   return BDIRMAX; //見つからなかった
 }
 
+bool Block::save( File& f )
+{
+  f.write( &m_dist, sizeof(m_dist) );
+  for( int8_t i=0; i<BDIRMAX; i++ ) {
+    f.write( &m_dirinfo[i], sizeof(m_dirinfo[i]) );
+    f.write( &m_bdidata[i], sizeof(m_bdidata[i]) );
+  }
+  return true;
+}
+
+bool Block::load( File& f )
+{
+  f.read(&m_dist, sizeof(m_dist));
+  for( int8_t i=0; i<BDIRMAX; i++ ) {
+    f.read(&m_dirinfo[i], sizeof(m_dirinfo[i]));
+    f.read(&m_bdidata[i], sizeof(m_bdidata[i]));
+  }
+  return true;
+}
+
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -408,7 +428,9 @@ Area::Area()
 Area::~Area()
 {
   if ( m_blk ) {
-    for ( int i = 0; i < m_blkcnt; i++ ) delete m_blk[i];
+    for ( int i = 0; i < m_blkcnt; i++ ) {
+      if( m_blk[i] ) delete m_blk[i];
+    }
     delete[] m_blk;
   }
 
@@ -603,16 +625,7 @@ int16_t Area::getWidth()
 
 ObjBase* Area::createObj( uint8_t blk, uint8_t objid )
 {
-  ObjBase* obj = NULL;
-  switch ( objid ) {
-    case OBJID_TORCH: obj = new ObjTorch(); break;
-    case OBJID_CANDLE: obj = new ObjCandle(); break;
-    case OBJID_CHEST: obj = new ObjChest(); break;
-    case OBJID_TABLE: obj = new ObjTable(); break;
-    case OBJID_UPSTAIR: obj = new ObjUpStair(); break;
-    case OBJID_DOWNSTAIR: obj = new ObjDownStair(); break;
-    case OBJID_DROPITEM: obj = new ObjDropItem(); break;
-  }
+  ObjBase* obj = createObjInstance( objid );
 
   if ( obj ) {
     if ( !entryObj( blk, obj ) ) {
@@ -636,11 +649,28 @@ bool Area::entryObj( uint8_t blk, ObjBase* obj )
   if ( i == MAX_OBJECT ) return false; //もう登録出来ない
 
   m_obj[i] = obj;
+  obj->setUID( i );
   obj->setBlock( blk );
   obj->init();
 
   return true;
 }
+
+ObjBase* Area::createObjInstance( uint8_t objid )
+{
+  ObjBase* obj = NULL;
+  switch ( objid ) {
+    case OBJID_TORCH: obj = new ObjTorch(); break;
+    case OBJID_CANDLE: obj = new ObjCandle(); break;
+    case OBJID_CHEST: obj = new ObjChest(); break;
+    case OBJID_TABLE: obj = new ObjTable(); break;
+    case OBJID_UPSTAIR: obj = new ObjUpStair(); break;
+    case OBJID_DOWNSTAIR: obj = new ObjDownStair(); break;
+    case OBJID_DROPITEM: obj = new ObjDropItem(); break;
+  }
+  return obj;
+}
+
 
 void Area::setObjPosWall( ObjBase* obj )
 {
@@ -696,6 +726,66 @@ void Area::setupContainer( ObjContainer* objc, uint8_t mapfloor, uint8_t droplvl
     }
   }
 }
+
+bool Area::save( File& f )
+{
+  f.write( &m_blkcnt, sizeof(m_blkcnt));
+  for( uint8_t i=0; i<m_blkcnt; i++ ) {
+    if( !m_blk[i]->save(f) ) return false;
+  }
+
+  for( int8_t i=0; i<MAX_OBJECT; i++ ) {
+    if( m_obj[i] ) {
+      if( !m_obj[i]->save(f) ) return false;
+    } else {
+      //無効な id, uid を書いておく
+      if( !ObjBase::saveInvalidIDs(f) ) return false;
+    }
+  }
+
+  return true;
+}
+
+bool Area::load( File& f )
+{
+  //block count
+  f.read( &m_blkcnt, sizeof(m_blkcnt));
+
+  //each block
+  m_blk = new Block*[m_blkcnt];
+  memset( m_blk, 0, sizeof(m_blk[0])*m_blkcnt );
+  for(uint8_t i=0; i<m_blkcnt; i++ ) {
+    m_blk[i] = new Block();
+    if( !m_blk[i]->load(f) ) return false;
+  }
+
+  //object
+  memset( m_obj, 0, sizeof(m_obj) );
+  for( int i=0; i<MAX_OBJECT; i++ ) {
+    uint8_t id, uid;
+    if( !ObjBase::loadIDs( f, id, uid ) ) return false;
+    if( uid == INVALID_UID ) {
+      continue; //無効な場所
+    } else {
+      ObjBase* o = createObjInstance( id );
+      if( !o ) return false;
+      if( !o->load( f ) ) {
+        delete o;
+        return false;
+      }
+      m_obj[ o->getUID() ] = o;
+    }
+  }
+
+  //全ての object 読み込み完了後、uid で保存していたポインタをポインタに戻す
+  for( int i=0; i<MAX_OBJECT; i++ ) {
+    if( m_obj[i] ) {
+      m_obj[i]->resolvePtr( m_obj );
+    }
+  }
+  
+}
+
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -876,6 +966,78 @@ Block* Map::getBlock( int16_t x, int16_t y )
   block = bgx / BLKTILEW;
   return getCurArea()->getBlock( block );
 }
+
+
+bool Map::save()
+{
+  File f = SD.open( "MAP.SAV", FILE_WRITE );
+  if( !f ) return false;
+  //version
+  int32_t v = VER_SAVEDATA;
+  f.write( &v, sizeof(v) );
+  f.write( &m_areacnt, sizeof(m_areacnt));
+  f.write( &m_homex, sizeof(m_homex));
+  f.write( &m_homey, sizeof(m_homey));
+  f.write( &m_curareaidx, sizeof(m_curareaidx));
+
+  for( int8_t i=0; i<m_areacnt; i++ ) {
+    if( !m_area[i]->save(f) ) {
+      f.close();
+      return false;
+    }
+  }
+
+  //敵データ
+  enSave( f );
+
+  //おしまい
+  f.flush();
+
+  f.close();
+
+  return true;
+}
+
+bool Map::load()
+{
+
+  //x!x! 各種ロードに失敗したら、色々破棄して終わる事
+  File f = SD.open( "MAP.SAV", FILE_READ );
+  if( !f ) return false;
+
+  int32_t v;
+  f.read( &v, sizeof(v));
+  if( v != VER_SAVEDATA ) return false;
+
+  f.read( &m_areacnt, sizeof(m_areacnt));
+  f.read( &m_homex, sizeof(m_homex));
+  f.read( &m_homey, sizeof(m_homey));
+  f.read( &m_curareaidx, sizeof(m_curareaidx));
+
+  m_area = new Area*[ m_areacnt ];
+  memset( m_area, 0, sizeof(m_area[0])*m_areacnt );
+  for( int8_t i=0; i<m_areacnt; i++ ) {
+    m_area[i] = new Area();
+    if( !m_area[i]->load(f) ) {
+      f.close();
+      return false; //失敗 x!x! 戻った後中途半端な生成物を破棄する事
+      //x!x! こっちで破棄する？
+    }
+  }
+
+  //BG マップを再生成
+  m_area[ m_curareaidx ]->makeBG( m_areaBG );
+
+  //敵データ
+  enLoad( f );
+
+  f.close();
+  
+  return true;
+}
+
+
+
 
 #if defined( DBG_MAP )
 void Map::DBGout()

@@ -128,6 +128,7 @@ public:
   friend class Map;
   friend class Area;
 #endif
+  Block() {}
   Block( Area* area, CellMaker* cm, CellMaker::AREABASE* abase, CellMaker::CELL* cell );
   ~Block();
 
@@ -153,6 +154,10 @@ public:
   //BDIRMAX が返った場合は見つからなかった。
   BlockDir findConnectDir( int8_t area, int8_t blk );
 
+
+  bool save( File& f );
+  bool load( File& f );
+   
 private:
   void writeBGparts( const uint8_t* parts, uint8_t* out );
   
@@ -217,6 +222,12 @@ public:
    * コンテナの中身を入れる
    */
    void setupContainer( ObjContainer* objc, uint8_t mapfloor, uint8_t droplvl );
+
+   bool save( File& f );
+   bool load( File& f );
+
+private:
+  ObjBase* createObjInstance( uint8_t objid );
 
 protected:
   uint8_t m_blkcnt;
@@ -308,6 +319,12 @@ public:
   {
     getCurArea()->getBlockTilePos( blk, bx, by, x, y );
   }
+
+  //save する
+  bool save();
+
+  //load する
+  bool load();
 
 
 #if defined( DBG_MAP )

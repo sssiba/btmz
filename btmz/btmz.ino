@@ -1250,25 +1250,18 @@ void finishMenuObjDropItem()
 //-------------------------------------------
 //-------------------------------------------
 //-------------------------------------------
+  //x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!
+  //エフェクト（魔法等）もセーブしだすときりがないので、エリアに敵がいるとセーブ不可などにして
+  //エフェクトの保存を不要にする？
+  //敵との戦闘中にセーブ・ロードすると、全ての情報を完全に保存しないと行動がキャンセルできたり色々まずそう。
+  //x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!
 void btmzSave()
 {
-  plSave();
-
-  //x!x! map もセーブする？
-  //x!x! 現状ではロードすると以前いたフロアの最初から再開。マップは作り直されるので前と違う。
-  
   gb.save.set( SDS_VER, VER_SAVEDATA );
 
+  plSave();
 
-#if 0
-  {
-    File f = SD.open( "MAP.SAV", FILE_WRITE );
-    char s[128];
-    f.write( s,128 );
-    f.flush();
-  }
-#endif
-  
+  DUNMAP()->save();
 }
 
 bool btmzLoad()
@@ -1276,18 +1269,30 @@ bool btmzLoad()
   if( btmzIsSaved() ) {
     plLoad();
 
-    //x!x! map もロードする？
-    //x!x! 現状ではロードすると以前いたフロアの最初から再開。マップは作り直されるので前と違う。
-
-    return true;
+    if( DUNMAP()->load() ) {
+      return true;
+    }
   }
+
+  //x!x! 中途半端な生成物を破棄しないと駄目
 
   return false;
 }
 
 bool btmzIsSaved()
 {
-  return (gb.save.get( SDS_VER ) == VER_SAVEDATA);
+  if( gb.save.get( SDS_VER ) != VER_SAVEDATA ) return false;
+  
+  if( !SD.exists( "MAP.SAV" ) ) return false;
+
+  File f = SD.open( "MAP.SAV", FILE_READ );
+  if( !f ) return false;
+  int32_t v;
+  f.read( &v, sizeof(int32_t));
+  f.close();
+  if( v != VER_SAVEDATA ) return false;
+
+  return true;
 }
 
 //-------------------------------------------
