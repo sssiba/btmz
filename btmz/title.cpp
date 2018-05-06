@@ -8,6 +8,9 @@
 #include "player.h"
 
 #include "object.h"
+
+#include "dungeon.h"
+
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
@@ -25,6 +28,13 @@ Title::Title()
 
   m_active[CUR_NEW] = true;
   m_active[CUR_CONTINUE] = m_existsave;
+
+
+  //初期化
+  plInit();
+  dunInit();
+  enInit();
+  
 }
 
 Title::~Title()
@@ -143,17 +153,23 @@ void Title::drawDecide()
 //--------------------------------------------------------------------------------
 void Title::updateNew()
 {
-  //プレイヤー初期化
-  plInit();
   
+  //input name
   PLSTAT& ps = plGetStat();
   gb.getDefaultName( ps.name );
-
   gb.gui.keyboard( "Your name", ps.name );
+
+  //map 生成
+  DUNMAP()->create();
+
+  //プレイヤー配置
+  DUNMAP()->enterFloor( true );
+
+
+  btmzSave();
   
   gamemain.getFlow().setFlow( &fsMain );
 
-  btmzSave();
 }
 
 void Title::drawNew()

@@ -342,6 +342,12 @@ void enSave( File& f )
 
 bool enLoad( File& f )
 {
+#if defined( DBG_SAVELOAD )
+{
+  TRACE( "LOAD>endata" );
+}
+#endif
+
   f.read( &g_endata, sizeof(g_endata) );
 
   return true;

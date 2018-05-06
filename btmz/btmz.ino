@@ -45,13 +45,11 @@ void setup() {
   gb.setFrameRate( FRAMERATE );
 
   //save data 準備
-  gb.save.config(100, NULL, 0 ); //maxblock(slot), defaultvars, defaultvarnum
+  gb.save.config(SDSMAX, NULL, 0 ); //maxblock(slot), defaultvars, defaultvarnum
 
   enableClrFrameBuffer( true );
 
   gamemain.setup();
-
-
 
   FBL().reset();
 
@@ -268,12 +266,13 @@ ModelessDlgInfo* showModelessInfo( const char* msg, uint16_t dfrm )
 //-------------------------------------------
 void MainInit()
 {
-  enInit();
+//  enInit();
 
-  dunInit();
+//  dunInit();
+//  DUNMAP()->create();
 
   //プレイヤー配置
-  DUNMAP()->enterFloor( true );
+//  DUNMAP()->enterFloor( true );
 
   g_modaldlg = NULL;
   g_modelessdlginfo = NULL;
@@ -288,23 +287,6 @@ void MainInit()
 
 void MainUpdate()
 {
-/*
-  if ( g_modaldlg ) {
-    //中断警告表示中・選択ヒョうじ中は処理は他の処理やらない
-    if ( g_modaldlg->isClosed() ) {
-      if( g_modaldlg->isAttr( WinBase::ATTR_QUERY ) ) {
-        //選択表示だったら結果取得
-        g_queryres = static_cast<DlgQuery*>(g_modaldlg)->getResult();
-      }
-      
-      delete g_modaldlg;
-      g_modaldlg = NULL;
-      //閉じた直後に動作すると閉じるキーがそのままの状態なので、１フレーム何もしない事にする
-      return;
-    }
-  }
-*/
-
   //phase 切り替え
   if( g_nextphase != PHASE_NONE ) {
     changePhase();

@@ -22,6 +22,7 @@
 
 //#define DBG_SHOW_HITRECT //当たり判定矩形表示
 
+//#define DBG_SAVELOAD
 
 #define SCRW 80
 #define SCRH 64
@@ -165,6 +166,7 @@ enum { //save data slot
    SDS_PLITEM_TOP,
    SDS_PLEQUIP_TOP = SDS_PLITEM_TOP + MAX_PLITEM,
    SDS_PLFLOOR = SDS_PLEQUIP_TOP + EQMAX,
+   SDSMAX
 };
 extern void btmzSave();
 

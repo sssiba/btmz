@@ -13,25 +13,16 @@
 //--------------------------------------------------------------------------
 Map* g_map = NULL;
 
-void dunCreate();
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-void dunCreate()
+void dunInit()
 {
   if ( g_map ) {
     delete g_map;
   }
   g_map = new Map;
-  g_map->create();
-
-}
-
-
-void dunInit()
-{
-  dunCreate();
 }
 
 void dunUpdate()
@@ -751,25 +742,74 @@ bool Area::load( File& f )
   //block count
   f.read( &m_blkcnt, sizeof(m_blkcnt));
 
+#if defined( DBG_SAVELOAD )
+{
+  char s[128];
+  sprintf( s, "LOAD>blkcnt %d", m_blkcnt );
+  TRACE( s );
+}
+#endif
+
   //each block
   m_blk = new Block*[m_blkcnt];
   memset( m_blk, 0, sizeof(m_blk[0])*m_blkcnt );
   for(uint8_t i=0; i<m_blkcnt; i++ ) {
     m_blk[i] = new Block();
-    if( !m_blk[i]->load(f) ) return false;
+    if( !m_blk[i]->load(f) ) {
+#if defined( DBG_SAVELOAD )
+{
+  char s[80];
+  sprintf( s, "LOAD>failed", i );
+  TRACE( s );
+}
+#endif
+      return false;
+    }
   }
 
   //object
   memset( m_obj, 0, sizeof(m_obj) );
   for( int i=0; i<MAX_OBJECT; i++ ) {
     uint8_t id, uid;
-    if( !ObjBase::loadIDs( f, id, uid ) ) return false;
+    if( !ObjBase::loadIDs( f, id, uid ) ) {
+#if defined( DBG_SAVELOAD )
+{
+  char s[80];
+  sprintf( s, "LOAD>objID failed" );
+  TRACE( s );
+}
+#endif
+      return false;
+    }
+#if defined( DBG_SAVELOAD )
+{
+  char s[128];
+  sprintf( s, "LOAD>createobj id:%d uid:%d", id, uid );
+  TRACE( s );
+}
+#endif
     if( uid == INVALID_UID ) {
       continue; //無効な場所
     } else {
       ObjBase* o = createObjInstance( id );
-      if( !o ) return false;
+      if( !o ) {
+#if defined( DBG_SAVELOAD )
+{
+  char s[80];
+  sprintf( s, "LOAD>createObjInstance %d failed", id );
+  TRACE( s );
+}
+#endif
+        return false;
+      }
       if( !o->load( f ) ) {
+#if defined( DBG_SAVELOAD )
+{
+  char s[80];
+  sprintf( s, "LOAD>obj failed" );
+  TRACE( s );
+}
+#endif
         delete o;
         return false;
       }
@@ -783,7 +823,8 @@ bool Area::load( File& f )
       m_obj[i]->resolvePtr( m_obj );
     }
   }
-  
+
+  return true;
 }
 
 
@@ -972,6 +1013,9 @@ bool Map::save()
 {
   File f = SD.open( "MAP.SAV", FILE_WRITE );
   if( !f ) return false;
+
+  f.seekSet( 0 );
+  
   //version
   int32_t v = VER_SAVEDATA;
   f.write( &v, sizeof(v) );
@@ -991,8 +1035,6 @@ bool Map::save()
   enSave( f );
 
   //おしまい
-  f.flush();
-
   f.close();
 
   return true;
@@ -1014,11 +1056,34 @@ bool Map::load()
   f.read( &m_homey, sizeof(m_homey));
   f.read( &m_curareaidx, sizeof(m_curareaidx));
 
+#if defined( DBG_SAVELOAD )
+{
+  char s[128];
+  sprintf( s, "LOAD>v:%d  ac:%d  hx:%d  hy:%d  ca:%d", v, m_areacnt, m_homex, m_homey, m_curareaidx );
+  TRACE( s );
+}
+#endif
+
+
   m_area = new Area*[ m_areacnt ];
   memset( m_area, 0, sizeof(m_area[0])*m_areacnt );
   for( int8_t i=0; i<m_areacnt; i++ ) {
     m_area[i] = new Area();
+#if defined( DBG_SAVELOAD )
+{
+  char s[64];
+  sprintf( s, "LOAD>area %d", i );
+  TRACE( s );
+}
+#endif
     if( !m_area[i]->load(f) ) {
+#if defined( DBG_SAVELOAD )
+{
+  char s[64];
+  sprintf( s, "LOAD>area %d failed", i );
+  TRACE( s );
+}
+#endif
       f.close();
       return false; //失敗 x!x! 戻った後中途半端な生成物を破棄する事
       //x!x! こっちで破棄する？
