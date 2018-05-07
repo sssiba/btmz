@@ -10,6 +10,8 @@
 
 #include "ui.h"
 
+#include "spatk.h"
+
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -37,7 +39,11 @@ int16_t g_wzx, g_wzy;
 static bool g_wzflip;
 static uint8_t g_wzanm;
 static uint8_t g_wzanmwait;
+static uint8_t g_wzmode;
 static uint8_t g_wzphase;
+static uint8_t g_wzwait;
+static EnemyData* g_wztgted;
+static int16_t g_wzcasttgtx, g_wzcasttgty;
 
 //magic: light ball  (effect として分けるかな)
 int16_t g_lbx, g_lby, g_lbfy;
@@ -71,10 +77,19 @@ enum : uint8_t {
   PLPHASE_AC_WAIT, //行動モード待機
 };
 
+//wizard mode
+enum : uint8_t {
+  WZMODE_UNDEFINED,
+  WZMODE_MOVE,
+  WZMODE_CAST,
+};
+
 //wizard phase
 enum : uint8_t {
   WZPHASE_MV_WAIT, //待機中
   WZPHASE_MV_TRACE, //プレイヤーの背後に移動中
+  WZPHASE_AT_CAST, //詠唱中
+  WZPHASE_AT_COOLDOWN, //詠唱後
 };
 
 #if defined( DBG_MAP )
@@ -96,6 +111,15 @@ static void wzInit();
 static void wzUpdate();
 static void wzDraw();
 static void wzFinish();
+static void wzMoveInit();
+static void wzMoveFinish();
+static void wzMoveUpdate();
+static void wzMoveDraw();
+static void wzCastInit();
+static void wzCastFinish();
+static void wzCastUpdate();
+static void wzCastDraw();
+static void wzCheckCastSpell();
 
 //light ball
 static void lbInit();
@@ -123,6 +147,7 @@ static void modeEnterFinish();
 static void modeEnterDraw();
 
 static void enterMode( uint8_t newmode );
+static void enterWzMode( uint8_t newmode );
 
 static void plDrawStat();
 
@@ -316,10 +341,6 @@ void modeMove()
       movable = false;
     }
   }
-
-
-
-
 
 
   if ( movable ) {
@@ -1311,11 +1332,63 @@ void wzInit()
   g_wzx = g_plx;
   g_wzy = g_ply;
   g_wzflip = false;
-  g_wzphase = WZPHASE_MV_WAIT;
-
+  g_wzmode = WZMODE_UNDEFINED;
+  enterWzMode( WZMODE_MOVE );
+//  g_wzphase = WZPHASE_MV_WAIT;
 }
 
 void wzUpdate()
+{
+  switch( g_wzmode ) {
+    case WZMODE_MOVE: wzMoveUpdate(); break;
+    case WZMODE_CAST: wzCastUpdate(); break;
+  }
+}
+
+void wzDraw()
+{
+  switch( g_wzmode ) {
+    case WZMODE_MOVE: wzMoveDraw(); break;
+    case WZMODE_CAST: wzCastDraw(); break;
+  }
+}
+
+void wzFinish()
+{
+}
+
+//--------------------------------------------------------------------------
+void enterWzMode( uint8_t newmode )
+{
+  if ( g_wzmode == newmode ) return; //既に同じモード
+
+  //以前のモードの後始末
+  switch ( g_wzmode ) {
+    case WZMODE_MOVE: wzMoveFinish(); break;
+    case WZMODE_CAST: wzCastFinish(); break;
+  }
+
+  //新しいモードの初期化
+  switch ( newmode ) {
+    case WZMODE_MOVE: wzMoveInit(); break;
+    case WZMODE_CAST: wzCastInit(); break;
+  }
+}
+
+//--------------------------------------------------------------------------
+void wzMoveInit()
+{
+  g_wzanm = 4;
+  g_wzanmwait = 0;
+  g_wzmode = WZMODE_MOVE;
+  g_wzphase = WZPHASE_MV_WAIT;
+}
+
+void wzMoveFinish()
+{
+}
+
+void wzMoveUpdate()
 {
   int16_t tgtx, tgty;
   int16_t my = 0, mx = 0;
@@ -1330,8 +1403,6 @@ void wzUpdate()
   if( tgtx > aw ) {
     tgtx = aw;
   }
-
-
 
   //Y 方向は確実に合わせる
   if ( tgty != g_wzy ) my = g_plentermy;
@@ -1380,9 +1451,12 @@ void wzUpdate()
     g_wzphase = WZPHASE_MV_WAIT;
   }
 
+  //呪文詠唱判定
+  wzCheckCastSpell();
+  
 }
 
-void wzDraw()
+void wzMoveDraw()
 {
   static const uint8_t frmtbl[] = { 1, 2, 3, 2, 0 };
 
@@ -1397,13 +1471,83 @@ void wzDraw()
   gb.display.drawImage( x - WZCX, y - WZCY, *getPic( PIC_WIZARD ), g_wzflip ? -WZPICW : WZPICW, WZPICH );
 
   //光る
-  FBL().setLight( x, y - 10, 16 );
+//  FBL().setLight( x, y - 10, 16 );
 
 }
 
-void wzFinish()
-{
 
+void wzCheckCastSpell()
+{
+  //停止中に呪文詠唱判定
+  if( g_wzphase == WZPHASE_MV_WAIT ) {
+    //敵が一定範囲に来たら
+    EnemyData* ed = enGetInRange( TOINT(g_wzx), TOINT(g_wzy), 40 );
+
+    //x!x! ↓みたいな条件つける？
+    //x!x! ・敵がこちらに気づいてなければ攻撃しない
+    //x!x! ・気づいて無くても戦士が攻撃モードにしたら攻撃する
+    
+    if( ed ) {
+      g_wzcasttgtx = ed->x;
+      g_wzcasttgty = ed->y;
+      g_wztgted = ed;
+
+
+      EnemyTemplate* et = ENTPL( ed->type );
+      g_wzcasttgty -= TOFIX( et->dfrect.h/2 );
+          
+          
+      
+      enterWzMode( WZMODE_CAST );
+    }
+  }
+}
+
+
+
+//--------------------------------------------------------------------------
+void wzCastInit()
+{
+  g_wzmode = WZMODE_CAST;
+  g_wzphase = WZPHASE_AT_CAST;
+  g_wzwait = 25; //詠唱時間。呪文によって変える？
+}
+
+void wzCastFinish()
+{
+}
+
+void wzCastUpdate()
+{
+  switch( g_wzphase ) {
+    case WZPHASE_AT_CAST:
+      {
+        if( --g_wzwait == 0 ) {
+          //呪文完成
+          SPAC().createFireBall( SpAtCtrl::FLAG_TGT_ENEMY, g_wzx + (g_wzflip ? TOFIX(-6) : TOFIX(6)), g_wzy - TOFIX(8), g_wzcasttgtx, g_wzcasttgty, 20 );
+          g_wzwait = 25; //詠唱後硬直時間。呪文によって変える？
+          g_wzphase = WZPHASE_AT_COOLDOWN;
+        }
+      }
+      break;
+    case WZPHASE_AT_COOLDOWN:
+      {
+        if( --g_wzwait == 0 ) {
+          enterWzMode( WZMODE_MOVE );
+        }
+      }
+      break;
+  }
+}
+
+void wzCastDraw()
+{
+  int16_t x, y;
+  x = DUNMAP()->toScrX(TOINT(g_wzx));
+  y = DUNMAP()->toScrY(TOINT(g_wzy));
+  
+  getPic( PIC_WIZARD )->setFrame( 4 );
+  gb.display.drawImage( x - WZCX, y - WZCY, *getPic( PIC_WIZARD ), g_wzflip ? -WZPICW : WZPICW, WZPICH );
 }
 
 //--------------------------------------------------------------------------

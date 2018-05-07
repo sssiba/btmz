@@ -140,6 +140,10 @@ void Title::updateDecide()
       } else {
         //失敗したら初められない
         m_phase = PHASE_MAINMENU;
+        //再初期化
+        plInit();
+        dunInit();
+        enInit();
       }
       break;
   }

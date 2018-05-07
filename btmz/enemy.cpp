@@ -7,7 +7,6 @@
 
 #include "dungeon.h"
 
-#define ENTPL( _ID_ ) (&g_enTemplate[ _ID_ ])
 
 //---------------------------------------------------------------------
 //---------------------------------------------------------------------
@@ -277,6 +276,38 @@ EnemyData* enCheckMvRect( int16_t x, int16_t y, Rect8& rect, bool flip )
 EnemyData* enCheckDfRect( int16_t x, int16_t y, Rect8& rect, bool flip )
 {
   return enCheckRect( RTYPE_DF, x, y, rect, flip );
+}
+
+EnemyData* enGetInRange( int16_t x, int16_t y, int16_t range )
+{
+  int16_t sx0, sx1;
+
+  sx0 = x - range;
+  sx1 = x + range;
+
+  for( int8_t i=0; i<MAX_ENEMYENTRY; i++ ) {
+    if( g_endata[i].type == ENTYPE_UNDEFINED ) continue;
+    EnemyData* ed = &g_endata[i];
+    if( ed->area != DUNMAP()->getCurAreaIdx() ) continue;
+
+    EnemyTemplate* et = ENTPL( ed->type );
+    
+    Rect8* trect = &et->dfrect;
+    int16_t dx0 = TOINT(ed->x), dx1;
+    if( ed->flip ) {
+      dx0 -= trect->x;
+      dx1 = dx0 - trect->w;
+    } else {
+      dx0 += trect->x;
+      dx1 = dx0 + trect->w;
+    }
+
+    if(sx0 <= dx1 && dx0 <= sx1 ) {
+      return ed;    
+    }
+  }
+
+  return NULL;
 }
 
 /*

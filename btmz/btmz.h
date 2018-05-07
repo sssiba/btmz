@@ -2,7 +2,7 @@
 
 #include <Gamebuino-Meta.h>
 
-//#define DBG_ENABLE_SERIAL_COMM
+#define DBG_ENABLE_SERIAL_COMM
 
 //#define SERIALPORT Serial
 #define SERIALPORT SerialUSB //GamebuinoMeta は Serial じゃなくて SerialUSB じゃないと駄目みたい
@@ -22,7 +22,7 @@
 
 //#define DBG_SHOW_HITRECT //当たり判定矩形表示
 
-//#define DBG_SAVELOAD
+#define DBG_SAVELOAD
 
 #define SCRW 80
 #define SCRH 64

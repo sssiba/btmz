@@ -122,11 +122,22 @@ extern bool enDamage( EnemyData* ed, int16_t dmg);
 extern EnemyData* enCheckMvRect( int16_t x, int16_t y, Rect8& rect, bool flip );
 extern EnemyData* enCheckDfRect( int16_t x, int16_t y, Rect8& rect, bool flip );
 
+/*
+ * 指定の位置から指定のX軸上の範囲内にいる敵の EnemyData* を返す
+ */
+extern EnemyData* enGetInRange( int16_t x, int16_t y, int16_t range );
+
 extern void enSave( File& f);
 extern bool enLoad( File& f);
 
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
+extern EnemyTemplate g_enTemplate[ ENTYPEMAX ];
+
 extern EnemyTemplate edSlime;
+
+#define ENTPL( _ID_ ) (&g_enTemplate[ _ID_ ])
+
+
 

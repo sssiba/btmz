@@ -802,6 +802,10 @@ bool Area::load( File& f )
 #endif
         return false;
       }
+
+      o->setID( id );
+      o->setUID( uid );
+      
       if( !o->load( f ) ) {
 #if defined( DBG_SAVELOAD )
 {
@@ -813,12 +817,19 @@ bool Area::load( File& f )
         delete o;
         return false;
       }
-      m_obj[ o->getUID() ] = o;
+      m_obj[ uid ] = o;
     }
   }
 
   //全ての object 読み込み完了後、uid で保存していたポインタをポインタに戻す
   for( int i=0; i<MAX_OBJECT; i++ ) {
+#if defined( DBG_SAVELOAD )
+{
+  char s[80];
+  sprintf( s, "LOAD>obj resolve %d[%d]", i, m_obj[i] );
+  TRACE( s );
+}
+#endif
     if( m_obj[i] ) {
       m_obj[i]->resolvePtr( m_obj );
     }

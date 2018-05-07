@@ -9,6 +9,8 @@
 #include "dungeon.h"
 #include "item.h"
 
+#include "spatk.h"
+
 #include "title.h"
 
 //-------------------------------------------
@@ -303,6 +305,8 @@ void MainUpdate()
 
         plUpdate(); //player update
 
+        SPAC().update(); //spattack update
+
         UIC().update(); //ui update
         
         if ( gamemain.isTrigger( BUTTON_C ) ) {
@@ -354,6 +358,8 @@ void MainDraw()
         enDraw();
 
         plDraw();
+
+        SPAC().draw();
 
         FBL().apply();
 
@@ -1249,14 +1255,20 @@ void btmzSave()
 bool btmzLoad()
 {
   if( btmzIsSaved() ) {
+    //player ロード
     plLoad();
 
+    //map, object, enemy 等ロード
     if( DUNMAP()->load() ) {
+      //完全成功
       return true;
     }
   }
 
   //x!x! 中途半端な生成物を破棄しないと駄目
+  dunFinish();
+  enFinish();
+  plFinish();
 
   return false;
 }
