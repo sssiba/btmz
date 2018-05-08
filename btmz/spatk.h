@@ -71,6 +71,8 @@ private:
 
   inline void clrData( SPADATA* spad ) { spad->type = SPATK_NONE; }
 
+  void saDamage( SPADATA* spad );
+
 private:
   SPADATA m_spadata[ MAX_SPATK ];
 

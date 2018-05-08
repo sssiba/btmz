@@ -102,6 +102,7 @@ extern int8_t enCreate( ENTYPE ent, uint8_t scl, uint8_t area, uint8_t blk );
 
 /*
  * プレイヤーの攻撃で受けるダメージを計算する
+ * x!x! ダメージの種類を設定した方がいいかもね
  */
  extern int16_t enCalcDamage( EnemyData* ed );
 

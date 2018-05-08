@@ -76,7 +76,7 @@ inline int16_t wzGetX() { return TOINT(g_wzx); }
 inline int16_t wzGetY() { return TOINT(g_wzy); }
 
 extern int16_t plCalcDamage( EnemyData* ed );
-extern bool plDamage( EnemyData* ed, int16_t dmg );
+extern bool plDamage( int16_t dmg );
 
 
 /*

@@ -321,7 +321,6 @@ ObjTorch::ObjTorch()
   , m_fireanm( 0 )
   , m_fireanmwait( 0 )
 {
-  setID( OBJID_TORCH );
   setPicID( PIC_OBJECT );
 }
 
@@ -375,7 +374,6 @@ void ObjTorch::draw()
 //-----------------------------------------------
 ObjChest::ObjChest()
 {
-  setID( OBJID_CHEST );
   setPicID( PIC_OBJECT16x8 );
 }
 
@@ -413,7 +411,6 @@ void ObjChest::finish()
 //-----------------------------------------------
 ObjTable::ObjTable()
 {
-  setID( OBJID_TABLE );
   setPicID( PIC_OBJECT16x8 );
 }
 
@@ -473,7 +470,6 @@ ObjCandle::ObjCandle()
   , m_fireanm( 0 )
   , m_fireanmwait( 0 )
 {
-  setID( OBJID_CANDLE );
   setPicID( PIC_OBJECT );
 }
 
@@ -524,7 +520,6 @@ void ObjCandle::draw()
 //-----------------------------------------------
 ObjUpStair::ObjUpStair()
 {
-  setID( OBJID_UPSTAIR );
   setDrawLayer( DRAWLYR_NORMAL );
 }
 void ObjUpStair::draw()
@@ -538,7 +533,6 @@ void ObjUpStair::draw()
 
 ObjDownStair::ObjDownStair()
 {
-  setID( OBJID_DOWNSTAIR );
   setDrawLayer( DRAWLYR_NORMAL );
 }
 

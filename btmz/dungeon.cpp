@@ -659,6 +659,11 @@ ObjBase* Area::createObjInstance( uint8_t objid )
     case OBJID_DOWNSTAIR: obj = new ObjDownStair(); break;
     case OBJID_DROPITEM: obj = new ObjDropItem(); break;
   }
+
+  if( obj ) {
+    obj->setID( objid );
+  }
+  
   return obj;
 }
 
@@ -796,14 +801,13 @@ bool Area::load( File& f )
 #if defined( DBG_SAVELOAD )
 {
   char s[80];
-  sprintf( s, "LOAD>createObjInstance %d failed", id );
+  sprintf( s, "LOAD>createObjInstance id:%d failed", id );
   TRACE( s );
 }
 #endif
         return false;
       }
 
-      o->setID( id );
       o->setUID( uid );
       
       if( !o->load( f ) ) {
@@ -826,7 +830,7 @@ bool Area::load( File& f )
 #if defined( DBG_SAVELOAD )
 {
   char s[80];
-  sprintf( s, "LOAD>obj resolve %d[%d]", i, m_obj[i] );
+  sprintf( s, "LOAD>obj resolve %d[%08x]", i, m_obj[i] );
   TRACE( s );
 }
 #endif

@@ -4,6 +4,9 @@
 
 #include "dungeon.h"
 
+#include "player.h"
+#include "enemy.h"
+
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -95,6 +98,50 @@ void SpAtCtrl::updateFIREBALL( SPADATA* spad )
   
   spad->x += spad->fx;
   spad->y += spad->fy;
+  int16_t x, y;
+  x = TOINT( spad->x );
+  y = TOINT( spad->y );
+
+  Rect8 rect = { -4, -4, 8, 8 };
+  //対象との当たり判定
+  if( spad->flag & FLAG_TGT_ENEMY ) {
+      //敵と判定
+      EnemyData* ed = enCheckDfRect( x, y, rect, false );
+            
+      if ( ed ) {
+        int16_t dmg = spad->value;
+        bool dead = enDamage( ed, dmg );
+        clrData( spad );
+        return;
+      }
+  }
+  if( spad->flag & FLAG_TGT_PLAYER ) {
+    //プレイヤーと判定
+    if( plCheckDfRect( x, y, rect, false ) ) {
+      int16_t dmg = spad->value;
+      plDamage( dmg );
+      clrData( spad );
+      return;
+    }
+  }
+
+  //地形と当たり判定
+  //地面・天井
+  if( (y >= (((BLKTILEH-2)*TILEH+(TILEH/2))-4)) ||
+      (y <= ((TILEH/2)-4))
+    ) {
+    //衝突
+    clrData( spad );
+    return;
+  }
+  //左右
+  int16_t aw = DUNMAP()->getCurArea()->getWidth()-4;
+  if( x < 4 || x >= aw ) {
+    clrData(spad);
+    return;
+  }
+
+  
 
   if( --spad->duration == 0 ) clrData( spad );
 }

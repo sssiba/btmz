@@ -450,7 +450,7 @@ void enSlimeUpdate( EnemyData* ed )
         ed->phase = ENPHASE_ATTACK;
 
         int16_t dmg = plCalcDamage( ed );
-        plDamage( ed, dmg );
+        plDamage( dmg );
 
         //攻撃の際は移動しない
         movable = false;
@@ -557,7 +557,7 @@ void enGhostUpdate( EnemyData* ed )
         ed->phase = ENPHASE_ATTACK;
 
         int16_t dmg = plCalcDamage( ed );
-        plDamage( ed, dmg );
+        plDamage( dmg );
 
         //攻撃の際は移動しない
         movable = false;
@@ -664,7 +664,7 @@ void enOrcUpdate( EnemyData* ed )
         ed->phase = ENPHASE_ATTACK;
 
         int16_t dmg = plCalcDamage( ed );
-        plDamage( ed, dmg );
+        plDamage( dmg );
 
         //攻撃の際は移動しない
         movable = false;

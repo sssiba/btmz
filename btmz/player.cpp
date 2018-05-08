@@ -1314,7 +1314,7 @@ int16_t plCalcDamage( EnemyData* ed )
   return (int16_t)dmg;
 }
 
-bool plDamage( EnemyData* ed, int16_t dmg )
+bool plDamage( int16_t dmg )
 {
   g_plstat.hp -= dmg;
   if ( g_plstat.hp <= 0 ) {
@@ -1492,6 +1492,8 @@ void wzCheckCastSpell()
       g_wzcasttgty = ed->y;
       g_wztgted = ed;
 
+      if( ed->x < g_wzx ) g_wzflip = true;
+      else g_wzflip = false;
 
       EnemyTemplate* et = ENTPL( ed->type );
       g_wzcasttgty -= TOFIX( et->dfrect.h/2 );
@@ -1524,7 +1526,7 @@ void wzCastUpdate()
       {
         if( --g_wzwait == 0 ) {
           //呪文完成
-          SPAC().createFireBall( SpAtCtrl::FLAG_TGT_ENEMY, g_wzx + (g_wzflip ? TOFIX(-6) : TOFIX(6)), g_wzy - TOFIX(8), g_wzcasttgtx, g_wzcasttgty, 20 );
+          SPAC().createFireBall( SpAtCtrl::FLAG_TGT_ENEMY, g_wzx + (g_wzflip ? TOFIX(-6) : TOFIX(6)), g_wzy - TOFIX(8), g_wzcasttgtx, g_wzcasttgty, 4+random(8) );
           g_wzwait = 25; //詠唱後硬直時間。呪文によって変える？
           g_wzphase = WZPHASE_AT_COOLDOWN;
         }
