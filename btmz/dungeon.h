@@ -69,7 +69,7 @@ public:
       E_WALL, E_CORRIDOR, E_NOTHING, E_DOOR,
     };
     enum : int8_t { //cellobject
-      O_EMPTY, O_UPSTAIR, O_DOWNSTAIR,
+      O_EMPTY, O_UPSTAIR, O_DOWNSTAIR, O_FOUNTAIN, O_ALTAR,
     };
     struct CELL {
       uint8_t id;
@@ -78,13 +78,49 @@ public:
       uint8_t toArea[DIRMAX]; //各方向の接続先エリア
       uint8_t toBlock[DIRMAX]; //各方向の接続先ブロック(エリア内の場所)
       uint8_t mapobject;  //階段等のマップに紐づく object
+      uint8_t attr; //エリアの属性を元に各cell毎に細かく設定される
     };
     struct AREABASE {
       int8_t sx, sy;
       uint8_t dir; //エリアを伸ばした方向
       uint8_t len;
-
+      uint8_t attr; //属性
+      uint8_t rtype; //部屋の場合の種類
       inline void fwdPos( int8_t& x, int8_t& y ) { x += getDirX(dir); y += getDirY(dir); }
+    };
+
+    //生成するフロアのタイプ
+    //タイプ毎に特徴をつける？
+    enum : uint8_t {
+      FTYPE_NORMAL,
+      FTYPE_CEMETERY, //墓場系(cemetery, altar, ...)
+      FTYPE_DUNGEON, //ダンジョン系
+      FTYPE_WIZARD, //魔法使いの研究所
+      FTYPE_ARMY, //軍事施設(barrack, throne, prison, hall, ...)
+      FTYPE_ELDER, //古代遺跡(ruin, altar, fountain, ...)
+    };
+    //属性
+    enum : uint8_t {
+      AATTR_DARK = (1<<0), //暗闇(明かりが（ほぼ）配置されない？)
+      AATTR_MONSTER = (1<<1), //敵(敵がいる）
+      AATTR_TREASURE = (1<<2), //宝(部屋にのみ配置？)
+      AATTR_TRAP = (1<<3),
+      AATTR_ROOM = (1<<4), //部屋(部屋である)
+      AATTR_CORRIDOR = (1<<5), //通路(部屋以外とすればわざわざ要らないかも)
+    };
+    //部屋の種類（フロアのタイプ、フロアによってどれがあるか決まる）
+    enum : uint8_t {
+      RTYPE_BARRACK, //兵舎（敵が一杯？強い敵がいる？）
+      RTYPE_PRIVATEROOM, //個室（テーブルとか家具がある？）
+      RTYPE_PRISON, //牢獄（壁が牢屋になってる？）
+      RTYPE_THRONE, //玉座の間（ボス的なのがいる？）
+      RTYPE_FOUNTAIN, //泉の間（色々な効果の泉がある？）
+      RTYPE_ALTAR, //祭壇の間（色々な効果のある祭壇がある）
+      RTYPE_CEMETERY, //墓地（骸骨とか幽霊とか？）
+      RTYPE_LABORATORY, //実験室（テーブルと実験器具？）
+      RTYPE_RUIN, //廃墟(強的と強いアイテムがある？ぼろぼろの壁？）
+      RTYPE_TREASURE, //宝物庫(必ず１個以上宝箱がある？）
+      RTYPE_HALL, //広間（大きいエリアのみ？なんかある？）
     };
     
 public:
