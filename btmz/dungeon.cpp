@@ -206,7 +206,7 @@ Block::Block( Area* area, CellMaker* cm, CellMaker::AREABASE* abase, CellMaker::
   }
 
   //map object
-  switch( cell->mapobject ) {
+  switch ( cell->mapobject ) {
     case CellMaker::O_UPSTAIR:
       {
         ObjUpStair* obj = static_cast<ObjUpStair*>( area->createObj( m_dist, OBJID_UPSTAIR ) );
@@ -220,7 +220,7 @@ Block::Block( Area* area, CellMaker* cm, CellMaker::AREABASE* abase, CellMaker::
       }
       break;
   }
-  
+
 }
 
 Block::~Block()
@@ -367,10 +367,10 @@ void Block::setObjCeiling( ObjBase* obj )
 
 BlockDir Block::findConnectDir( int8_t area, int8_t blk )
 {
-  for( uint8_t i=BDIR_FAR; i<BDIRMAX; i++ ) {
+  for ( uint8_t i = BDIR_FAR; i < BDIRMAX; i++ ) {
     //その方向はドアか通路ならつながっている可能性がある
     int8_t a = 1, b = -1;
-    switch( m_dirinfo[i] ) {
+    switch ( m_dirinfo[i] ) {
       case BDINFO_DOOR:
         a = m_bdidata[i].door.toArea;
         b = m_bdidata[i].door.toBlock;
@@ -380,7 +380,7 @@ BlockDir Block::findConnectDir( int8_t area, int8_t blk )
         b = m_bdidata[i].corridor.toBlock;
         break;
     }
-    if( a == area && b == blk ) return BlockDir(i);
+    if ( a == area && b == blk ) return BlockDir(i);
   }
 
   return BDIRMAX; //見つからなかった
@@ -389,7 +389,7 @@ BlockDir Block::findConnectDir( int8_t area, int8_t blk )
 bool Block::save( File& f )
 {
   f.write( &m_dist, sizeof(m_dist) );
-  for( int8_t i=0; i<BDIRMAX; i++ ) {
+  for ( int8_t i = 0; i < BDIRMAX; i++ ) {
     f.write( &m_dirinfo[i], sizeof(m_dirinfo[i]) );
     f.write( &m_bdidata[i], sizeof(m_bdidata[i]) );
   }
@@ -399,7 +399,7 @@ bool Block::save( File& f )
 bool Block::load( File& f )
 {
   f.read(&m_dist, sizeof(m_dist));
-  for( int8_t i=0; i<BDIRMAX; i++ ) {
+  for ( int8_t i = 0; i < BDIRMAX; i++ ) {
     f.read(&m_dirinfo[i], sizeof(m_dirinfo[i]));
     f.read(&m_bdidata[i], sizeof(m_bdidata[i]));
   }
@@ -420,7 +420,7 @@ Area::~Area()
 {
   if ( m_blk ) {
     for ( int i = 0; i < m_blkcnt; i++ ) {
-      if( m_blk[i] ) delete m_blk[i];
+      if ( m_blk[i] ) delete m_blk[i];
     }
     delete[] m_blk;
   }
@@ -449,7 +449,7 @@ void Area::setup( CellMaker* cm, uint8_t id )
 
     abp->fwdPos( x, y );
 
-#if 01
+#if 0
     //object 配置test
     if ( random(100) < 45 ) {
       if ( random(100) < 75 ) {
@@ -473,24 +473,24 @@ void Area::setup( CellMaker* cm, uint8_t id )
         m_blk[i]->setObjGround( tbl );
         //直接作成して机に置く
         ObjCandle* c = static_cast<ObjCandle*>( createObj( i, OBJID_CANDLE ) );
-        if( c ) {
+        if ( c ) {
           tbl->addObj( c ); //ろうそくを机におく
         }
       }
     }
 #endif
 #if 01 //item
-    if( random(100) < 7 ) {
+    if ( random(100) < 7 ) {
       ObjDropItem* o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
-      if( o ) {
+      if ( o ) {
         ITEM* item = itGenerateFloor( plGetFloor() );
         o->attachItem( item );
         m_blk[i]->setObjCenter( o ); //通路上に置く
       }
 #if 0
       //同じ場所に２個おいて実験
-       o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
-      if( o ) {
+      o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
+      if ( o ) {
         ITEM* item = itGenerateFloor( plGetFloor() );
         o->attachItem( item );
         m_blk[i]->setObjCenter( o ); //通路上に置く
@@ -502,10 +502,10 @@ void Area::setup( CellMaker* cm, uint8_t id )
 
   }
 
-#if 01 //敵配置 test
-    if( m_blkcnt > 1 ) {
-      enCreate( ENTYPE( ENTYPE_SLIME + random(ENTYPEMAX-1) ), 0, id, random(m_blkcnt-1) + 1 );
-    }
+#if 0 //敵配置 test
+  if ( m_blkcnt > 1 ) {
+    enCreate( ENTYPE( ENTYPE_SLIME + random(ENTYPEMAX - 1) ), 0, id, random(m_blkcnt - 1) + 1 );
+  }
 #endif
 
 #if defined( DBG_MAP )
@@ -537,14 +537,13 @@ void Area::draw()
   }
 
 #if 01
-  //x!x! object 間の描画のプライオリティを付けないとまずい。階段とたいまつの位置関係等がおかしくなる。 x!x!
   //object
   //レイヤー毎に分けて描く
   //x!x! プレイヤーと敵もまとめて管理しないと駄目かも…
-  for( int8_t lyr=0; lyr<MAX_DRAWLYR; lyr++ ) {
+  for ( int8_t lyr = 0; lyr < MAX_DRAWLYR; lyr++ ) {
     for ( int8_t i = 0; i < MAX_OBJECT; i++ ) {
       if ( m_obj[i] ) {
-        if( m_obj[i]->getDrawLayer() == lyr ) {
+        if ( m_obj[i]->getDrawLayer() == lyr ) {
           m_obj[i]->draw();
         }
       }
@@ -570,7 +569,7 @@ void Area::update()
 BlockDir Area::getEnterPos( uint8_t blk, int8_t prvarea, int8_t prvblk, int16_t& x, int16_t& y )
 {
   BlockDir bd;
-  
+
   //指定ブロックの中央
   x = blk * BLKTILEW * TILEW + (BLKTILEW * TILEW / 2);
   y = (BLKTILEH - 2) * TILEH + (TILEH / 2);
@@ -579,7 +578,7 @@ BlockDir Area::getEnterPos( uint8_t blk, int8_t prvarea, int8_t prvblk, int16_t&
   bd = m_blk[blk]->findConnectDir( prvarea, prvblk );
 
   //進入方向によってずらす
-  switch( bd ) {
+  switch ( bd ) {
     case BDIR_FAR:
       y -= ENTEROFSTV;
       break;
@@ -660,10 +659,10 @@ ObjBase* Area::createObjInstance( uint8_t objid )
     case OBJID_DROPITEM: obj = new ObjDropItem(); break;
   }
 
-  if( obj ) {
+  if ( obj ) {
     obj->setID( objid );
   }
-  
+
   return obj;
 }
 
@@ -708,9 +707,9 @@ void Area::setupContainer( ObjContainer* objc, uint8_t mapfloor, uint8_t droplvl
   //個数
   uint8_t num = random( ObjContainer::MAX_CONTENTS - 1 ) + 1;
 
-  for( int8_t i=0; i<num; i++ ) {
+  for ( int8_t i = 0; i < num; i++ ) {
     ObjDropItem* o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
-    if( o ) {
+    if ( o ) {
       ITEM* item = itGenerateFloor( mapfloor );
       o->attachItem( item );
 
@@ -726,16 +725,16 @@ void Area::setupContainer( ObjContainer* objc, uint8_t mapfloor, uint8_t droplvl
 bool Area::save( File& f )
 {
   f.write( &m_blkcnt, sizeof(m_blkcnt));
-  for( uint8_t i=0; i<m_blkcnt; i++ ) {
-    if( !m_blk[i]->save(f) ) return false;
+  for ( uint8_t i = 0; i < m_blkcnt; i++ ) {
+    if ( !m_blk[i]->save(f) ) return false;
   }
 
-  for( int8_t i=0; i<MAX_OBJECT; i++ ) {
-    if( m_obj[i] ) {
-      if( !m_obj[i]->save(f) ) return false;
+  for ( int8_t i = 0; i < MAX_OBJECT; i++ ) {
+    if ( m_obj[i] ) {
+      if ( !m_obj[i]->save(f) ) return false;
     } else {
       //無効な id, uid を書いておく
-      if( !ObjBase::saveInvalidIDs(f) ) return false;
+      if ( !ObjBase::saveInvalidIDs(f) ) return false;
     }
   }
 
@@ -748,25 +747,25 @@ bool Area::load( File& f )
   f.read( &m_blkcnt, sizeof(m_blkcnt));
 
 #if defined( DBG_SAVELOAD )
-{
-  char s[128];
-  sprintf( s, "LOAD>blkcnt %d", m_blkcnt );
-  TRACE( s );
-}
+  {
+    char s[128];
+    sprintf( s, "LOAD>blkcnt %d", m_blkcnt );
+    TRACE( s );
+  }
 #endif
 
   //each block
   m_blk = new Block*[m_blkcnt];
   memset( m_blk, 0, sizeof(m_blk[0])*m_blkcnt );
-  for(uint8_t i=0; i<m_blkcnt; i++ ) {
+  for (uint8_t i = 0; i < m_blkcnt; i++ ) {
     m_blk[i] = new Block();
-    if( !m_blk[i]->load(f) ) {
+    if ( !m_blk[i]->load(f) ) {
 #if defined( DBG_SAVELOAD )
-{
-  char s[80];
-  sprintf( s, "LOAD>failed", i );
-  TRACE( s );
-}
+      {
+        char s[80];
+        sprintf( s, "LOAD>failed", i );
+        TRACE( s );
+      }
 #endif
       return false;
     }
@@ -774,49 +773,49 @@ bool Area::load( File& f )
 
   //object
   memset( m_obj, 0, sizeof(m_obj) );
-  for( int i=0; i<MAX_OBJECT; i++ ) {
+  for ( int i = 0; i < MAX_OBJECT; i++ ) {
     uint8_t id, uid;
-    if( !ObjBase::loadIDs( f, id, uid ) ) {
+    if ( !ObjBase::loadIDs( f, id, uid ) ) {
 #if defined( DBG_SAVELOAD )
-{
-  char s[80];
-  sprintf( s, "LOAD>objID failed" );
-  TRACE( s );
-}
+      {
+        char s[80];
+        sprintf( s, "LOAD>objID failed" );
+        TRACE( s );
+      }
 #endif
       return false;
     }
 #if defined( DBG_SAVELOAD )
-{
-  char s[128];
-  sprintf( s, "LOAD>createobj id:%d uid:%d", id, uid );
-  TRACE( s );
-}
+    {
+      char s[128];
+      sprintf( s, "LOAD>createobj id:%d uid:%d", id, uid );
+      TRACE( s );
+    }
 #endif
-    if( uid == INVALID_UID ) {
+    if ( uid == INVALID_UID ) {
       continue; //無効な場所
     } else {
       ObjBase* o = createObjInstance( id );
-      if( !o ) {
+      if ( !o ) {
 #if defined( DBG_SAVELOAD )
-{
-  char s[80];
-  sprintf( s, "LOAD>createObjInstance id:%d failed", id );
-  TRACE( s );
-}
+        {
+          char s[80];
+          sprintf( s, "LOAD>createObjInstance id:%d failed", id );
+          TRACE( s );
+        }
 #endif
         return false;
       }
 
       o->setUID( uid );
-      
-      if( !o->load( f ) ) {
+
+      if ( !o->load( f ) ) {
 #if defined( DBG_SAVELOAD )
-{
-  char s[80];
-  sprintf( s, "LOAD>obj failed" );
-  TRACE( s );
-}
+        {
+          char s[80];
+          sprintf( s, "LOAD>obj failed" );
+          TRACE( s );
+        }
 #endif
         delete o;
         return false;
@@ -826,15 +825,15 @@ bool Area::load( File& f )
   }
 
   //全ての object 読み込み完了後、uid で保存していたポインタをポインタに戻す
-  for( int i=0; i<MAX_OBJECT; i++ ) {
+  for ( int i = 0; i < MAX_OBJECT; i++ ) {
 #if defined( DBG_SAVELOAD )
-{
-  char s[80];
-  sprintf( s, "LOAD>obj resolve %d[%08x]", i, m_obj[i] );
-  TRACE( s );
-}
+    {
+      char s[80];
+      sprintf( s, "LOAD>obj resolve %d[%08x]", i, m_obj[i] );
+      TRACE( s );
+    }
 #endif
-    if( m_obj[i] ) {
+    if ( m_obj[i] ) {
       m_obj[i]->resolvePtr( m_obj );
     }
   }
@@ -862,11 +861,11 @@ Map::~Map()
   }
 }
 
-void Map::create()
+void Map::create( uint8_t mapfloor )
 {
   //仮想マップ構築
   CellMaker* cm = new CellMaker();
-  cm->make();
+  cm->make( mapfloor );
 
   //仮想マップの情報を元にエリア作成
   m_areacnt = cm->getAreaCount();
@@ -896,13 +895,13 @@ void Map::draw()
 
 
 /*
- * 指定の object id を持つ object を探す
- * 最初に見つかったものを返す。複数あるものを順次見つける場合は、同じ OBJFINDER を使って呼び続ける。
- * objid に OBJID_ALL を指定すると全ての object を拾う
- */
+   指定の object id を持つ object を探す
+   最初に見つかったものを返す。複数あるものを順次見つける場合は、同じ OBJFINDER を使って呼び続ける。
+   objid に OBJID_ALL を指定すると全ての object を拾う
+*/
 ObjBase* Map::findObject( OBJFINDER& of )
 {
-  if( of.area < 0 || of.objidx < 0 ) {
+  if ( of.area < 0 || of.objidx < 0 ) {
     //初回
     of.area = of.objidx = 0;
   } else {
@@ -910,37 +909,37 @@ ObjBase* Map::findObject( OBJFINDER& of )
     of.objidx++;
   }
 
-  for(;;) {
-    if( of.area >= m_areacnt ) break;
+  for (;;) {
+    if ( of.area >= m_areacnt ) break;
     Area* a = m_area[ of.area ];
 
-    for( ; of.objidx < MAX_OBJECT; of.objidx++ ) {
+    for ( ; of.objidx < MAX_OBJECT; of.objidx++ ) {
       ObjBase* obj = a->getObj( of.objidx );
-      if( obj ) {
-        if( (of.objid == OBJID_ALL) || (obj->getID() == of.objid) ) {
+      if ( obj ) {
+        if ( (of.objid == OBJID_ALL) || (obj->getID() == of.objid) ) {
           return obj;
         }
       }
-    }    
+    }
     of.area++;
     of.objidx = 0;
   }
 
-  return NULL; //無かった 
+  return NULL; //無かった
 }
 
 
 /*
- * 別フロアへの移動
- * descend true:降りてきた==登る階段のある場所へ   false:登ってきた==降りる階段のある場所へ
- */
+   別フロアへの移動
+   descend true:降りてきた==登る階段のある場所へ   false:登ってきた==降りる階段のある場所へ
+*/
 void Map::enterFloor( bool descend )
 {
   OBJFINDER of( descend ? OBJID_UPSTAIR : OBJID_DOWNSTAIR );
 
   ObjBase* obj = findObject( of );
 
-  if( !obj ) {
+  if ( !obj ) {
     return; //x!x! こうなったらおかしい… assert()
   }
 
@@ -1027,10 +1026,10 @@ Block* Map::getBlock( int16_t x, int16_t y )
 bool Map::save()
 {
   File f = SD.open( "MAP.SAV", FILE_WRITE );
-  if( !f ) return false;
+  if ( !f ) return false;
 
   f.seekSet( 0 );
-  
+
   //version
   int32_t v = VER_SAVEDATA;
   f.write( &v, sizeof(v) );
@@ -1039,8 +1038,8 @@ bool Map::save()
   f.write( &m_homey, sizeof(m_homey));
   f.write( &m_curareaidx, sizeof(m_curareaidx));
 
-  for( int8_t i=0; i<m_areacnt; i++ ) {
-    if( !m_area[i]->save(f) ) {
+  for ( int8_t i = 0; i < m_areacnt; i++ ) {
+    if ( !m_area[i]->save(f) ) {
       f.close();
       return false;
     }
@@ -1060,11 +1059,11 @@ bool Map::load()
 
   //x!x! 各種ロードに失敗したら、色々破棄して終わる事
   File f = SD.open( "MAP.SAV", FILE_READ );
-  if( !f ) return false;
+  if ( !f ) return false;
 
   int32_t v;
   f.read( &v, sizeof(v));
-  if( v != VER_SAVEDATA ) return false;
+  if ( v != VER_SAVEDATA ) return false;
 
   f.read( &m_areacnt, sizeof(m_areacnt));
   f.read( &m_homex, sizeof(m_homex));
@@ -1072,32 +1071,32 @@ bool Map::load()
   f.read( &m_curareaidx, sizeof(m_curareaidx));
 
 #if defined( DBG_SAVELOAD )
-{
-  char s[128];
-  sprintf( s, "LOAD>v:%d  ac:%d  hx:%d  hy:%d  ca:%d", v, m_areacnt, m_homex, m_homey, m_curareaidx );
-  TRACE( s );
-}
+  {
+    char s[128];
+    sprintf( s, "LOAD>v:%d  ac:%d  hx:%d  hy:%d  ca:%d", v, m_areacnt, m_homex, m_homey, m_curareaidx );
+    TRACE( s );
+  }
 #endif
 
 
   m_area = new Area*[ m_areacnt ];
   memset( m_area, 0, sizeof(m_area[0])*m_areacnt );
-  for( int8_t i=0; i<m_areacnt; i++ ) {
+  for ( int8_t i = 0; i < m_areacnt; i++ ) {
     m_area[i] = new Area();
 #if defined( DBG_SAVELOAD )
-{
-  char s[64];
-  sprintf( s, "LOAD>area %d", i );
-  TRACE( s );
-}
+    {
+      char s[64];
+      sprintf( s, "LOAD>area %d", i );
+      TRACE( s );
+    }
 #endif
-    if( !m_area[i]->load(f) ) {
+    if ( !m_area[i]->load(f) ) {
 #if defined( DBG_SAVELOAD )
-{
-  char s[64];
-  sprintf( s, "LOAD>area %d failed", i );
-  TRACE( s );
-}
+      {
+        char s[64];
+        sprintf( s, "LOAD>area %d failed", i );
+        TRACE( s );
+      }
 #endif
       f.close();
       return false; //失敗 x!x! 戻った後中途半端な生成物を破棄する事
@@ -1112,7 +1111,7 @@ bool Map::load()
   enLoad( f );
 
   f.close();
-  
+
   return true;
 }
 
@@ -1248,23 +1247,51 @@ void Map::DBGout()
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
+/*
+    //部屋の情報
+    typedef struct {
+      uint8_t minsize; //最低blockサイズ
+      uint8_t itemrate; //アイテムが落ちてる割合(0-100)
+      uint8_t chestrate; //宝箱がある割合(0-100)
+      uint8_t droplvlcorrection; //ドロップレベル補正
+      uint8_t enemyrate; //敵出現率
+      uint8_t minenemy; //敵最小数
+      uint8_t maxenmey; //敵最大数
+    } ROOMDATA;
+*/
+const CellMaker::ROOMDATA CellMaker::m_roomdata[CellMaker::MAXRTYPE] = {
+  { 4, 15, 40, 0, 100, 3, 6 }, //barracks
+  { 1, 30, 30, 0, 30, 1, 3 }, //privateroom
+  { 1, 5, 5, 0, 40, 1, 4 }, //prison
+  { 1, 10, 5, 1, 0, 0, 0 }, //fountain
+  { 1, 5, 10, 0, 10, 1, 1 }, //altar
+  { 3, 50, 10, 0, 80, 1, 3 }, //cemetery
+  { 2, 50, 50, 0, 30, 1, 2 }, //laboratory
+  { 3, 100, 0, 5, 100, 1, 1 }, //ruin
+  { 2, 0, 100, 2, 60, 2, 5 }, //treasure
+  { 5, 20, 20, 0, 75, 2, 6 }, //hall
+};
+
 CellMaker::CellMaker()
 {
   memset( m_cell, 0, sizeof(m_cell) );
+  memset( m_areabase, 0, sizeof(m_areabase) );
 }
 
 CellMaker::~CellMaker()
 {
 }
 
-void CellMaker::make()
+void CellMaker::make( uint8_t mapfloor )
 {
+  m_tgtfloor = mapfloor;
+
   /*
      A000B
      #####
      のAとBをつないでワープ通路とかあり？
   */
-  m_areacnt = 3 + random(MAX_AREA - 3); //試行する回数
+  m_areacnt = MIN_AREA + random(MAX_AREA - MIN_AREA); //試行する回数
   uint8_t id = 1;
   int8_t sx = random(TMAPW);
   int8_t sy = random(TMAPH);
@@ -1381,15 +1408,147 @@ void CellMaker::make()
     delete[] done;
   }
 
+  //部屋割当
+  makeRoom();
+
+
   //階段設置
   //down
   randomObject( O_DOWNSTAIR );
   randomObject( O_UPSTAIR );
-  
 
-  
+
+
 
 #if defined( DBG_MAP )
+  DBGdumpMap();
+#endif
+}
+
+
+bool CellMaker::randomObject( int8_t obj )
+{
+  //開始位置をランダム決定
+  uint8_t s = random(TMAPW * TMAPH);
+
+  //有効な場所を見つけるまで右下方向に向けて調べる
+  //右下を超えたら左上に戻って続く
+  for ( uint8_t c = 0; c < TMAPW * TMAPH; c++ ) {
+    CELL* cell = &m_cell[s];
+    if ( cell->id != 0 ) {
+      //有効なセル
+      if ( cell->mapobject == 0 ) { //まだ何も object が無い場所なら OK
+        cell->mapobject = obj;
+        return true;
+      }
+    }
+    if ( ++s >= TMAPW * TMAPH ) s = 0;
+  }
+}
+
+void CellMaker::initConnect( uint8_t id )
+{
+  AREABASE *abp = &m_areabase[ id - 1];
+
+  //初期状態では、entrance は 0 (==全方向壁)
+
+  int8_t sx = abp->sx;
+  int8_t sy = abp->sy;
+  uint8_t dir = abp->dir;
+
+  //長さ１の場合は全方向壁のままで良し
+  if ( abp->len == 1 ) return;
+
+  //開始地点は伸ばして行く方向のみ空白
+  m_cell[ sx + sy * TMAPW ].entrance |= E_NOTHING << (dir * 2);
+  sx += getDirX( dir );
+  sy += getDirY( dir );
+
+  if ( abp->len >= 3 ) { //開始地点と終了地点以外がある場合
+    //間は左右が通路
+    for ( int i = 1; i < abp->len - 1; i++ ) {
+      if ( dir & 1 ) {
+        //EW
+        m_cell[ sx + sy * TMAPW ].entrance |= (E_NOTHING << 6) | (E_NOTHING << 2); //EW 両方空白
+      } else {
+        //NS
+        m_cell[ sx + sy * TMAPW ].entrance |= (E_NOTHING << 4) | (E_NOTHING << 0); //NS 両方空白
+      }
+      sx += getDirX( dir );
+      sy += getDirY( dir );
+    }
+  }
+
+  //終了地点は伸ばす方向と逆が空白
+  m_cell[ sx + sy * TMAPW ].entrance |= E_NOTHING << (((dir + 2) & 3) * 2);
+}
+
+bool CellMaker::findNextStart( uint8_t curid, int8_t& x, int8_t& y, uint8_t& dir, int8_t& nx, int8_t& ny )
+{
+  AREABASE *abp = &m_areabase[ curid - 1];
+
+  uint8_t len = abp->len;
+
+  uint8_t cdist = random( len ); //調べ始める点を決める
+
+  for (; len; len-- ) {
+    uint8_t cdir = random( DIRMAX ); //調べ始める方向
+    int8_t cx = abp->sx + getDirX( abp->dir ) * cdist;
+    int8_t cy = abp->sy + getDirY( abp->dir ) * cdist;
+    CELL* cp = &m_cell[ cx + cy * TMAPW ];
+    //調べる場所の４方向を、入り口が作成可能か判定する
+    int8_t i;
+    int8_t tx, ty;
+    for ( i = 0; i < DIRMAX; i++ ) {
+      tx = cx + getDirX( cdir );
+      ty = cy + getDirY( cdir );
+      uint8_t mask = 0x03 << (cdir * 2);
+
+      if ( (tx >= 0 && ty >= 0 && tx < TMAPW && ty < TMAPH) &&  //範囲外に出る場合はダメ
+           (m_cell[tx + ty * TMAPW].id == 0) && //既に別エリアがあればダメ
+           ((cp->entrance & mask) == 0) //その方向は既に使用中ならダメ
+         ) {
+        break;
+      }
+      cdir = (cdir + 1) & 0x3;
+    }
+
+    if ( i < DIRMAX ) {
+      //見つけた
+      x = cx; //現在のエリア側の位置
+      y = cy;
+      dir = cdir;
+      nx = tx; //新しい開始位置
+      ny = ty;
+      return true;
+    }
+
+    //どの方向もダメなので次のセル
+    if ( ++cdist >= abp->len ) cdist = 0;
+  }
+
+  //どこにも場所が無い
+  return false;
+}
+
+
+//指定エリアの開始位置から、指定された距離にある CELL を返す
+CellMaker::CELL* CellMaker::getCellFromAreaDist( uint8_t area, uint8_t dist )
+{
+  AREABASE* abp = &m_areabase[ area ];
+
+  if ( dist >= abp->len ) dist = abp->len - 1;
+
+  int8_t x = abp->sx + getDirX( abp->dir ) * dist;
+  int8_t y = abp->sy + getDirY( abp->dir ) * dist;
+
+  return &m_cell[ x + y * TMAPW ];
+}
+
+
+#if defined( DBG_MAP )
+void DBGdumpMap()
+{
   {
     for ( int i = 0; i < TMAPH; i++ ) {
       char s[20];
@@ -1501,128 +1660,133 @@ void CellMaker::make()
     TRACEN( "|-----------------" );
   }
   TRACE( "|" );
+}
 #endif
-}
 
-bool CellMaker::randomObject( int8_t obj )
+
+
+void CellMaker::makeRoom()
 {
-  //開始位置をランダム決定
-  uint8_t s = random(TMAPW*TMAPH);
+  static const InitRoomFunc initRoomTbl[ MAXRTYPE ] = {
+    initRoomBarracks, initRoomPrivateRoom, initRoomPrison, initRoomThrone,
+    initRoomFountain, initRoomAltar, initRoomCemetery, initRoomLaboratory,
+    initRoomRuin, initRoomTreasure, initRoomHall
+  };
 
-  //有効な場所を見つけるまで右下方向に向けて調べる
-  //右下を超えたら左上に戻って続く
-  for( uint8_t c=0; c<TMAPW*TMAPH; c++ ) {
-    CELL* cell = &m_cell[s];
-    if( cell->id != 0 ) {
-      //有効なセル
-      if( cell->mapobject == 0 ) { //まだ何も object が無い場所なら OK
-        cell->mapobject = obj;
-        return true;        
+  uint8_t roomtbl[MAXRTYPE];
+  uint8_t areaidx[MAX_AREA];
+  uint8_t roomcnt = m_areacnt / 2; //総エリア数の半分が部屋
+
+  //部屋インデックスをシャッフル
+  for ( uint8_t i = 0; i < m_areacnt; i++ ) areaidx[i] = i;
+  gamemain.shuffle( areaidx, m_areacnt );
+
+  //各エリアを部屋にする
+  for ( uint8_t i = 0; i < roomcnt; i++ ) {
+    AREABASE* ab = &m_areabase[ areaidx[i] ];
+    uint8_t len = ab->len; //エリアの大きさ
+    uint8_t vrcnt = 0;
+    //サイズが合っていて使える部屋を集める
+    //x!x! フロアのタイプ毎に使える部屋タイプを制限する？
+    //x!x! 同じフロアに何個も出ない設定もいる？
+    for ( uint8_t j = 0; j < MAXRTYPE; j++ ) {
+      if ( len >= m_roomdata[j].minsize ) {
+        roomtbl[vrcnt++] = j;
       }
     }
-    if( ++s >= TMAPW*TMAPH ) s = 0;
+    //部屋の種類ランダム化
+    gamemain.shuffle( roomtbl, vrcnt );
+
+    //その他条件を考慮しながら使えるものを適用
+    //A の部屋がある場合は B の部屋は無いとか。
+    ab->rtype = roomtbl[0];
+    ab->attr |= AATTR_ROOM; //部屋
+
+    //パラメータに従い設定
+    const ROOMDATA* rd = &m_roomdata[ ab->rtype ];
+    ab->droplvlcorrection = rd->droplvlcorrection; //ドロップレベル補正
+    if ( random(100) < rd->itemrate ) { //アイテムが落ちてる割合
+      ab->attr |= AATTR_ITEMDROP;
+    }
+    if ( random(100) < rd->chestrate ) { //宝箱がある割合
+      ab->attr |= AATTR_TREASURE;
+    }
+    if ( random(100) < rd->enemyrate ) { //敵出現
+      ab->attr |= AATTR_ENEMY;
+      ab->enemynum = rd->minenemy;
+      if ( rd->maxenemy > rd->minenemy ) {
+        ab->enemynum += random(rd->maxenemy - rd->minenemy);
+      }
+    }
+
+    //暗闇
+    if ( random(100) < 30 ) {
+      ab->attr |= AATTR_DARK;
+    }
+
+
+    //各部屋専用初期化
+    if ( !initRoomTbl[ ab->rtype ]( this, ab ) ) {
+      //ダメだったら部屋をやめる
+      ab->attr &= ~(AATTR_ROOM | AATTR_ITEMDROP | AATTR_TREASURE | AATTR_ENEMY);
+    }
   }
 }
 
-void CellMaker::initConnect( uint8_t id )
+bool CellMaker::initRoomBarracks( CellMaker* cm, AREABASE* ab )
 {
-  AREABASE *abp = &m_areabase[ id - 1];
-
-  //初期状態では、entrance は 0 (==全方向壁)
-
-  int8_t sx = abp->sx;
-  int8_t sy = abp->sy;
-  uint8_t dir = abp->dir;
-
-  //長さ１の場合は全方向壁のままで良し
-  if ( abp->len == 1 ) return;
-
-  //開始地点は伸ばして行く方向のみ空白
-  m_cell[ sx + sy * TMAPW ].entrance |= E_NOTHING << (dir * 2);
-  sx += getDirX( dir );
-  sy += getDirY( dir );
-
-  if ( abp->len >= 3 ) { //開始地点と終了地点以外がある場合
-    //間は左右が通路
-    for ( int i = 1; i < abp->len - 1; i++ ) {
-      if ( dir & 1 ) {
-        //EW
-        m_cell[ sx + sy * TMAPW ].entrance |= (E_NOTHING << 6) | (E_NOTHING << 2); //EW 両方空白
-      } else {
-        //NS
-        m_cell[ sx + sy * TMAPW ].entrance |= (E_NOTHING << 4) | (E_NOTHING << 0); //NS 両方空白
-      }
-      sx += getDirX( dir );
-      sy += getDirY( dir );
-    }
-  }
-
-  //終了地点は伸ばす方向と逆が空白
-  m_cell[ sx + sy * TMAPW ].entrance |= E_NOTHING << (((dir + 2) & 3) * 2);
+  return true;
 }
 
-bool CellMaker::findNextStart( uint8_t curid, int8_t& x, int8_t& y, uint8_t& dir, int8_t& nx, int8_t& ny )
+bool CellMaker::initRoomPrivateRoom( CellMaker* cm, AREABASE* ab )
 {
-  AREABASE *abp = &m_areabase[ curid - 1];
-
-  uint8_t len = abp->len;
-
-  uint8_t cdist = random( len ); //調べ始める点を決める
-
-  for (; len; len-- ) {
-    uint8_t cdir = random( DIRMAX ); //調べ始める方向
-    int8_t cx = abp->sx + getDirX( abp->dir ) * cdist;
-    int8_t cy = abp->sy + getDirY( abp->dir ) * cdist;
-    CELL* cp = &m_cell[ cx + cy * TMAPW ];
-    //調べる場所の４方向を、入り口が作成可能か判定する
-    int8_t i;
-    int8_t tx, ty;
-    for ( i = 0; i < DIRMAX; i++ ) {
-      tx = cx + getDirX( cdir );
-      ty = cy + getDirY( cdir );
-      uint8_t mask = 0x03 << (cdir * 2);
-
-      if ( (tx >= 0 && ty >= 0 && tx < TMAPW && ty < TMAPH) &&  //範囲外に出る場合はダメ
-           (m_cell[tx + ty * TMAPW].id == 0) && //既に別エリアがあればダメ
-           ((cp->entrance & mask) == 0) //その方向は既に使用中ならダメ
-         ) {
-        break;
-      }
-      cdir = (cdir + 1) & 0x3;
-    }
-
-    if ( i < DIRMAX ) {
-      //見つけた
-      x = cx; //現在のエリア側の位置
-      y = cy;
-      dir = cdir;
-      nx = tx; //新しい開始位置
-      ny = ty;
-      return true;
-    }
-
-    //どの方向もダメなので次のセル
-    if ( ++cdist >= abp->len ) cdist = 0;
-  }
-
-  //どこにも場所が無い
-  return false;
+  return true;
 }
 
-
-//指定エリアの開始位置から、指定された距離にある CELL を返す
-CellMaker::CELL* CellMaker::getCellFromAreaDist( uint8_t area, uint8_t dist )
+bool CellMaker::initRoomPrison( CellMaker* cm, AREABASE* ab )
 {
-  AREABASE* abp = &m_areabase[ area ];
-
-  if ( dist >= abp->len ) dist = abp->len - 1;
-
-  int8_t x = abp->sx + getDirX( abp->dir ) * dist;
-  int8_t y = abp->sy + getDirY( abp->dir ) * dist;
-
-  return &m_cell[ x + y * TMAPW ];
+  return true;
 }
 
+bool CellMaker::initRoomThrone( CellMaker* cm, AREABASE* ab )
+{
+  return true;
+}
+
+bool CellMaker::initRoomFountain( CellMaker* cm, AREABASE* ab )
+{
+  return true;
+}
+
+bool CellMaker::initRoomAltar( CellMaker* cm, AREABASE* ab )
+{
+  return true;
+}
+
+bool CellMaker::initRoomCemetery( CellMaker* cm, AREABASE* ab )
+{
+  return true;
+}
+
+bool CellMaker::initRoomLaboratory( CellMaker* cm, AREABASE* ab )
+{
+  return true;
+}
+
+bool CellMaker::initRoomRuin( CellMaker* cm, AREABASE* ab )
+{
+  return true;
+}
+
+bool CellMaker::initRoomTreasure( CellMaker* cm, AREABASE* ab )
+{
+  return true;
+}
+
+bool CellMaker::initRoomHall( CellMaker* cm, AREABASE* ab )
+{
+  return true;
+}
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------

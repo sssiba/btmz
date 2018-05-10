@@ -86,6 +86,8 @@ public:
       uint8_t len;
       uint8_t attr; //属性
       uint8_t rtype; //部屋の場合の種類
+      uint8_t droplvlcorrection; //ドロップレベル補正
+      uint8_t enemynum;
       inline void fwdPos( int8_t& x, int8_t& y ) { x += getDirX(dir); y += getDirY(dir); }
     };
 
@@ -98,19 +100,21 @@ public:
       FTYPE_WIZARD, //魔法使いの研究所
       FTYPE_ARMY, //軍事施設(barrack, throne, prison, hall, ...)
       FTYPE_ELDER, //古代遺跡(ruin, altar, fountain, ...)
+      MAXFTYPE
     };
     //属性
     enum : uint8_t {
       AATTR_DARK = (1<<0), //暗闇(明かりが（ほぼ）配置されない？)
-      AATTR_MONSTER = (1<<1), //敵(敵がいる）
-      AATTR_TREASURE = (1<<2), //宝(部屋にのみ配置？)
-      AATTR_TRAP = (1<<3),
-      AATTR_ROOM = (1<<4), //部屋(部屋である)
-      AATTR_CORRIDOR = (1<<5), //通路(部屋以外とすればわざわざ要らないかも)
+      AATTR_ENEMY = (1<<1), //敵(敵がいる）
+      AATTR_ITEMDROP = (1<<2), //アイテムが落ちている
+      AATTR_TREASURE = (1<<3), //宝(部屋にのみ配置？)
+      AATTR_TRAP = (1<<4),
+      AATTR_ROOM = (1<<5), //部屋(部屋である)
+      AATTR_CORRIDOR = (1<<6), //通路(部屋以外とすればわざわざ要らないかも)
     };
     //部屋の種類（フロアのタイプ、フロアによってどれがあるか決まる）
     enum : uint8_t {
-      RTYPE_BARRACK, //兵舎（敵が一杯？強い敵がいる？）
+      RTYPE_BARRACKS, //兵舎（敵が一杯？強い敵がいる？）
       RTYPE_PRIVATEROOM, //個室（テーブルとか家具がある？）
       RTYPE_PRISON, //牢獄（壁が牢屋になってる？）
       RTYPE_THRONE, //玉座の間（ボス的なのがいる？）
@@ -121,13 +125,38 @@ public:
       RTYPE_RUIN, //廃墟(強的と強いアイテムがある？ぼろぼろの壁？）
       RTYPE_TREASURE, //宝物庫(必ず１個以上宝箱がある？）
       RTYPE_HALL, //広間（大きいエリアのみ？なんかある？）
+      MAXRTYPE
     };
+    //部屋の情報
+    typedef struct {
+      uint8_t minsize; //最低blockサイズ
+      uint8_t itemrate; //アイテムが落ちてる割合(0-100)
+      uint8_t chestrate; //宝箱がある割合(0-100)
+      uint8_t droplvlcorrection; //ドロップレベル補正
+      uint8_t enemyrate; //敵出現率
+      uint8_t minenemy; //敵最小数
+      uint8_t maxenemy; //敵最大数
+    } ROOMDATA;
+
+private:
+  typedef bool (*InitRoomFunc)( CellMaker*, AREABASE* );
+  static bool initRoomBarracks( CellMaker* cm, AREABASE* ab );
+  static bool initRoomPrivateRoom( CellMaker* cm, AREABASE* ab );
+  static bool initRoomPrison( CellMaker* cm, AREABASE* ab );
+  static bool initRoomThrone( CellMaker* cm, AREABASE* ab );
+  static bool initRoomFountain( CellMaker* cm, AREABASE* ab );
+  static bool initRoomAltar( CellMaker* cm, AREABASE* ab );
+  static bool initRoomCemetery( CellMaker* cm, AREABASE* ab );
+  static bool initRoomLaboratory( CellMaker* cm, AREABASE* ab );
+  static bool initRoomRuin( CellMaker* cm, AREABASE* ab );
+  static bool initRoomTreasure( CellMaker* cm, AREABASE* ab );
+  static bool initRoomHall( CellMaker* cm, AREABASE* ab );
     
 public:
   CellMaker();
   ~CellMaker();
 
-  void make();
+  void make( uint8_t mapfloor );
 
   inline uint8_t getAreaCount() { return m_areacnt; }
   inline AREABASE* getAreaBase( int8_t idx ) { return &m_areabase[idx]; }
@@ -135,6 +164,12 @@ public:
   CELL* getCellFromAreaDist( uint8_t area, uint8_t dist ); //指定エリアの開始位置から、指定された距離にある CELL を返す
 
   bool randomObject( int8_t cellobj );
+
+  void makeRoom();
+
+#if defined( DBG_MAP )
+  void DBGdumpMap();
+#endif
 
 private:
   void initConnect( uint8_t id );
@@ -144,6 +179,8 @@ private:
   CELL m_cell[ TMAPW * TMAPH ];
   AREABASE m_areabase[ MAX_AREA ];
   uint8_t m_areacnt;
+  static const ROOMDATA m_roomdata[ MAXRTYPE ];
+  uint8_t m_tgtfloor;
 };
 
 
@@ -301,7 +338,7 @@ public:
   ~Map();
 
   void draw();
-  void create();
+  void create( uint8_t mapfloor );
   void update();
 
   inline int16_t getHomeX() { return m_homex; }

@@ -618,7 +618,7 @@ void actStair( bool descend )
 
   enInit();
   dunInit();
-  DUNMAP()->create();
+  DUNMAP()->create( f );
 
   //プレイヤー配置
   DUNMAP()->enterFloor( descend );

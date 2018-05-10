@@ -164,7 +164,7 @@ void Title::updateNew()
   gb.gui.keyboard( "Your name", ps.name );
 
   //map 生成
-  DUNMAP()->create();
+  DUNMAP()->create( plGetFloor() ); //x!x! 地上から始まる？
 
   //プレイヤー配置
   DUNMAP()->enterFloor( true );

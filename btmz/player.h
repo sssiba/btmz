@@ -69,7 +69,7 @@ inline Rect8& plGetMvRect() { return g_plmvrect; }
 inline Rect8& plGetAtRect() { return g_platrect; }
 inline Rect8& plGetDfRect() { return g_pldfrect; }
 inline PLSTAT& plGetStat() { return g_plstat; }
-inline uint8_t plGetFloor() { return g_plstat.curfloor; }
+inline uint8_t plGetFloor() { return g_plstat.curfloor; } //0:地上？ 1-???
 inline void plSetFloor( uint8_t f ) { g_plstat.curfloor = f; }
 
 inline int16_t wzGetX() { return TOINT(g_wzx); }
