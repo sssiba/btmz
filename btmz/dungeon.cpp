@@ -62,47 +62,47 @@ void dunFinish()
 */
 static const uint8_t farWall[] PROGMEM = { //奥の壁
   0, 0, //x, y
-  4, 5, //w, h
-  0, 0, 0, 0,
-  1, 1, 1, 1,
-  1, 1, 1, 1,
-  1, 1, 1, 1,
-  0, 0, 0, 0,
+  6, 5, //w, h
+  0, 0, 0, 0, 0, 0,
+  1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1,
+  0, 0, 0, 0, 0, 0,
 };
 static const uint8_t farCorridor[] PROGMEM = { //奥の通路
   0, 0, //x, y
-  4, 5, //w, h
-  0, 0, 0, 0,
-  1, 2, 5, 1,
-  1, 3, 6, 1,
-  1, 4, 7, 1,
-  0, 0, 0, 0,
+  6, 5, //w, h
+  0, 0, 0, 0, 0, 0,
+  1, 1, 2, 5, 1, 1,
+  1, 1, 3, 6, 1, 1,
+  1, 1, 4, 7, 1, 1,
+  0, 0, 0, 0, 0, 0,
 };
 static const uint8_t farDoor[] PROGMEM = { //奥のドア x!x! ドア部分だけ後から書くようにした方がいいかも
   0, 0, //x, y
-  4, 5, //w, h
-  0, 0, 0, 0,
-  1, 1, 1, 1,
-  1, 18, 20, 1,
-  1, 19, 21, 1,
-  0, 0, 0, 0,
+  6, 5, //w, h
+  0, 0, 0, 0, 0, 0,
+  1, 1, 1, 1, 1, 1,
+  1, 1, 18, 20, 1, 1,
+  1, 1, 19, 21, 1, 1,
+  0, 0, 0, 0, 0, 0,
 };
 
 
 static const uint8_t nearWall[] PROGMEM = { //手前の壁
   0, 5, //x, y
-  4, 1, //w, h
-  1, 1, 1, 1,
+  6, 1, //w, h
+  1, 1, 1, 1, 1, 1,
 };
 static const uint8_t nearCorridor[] PROGMEM = { //手前の通路
   0, 5, //x, y
-  4, 1, //w, h
-  4, 0, 0, 7,
+  6, 1, //w, h
+  1, 4, 0, 0, 7, 1,
 };
 static const uint8_t nearDoor[] PROGMEM = { //手前のドア
   0, 5, //x, y
-  4, 1, //w, h
-  22, 23, 24, 25,
+  6, 1, //w, h
+  1, 22, 23, 24, 25, 1,
 };
 
 static const uint8_t leftWall[] PROGMEM = { //左の壁
@@ -117,13 +117,13 @@ static const uint8_t leftDoor[] PROGMEM = { //左のドア
 };
 
 static const uint8_t rightWall[] PROGMEM = { //右の壁
-  3, 0,
+  5, 0,
   1, 5,
   13, 14, 15, 16, 17,
 };
 
 static const uint8_t rightDoor[] PROGMEM = { //右のドア
-  3, 0,
+  5, 0,
   1, 5,
   13, 14, 29, 30, 31,
 };
@@ -205,6 +205,7 @@ Block::Block( Area* area, CellMaker* cm, CellMaker::AREABASE* abase, CellMaker::
     }
   }
 
+  //絶対必要なものを先にやる
   //map object
   switch ( cell->mapobject ) {
     case CellMaker::O_UPSTAIR:
@@ -220,6 +221,42 @@ Block::Block( Area* area, CellMaker* cm, CellMaker::AREABASE* abase, CellMaker::
       }
       break;
   }
+
+
+  //--- attribute 処理
+  uint8_t mapfloor = DUNMAP()->getMapFloor();
+  //dark
+  if( !(cell->attr & CellMaker::AATTR_DARK) ) {
+    //暗闇じゃなかったら明かり
+    ObjBase* o = area->createObj( m_dist, OBJID_TORCH );
+    setObjWall( o ); //壁に配置
+
+    //ろうそくも有りにする？暗闇も偶にろうそくとか置く？
+    //ObjBase* o = createObj( i, OBJID_CANDLE );
+    //m_blk[i]->setObjGround( o );  //床に配置
+  
+  }
+#if 0
+  //itemdrop (総数をカウントしておいて、全然無ければ最後に適当にばらまく？）
+  if( cell->attr & CellMaker::AATTR_ITEMDROP ) {
+      ObjDropItem* o = static_cast<ObjDropItem*>( area->createObj( m_dist, OBJID_DROPITEM ) );
+      if ( o ) {
+        ITEM* item = itGenerateFloor( mapfloor );
+        o->attachItem( item );
+        setObjCenter( o ); //通路上に置く
+      }
+  }
+
+  //treasure
+  if( cell->attr & CellMaker::AATTR_TREASURE ) {
+    //部屋によっては table とか別のコンテナにする？
+    ObjBase* o = area->createObj( m_dist, OBJID_CHEST );
+    if( o ) {
+      area->setupContainer( static_cast<ObjContainer*>(o), mapfloor, 0 ); //中身を入れる
+      setObjGround( o );
+    }
+  }
+#endif
 
 }
 
@@ -314,14 +351,16 @@ void Block::setObjWall( ObjBase* obj )
   bool center = false;
   by = 2;
   if ( isWall( BDIR_FAR ) ) { //奥側が壁なら中央に配置
-    bx = 1;
+    bx = (BLKTILEW/2-1);
     center = true;
   } else {
     //通路・ドアなら左右のどっちかに配置。両方もあり？
-    bx = (random(100) & 1) ? 0 : 3;
+    //  1  4 
+    // ==||==
+    bx = (random(100) & 1) ? (BLKTILEW/2-2) : (BLKTILEW/2+1);
   }
 
-  x = ( m_dist * BLKTILEW + bx) * TILEW + (center ? 4 : 0);
+  x = ( m_dist * BLKTILEW + bx) * TILEW + (center ? (TILEW/2) : 0);
   y = by * TILEH;
 
   x += obj->getOfstX();
@@ -335,7 +374,7 @@ void Block::setObjWall( ObjBase* obj )
 void Block::setObjGround( ObjBase* obj )
 {
   int16_t x, y;
-  x = ( m_dist * BLKTILEW + 2) * TILEW;
+  x = ( m_dist * BLKTILEW + (BLKTILEW/2)) * TILEW;
   y = 3 * TILEH;
 
   x += obj->getOfstX();
@@ -343,10 +382,13 @@ void Block::setObjGround( ObjBase* obj )
   obj->setPos( x, y );
 }
 
+/*
+    指定の object を床（中央）に配置する
+ */
 void Block::setObjCenter( ObjBase* obj )
 {
   int16_t x, y;
-  x = ( m_dist * BLKTILEW + 2) * TILEW;
+  x = ( m_dist * BLKTILEW + (BLKTILEW/2)) * TILEW;
   y = 4 * TILEH;
 
   x += obj->getOfstX();
@@ -354,10 +396,13 @@ void Block::setObjCenter( ObjBase* obj )
   obj->setPos( x, y );
 }
 
+/*
+    指定の object を天井に配置
+ */
 void Block::setObjCeiling( ObjBase* obj )
 {
   int16_t x, y;
-  x = ( m_dist * BLKTILEW + 2) * TILEW;
+  x = ( m_dist * BLKTILEW + (BLKTILEW/2)) * TILEW;
   y = 0 * TILEH;
 
   x += obj->getOfstX();
@@ -863,6 +908,8 @@ Map::~Map()
 
 void Map::create( uint8_t mapfloor )
 {
+  m_mapfloor = mapfloor;
+  
   //仮想マップ構築
   CellMaker* cm = new CellMaker();
   cm->make( mapfloor );
@@ -1410,6 +1457,8 @@ void CellMaker::make( uint8_t mapfloor )
 
   //部屋割当
   makeRoom();
+  //部屋の状態に合わせて cell の詳細設定
+  setupCell();
 
 
   //階段設置
@@ -1720,15 +1769,37 @@ void CellMaker::makeRoom()
     }
 
     //暗闇
-    if ( random(100) < 30 ) {
+    if ( random(100) < 25 ) { //floor で変える？
       ab->attr |= AATTR_DARK;
     }
-
 
     //各部屋専用初期化
     if ( !initRoomTbl[ ab->rtype ]( this, ab ) ) {
       //ダメだったら部屋をやめる
       ab->attr &= ~(AATTR_ROOM | AATTR_ITEMDROP | AATTR_TREASURE | AATTR_ENEMY);
+    }
+  }
+
+  //部屋以外の場所への設定
+  for( int8_t i=0; i<m_areacnt; i++ ) {
+    AREABASE* ab = &m_areabase[ areaidx[i] ];
+    if( ab->attr & AATTR_ROOM ) continue; //部屋は無視
+
+    //暗闇
+    if ( random(100) < 30 ) { //floor で変える？
+      ab->attr |= AATTR_DARK;
+    }
+
+    //敵
+    if( random(100) < 20 ) { //floor で変える？
+      ab->attr |= AATTR_ENEMY;
+      ab->enemynum += 1 + (ab->len-1);
+      if( ab->enemynum > 3 ) ab->enemynum = 3;
+    }
+
+    //落ちてるアイテム
+    if( random(100) < 10 ) { //floor で変える？
+      ab->attr |= AATTR_ITEMDROP;
     }
   }
 }
@@ -1787,6 +1858,36 @@ bool CellMaker::initRoomHall( CellMaker* cm, AREABASE* ab )
 {
   return true;
 }
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+void CellMaker::setupCell()
+{
+  for( int8_t i=0; i<m_areacnt; i++ ) {
+    AREABASE *ab = &m_areabase[i];
+    int8_t cx, cy;
+    cx = ab->sx;
+    cy = ab->sy;
+
+    for( int8_t j=0; j<ab->len; j++ ) {
+      CELL* c = &m_cell[ cy*TMAPH + cx ];
+      c->attr = 0;
+      //dark
+      if( ab->attr & AATTR_DARK ) c->attr |= AATTR_DARK; //暗闇はエリア全体に適用。偶に抜く？
+#if 0
+      //itemdrop
+      if( ab->attr & AATTR_ITEMDROP ) c->attr |= AATTR_ITEMDROP; //エリアの何処に置くか選ぶ。数もチェック。
+      //treasure
+      if( ab->attr & AATTR_TREASURE ) c->attr |= AATTR_TREASURE; //エリアの何処に置くか選ぶ。数もチェック。
+#endif      
+      
+      ab->fwdPos( cx, cy );
+    }
+    
+  }
+}
+
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------

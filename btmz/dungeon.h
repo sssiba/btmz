@@ -9,7 +9,7 @@
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-#define BLKTILEW 4 //１ブロックの横幅(タイル単位)
+#define BLKTILEW 6 //１ブロックの横幅(タイル単位)
 #define BLKTILEH 6
 #define TILEW 8    //１タイルの横幅
 #define TILEH 8
@@ -19,7 +19,7 @@
 #define TMAPH 10
 
 //エリア切替時の入口方向による位置オフセット
-#define ENTEROFSTH (TILEW + (TILEW/2)-2)
+#define ENTEROFSTH (TILEW * (BLKTILEW/2-1) + (TILEW/2)-2)
 #define ENTEROFSTV 4
 
 
@@ -109,8 +109,7 @@ public:
       AATTR_ITEMDROP = (1<<2), //アイテムが落ちている
       AATTR_TREASURE = (1<<3), //宝(部屋にのみ配置？)
       AATTR_TRAP = (1<<4),
-      AATTR_ROOM = (1<<5), //部屋(部屋である)
-      AATTR_CORRIDOR = (1<<6), //通路(部屋以外とすればわざわざ要らないかも)
+      AATTR_ROOM = (1<<5), //部屋(部屋である) -> 部屋じゃない場所 == 通路
     };
     //部屋の種類（フロアのタイプ、フロアによってどれがあるか決まる）
     enum : uint8_t {
@@ -166,6 +165,7 @@ public:
   bool randomObject( int8_t cellobj );
 
   void makeRoom();
+  void setupCell();
 
 #if defined( DBG_MAP )
   void DBGdumpMap();
@@ -399,12 +399,15 @@ public:
   //load する
   bool load();
 
+  inline uint8_t getMapFloor() { return m_mapfloor; }
+
 
 #if defined( DBG_MAP )
   void DBGout();
 #endif
 
 protected:
+  uint8_t m_mapfloor; //現在保持しているマップのフロア
   uint8_t m_areacnt;
   Area** m_area;
   int16_t m_homex, m_homey;
