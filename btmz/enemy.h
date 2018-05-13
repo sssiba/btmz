@@ -29,7 +29,7 @@ typedef struct EnemyData {
   uint8_t type; //type
 //  EnemyTemplate* base; //pic, name はテンプレートから引く。
   uint8_t area; //存在する areaID
-  uint8_t block; //自分の属する area 内ブロック
+//  uint8_t block; //自分の属する area 内ブロック
   uint8_t lvl;
   int16_t hpmax;
   int16_t hp;
@@ -46,15 +46,11 @@ typedef struct EnemyData {
 };
 
 
-
-
-
 /*
    敵データテンプレート
 */
 typedef void (*enFunc)(EnemyData*);
 typedef struct EnemyTemplate {
-//  EnemyPic* pic;
   enFunc fInit;
   enFunc fUpdate;
   enFunc fDraw;
@@ -64,6 +60,7 @@ typedef struct EnemyTemplate {
   uint16_t hpmax;
   uint16_t str;
   uint16_t def;
+  uint8_t w; //配置時の横幅
   Rect8 mvrect;
   Rect8 atrect;
   Rect8 dfrect;
@@ -96,9 +93,17 @@ extern int16_t enGetPlayerDist( EnemyData* ed ); //プレイヤーとのX軸上�
  *  敵を生成
  *  ent : 生成する敵の種類
  *  scl : 強さスケール
- *  return id
+ *  return EnemyData*
  */
-extern int8_t enCreate( ENTYPE ent, uint8_t scl, uint8_t area, uint8_t blk );
+extern EnemyData* enCreate( ENTYPE ent, uint8_t scl, uint8_t area );
+inline void enDelete( EnemyData* ed ) {
+  ed->type = ENTYPE_UNDEFINED;
+}
+
+inline void enSetPos( EnemyData* ed, uint16_t x, uint16_t y ) {
+  ed->x = x;
+  ed->y = y;
+}
 
 /*
  * プレイヤーの攻撃で受けるダメージを計算する

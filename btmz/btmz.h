@@ -32,7 +32,7 @@
 
 #define MAX_AREA 24   //１マップ内の最大エリア数
 #define MIN_AREA 3    //１マップ内の最低エリア数。ランダムに作るけど、これを下回る事は無いはず。
-#define MAX_BLOCK 8   //１エリア内の最大 block 数
+#define MAX_BLOCK 7   //１エリア内の最大 block 数
 #define MAX_OBJECT 24 //１エリア内の最大 object 数
 
 #define VER_SAVEDATA 1

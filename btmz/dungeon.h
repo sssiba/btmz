@@ -6,6 +6,8 @@
 
 #include "object.h"
 
+#include "enemy.h"
+
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -50,11 +52,22 @@ typedef union {
   } door;
 } BDIDATA;
 
-enum ObjType {
+enum ObjType : uint8_t {
   OBJ_EMPTY,
   OBJ_UPSTAIR,
   OBJ_DOWNSTAIR,
 };
+
+
+//x!x! 通れる・通れないの判定だけならやっぱり BG の番号が～以降とかで判定した方が良いかも
+enum : uint8_t {
+  BGATTR_BLOCK = (1<<0), //通過不能
+  BGATTR_ENTER = (1<<1), //入れる（ドアとか）
+
+  BGATTR_PUTENEMY = (1<<6), //enemy 配置可能(マップ生成時のenemyt配置場所決定時に使用するだけ)
+  BGATTR_PUTOBJ = (1<<7), //object 配置可能(マップ生成時のobject配置場所決定時に使用するだけ)
+};
+
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -87,6 +100,8 @@ public:
       uint8_t attr; //属性
       uint8_t rtype; //部屋の場合の種類
       uint8_t droplvlcorrection; //ドロップレベル補正
+      uint8_t numitemdrop; //落ちてるアイテム数
+      uint8_t numtreasure; //アイテム入りコンテナの数
       uint8_t enemynum;
       inline void fwdPos( int8_t& x, int8_t& y ) { x += getDirX(dir); y += getDirY(dir); }
     };
@@ -214,7 +229,7 @@ public:
   BDIDATA* getBDIData( uint8_t dir ) { return &m_bdidata[dir]; }
   inline uint8_t getDist() { return m_dist; }
 
-  void makeBG( uint8_t* out );
+  void makeBG( uint8_t* out, uint8_t* aout );
 
   bool isWall( uint8_t dir ); //指定の方向が壁か調べる
 
@@ -232,7 +247,7 @@ public:
   bool load( File& f );
    
 private:
-  void writeBGparts( const uint8_t* parts, uint8_t* out );
+  void writeBGparts( const uint8_t* parts, uint8_t* out, uint8_t* attr );
   
 private:
   BlockDirInfo m_dirinfo[BDIRMAX]; //左右奥手前の４方向の状況。壁とかドアとか何も無いとか。
@@ -262,7 +277,7 @@ public:
 
   BlockDir getEnterPos( uint8_t blk, int8_t prvarea, int8_t prvblk, int16_t& x, int16_t& y );
 
-  void makeBG( uint8_t* out );
+  void makeBG( uint8_t* out, uint8_t* aout );
 
   int16_t getWidth(); //横幅(dot)を返す
 
@@ -284,6 +299,15 @@ public:
   void removeObj( uint8_t idx );
   void setObjPosWall( ObjBase* obj );
   void setObjPosGround( ObjBase* obj );
+  
+
+  /*
+   Object をエリア全体のランダムな置ける場所に置く（奥側用。宝箱とかの）
+   attribute を使用するので、makeBG() を呼ぶ等して attribute を準備しておく必要がある。
+  */
+  bool setObjToRandomGround( ObjBase* obj );
+
+  bool setEnemyToRandom( EnemyData* ed );
   
   inline void getBlockTilePos( uint8_t blk, uint8_t bx, uint8_t by, int16_t& x, int16_t& y )
   {
@@ -348,6 +372,7 @@ public:
   inline Area* getCurArea() { return m_area[m_curareaidx]; } //現在の area を取得
   inline uint8_t getCurAreaIdx() { return m_curareaidx; } //現在の area の index を取得
   inline uint8_t* getAreaBG() { return m_areaBG; } //現在の area の BG map を取得
+  inline uint8_t* getAttrBG() { return m_attrBG; } //現在の area の BG attribute を取得
   Block* getBlock( int16_t x, int16_t y );
 
   /*
@@ -386,6 +411,10 @@ public:
 
   //指定位置(マップ座標)のBGを取得
   uint8_t getMapBG( int16_t x, int16_t y );
+  //指定位置(マップ座標)のBG attributeを取得
+  uint8_t getAttrBG( int16_t x, int16_t y );
+  //指定位置(タイル座標)の指定のBG attributeをクリア
+  void clrAttrBG( uint8_t bx, uint8_t by, uint8_t attr );
 
   //指定ブロックの指定タイルの、現在のエリアの座標上の位置を取得
   inline void getBlockTilePos( uint8_t blk, uint8_t bx, uint8_t by, int16_t& x, int16_t& y )
@@ -424,6 +453,7 @@ protected:
    * 0c: 222222
    */
   uint8_t m_areaBG[BLKTILEW*BLKTILEH*MAX_BLOCK]; //x!x! 引数で渡さなくても良い様にグローバル変数にする？
+  uint8_t m_attrBG[BLKTILEW*BLKTILEH*MAX_BLOCK]; //x!x! BG の attribute (通過可能とかのフラグ？ m_areaBG の上位ビットとかに統合する？ bgは0-63なので、上位2bit余るはず)
 };
 
 
@@ -439,6 +469,9 @@ extern void dunFinish();
 extern Map* g_map;
 
 #define DUNMAP() (g_map)
+
+#define BGisBlock( v ) (v & BGATTR_BLOCK)
+#define BGisEnter( v ) (v & BGATTR_ENTER)
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------

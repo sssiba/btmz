@@ -140,7 +140,15 @@ public:
 
   void setPalette( Gamebuino_Meta::Graphics* grp, int idx=0 ); //0 == default
 
+  /*
+   * 指定の配列の中身をシャッフルする
+   */
   void shuffle( uint8_t* ary, uint8_t sz );
+
+  /*
+   * 指定の配列に、シャッフルされた 0 ～ (sz-1) までの index を入れる
+   */
+   void getShuffledIdx( uint8_t* ary, uint8_t sz );
 
   GameFlow& getFlow() { return flow; }
 

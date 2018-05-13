@@ -150,6 +150,12 @@ void GameMain::shuffle( uint8_t* ary, uint8_t sz )
   delete[] tmp;
 }
 
+void GameMain::getShuffledIdx( uint8_t* ary, uint8_t sz )
+{
+  for( uint8_t i=0; i<sz; i++ ) ary[i] = i;
+  shuffle( ary, sz );
+}
+
 /*
  * fix16 の sin を返す
  * a 角度 (fixではない通常の整数)

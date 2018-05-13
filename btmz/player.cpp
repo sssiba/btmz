@@ -319,16 +319,14 @@ void modeMove()
   //移動可能チェック
   //とりあえず BG を見る
   cx += mv;
-  bool movable = true;
-  uint8_t bg = 0;
 
   //エリアの端では LEFT, RIGHT の通路へ出入り
   if ( (plact == PLPHASE_MV_LEFT) && enter( BDIR_LEFT, cx, cy ) ) return;
   if ( (plact == PLPHASE_MV_RIGHT) && enter( BDIR_RIGHT, cx, cy ) ) return;
 
   //そうで無ければ移動可能か調べる
-  bg = DUNMAP()->getMapBG( TOINT(cx), TOINT(cy) );
-  movable = (bg == 0 );
+  uint8_t bgattr = DUNMAP()->getAttrBG( TOINT(cx), TOINT(cy) );
+  bool movable = !BGisBlock( bgattr );
 
 
   //敵にぶつかるか調べる
@@ -341,7 +339,6 @@ void modeMove()
       movable = false;
     }
   }
-
 
   if ( movable ) {
     g_plx += mv;
@@ -987,6 +984,7 @@ bool enter( uint8_t bdir, int16_t cx, int16_t cy )
     case BDIR_NEAR:
       {
         cy += getDirY( bdir ) * TILEH;
+#if 0
         uint8_t bg = DUNMAP()->getMapBG( cx, cy );
         if ( bg == 4 || bg == 7 || bg == 0
              || bg == 19 || bg == 21 //奥のドア
@@ -994,6 +992,10 @@ bool enter( uint8_t bdir, int16_t cx, int16_t cy )
            ) {
           ok = true;
         }
+#else
+        uint8_t bgattr = DUNMAP()->getAttrBG( cx, cy );
+        ok = BGisEnter( bgattr );
+#endif
       }
       break;
     case BDIR_LEFT: //左右の出入り
@@ -1006,6 +1008,7 @@ bool enter( uint8_t bdir, int16_t cx, int16_t cy )
 
           ok = true;
         } else {
+#if 0
           uint8_t bg = DUNMAP()->getMapBG( cx, cy );
           if ( bg == 28 || bg == 31 //左右ドア
              ) {
@@ -1015,6 +1018,15 @@ bool enter( uint8_t bdir, int16_t cx, int16_t cy )
             sprintf( s, "enter bg [%d] %d", bdir, bg );
             TRACE( s );
           }
+#else
+          uint8_t bgattr = DUNMAP()->getAttrBG( cx, cy );
+          ok = BGisEnter( bgattr );
+          if( ok ) {
+            char s[64];
+            sprintf( s, "enter bg [%d] %d", bdir, DUNMAP()->getMapBG(cx,cy) );
+            TRACE( s );
+          }
+#endif
         }
       }
       break;

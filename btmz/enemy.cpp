@@ -45,6 +45,7 @@ EnemyTemplate g_enTemplate[ ENTYPEMAX ] = {
     15, //hpmax
     5, //sr
     3, //def
+    16, //w
     { -8, -8, 16, 8 }, //移動当たり判定
     {  8, -6,  4, 3 }, //攻撃当たり判定
     { -8, -8, 16, 8 }, //ダメージ当たり判定
@@ -59,6 +60,7 @@ EnemyTemplate g_enTemplate[ ENTYPEMAX ] = {
     20, //hpmax
     3, //str
     5, //def
+    6, //w
     { -3, -16, 6, 16 }, //移動当たり判定
     {  3, -10, 5, 4 },  //攻撃当たり判定
     { -4, -16, 8, 16 }, //ダメージ当たり判定
@@ -73,6 +75,7 @@ EnemyTemplate g_enTemplate[ ENTYPEMAX ] = {
     30, //hpmax
     8, //str
     8, //def
+    12, //w
     { -6, -16, 12, 16 }, //移動当たり判定
     {  6, -9,  6, 4 }, //攻撃当たり判定
     { -6, -16, 12, 16 }, //ダメージ当たり判定
@@ -159,14 +162,14 @@ void enFinish()
   
 }
 
-int8_t enCreate( ENTYPE ent, uint8_t scl, uint8_t area, uint8_t blk )
+EnemyData* enCreate( ENTYPE ent, uint8_t scl, uint8_t area )
 {
   //empty
   int8_t i=0;
   for( i=0; i<MAX_ENEMYENTRY; i++ ) {
     if( g_endata[i].type == ENTYPE_UNDEFINED ) break;
   }
-  if( i == MAX_ENEMYENTRY ) return -1;
+  if( i == MAX_ENEMYENTRY ) return NULL;
 
   EnemyData* ed = &g_endata[i];
   ed->type = ent;
@@ -179,9 +182,9 @@ int8_t enCreate( ENTYPE ent, uint8_t scl, uint8_t area, uint8_t blk )
   ed->def = et->def;
   ed->stat = 0;
   ed->area = area;
-  ed->block = blk;
-  ed->x = TOFIX( blk * BLKTILEW * TILEW + (BLKTILEW * TILEW / 2) );
-  ed->y = TOFIX( (BLKTILEH - 2) * TILEH + (TILEH / 2) );
+//  ed->block = blk;
+//  ed->x = x;//TOFIX( blk * BLKTILEW * TILEW + (BLKTILEW * TILEW / 2) );
+//  ed->y = y;//TOFIX( (BLKTILEH - 2) * TILEH + (TILEH / 2) );
   ed->flip = true;
   ed->anm = 0;
   ed->anmwait = 0;
@@ -189,8 +192,9 @@ int8_t enCreate( ENTYPE ent, uint8_t scl, uint8_t area, uint8_t blk )
 
   et->fInit( ed );
   
-  return i;
+  return ed;
 }
+
 
 /*
  * 敵とプレイヤーとの x 軸上の距離を取得
@@ -428,9 +432,8 @@ void enSlimeUpdate( EnemyData* ed )
   
     cx += mv;
     bool movable = true;
-    uint8_t bg = 0;
-    bg = DUNMAP()->getMapBG( TOINT(cx), TOINT(cy) );
-    movable = (bg == 0 );
+    uint8_t bgattr = DUNMAP()->getAttrBG( TOINT(cx), TOINT(cy) );
+    movable = BGisBlock(bgattr);
 
     EnemyTemplate* et = ENTPL( ed->type );
     { //移動当たり判定
@@ -535,9 +538,8 @@ void enGhostUpdate( EnemyData* ed )
   
     cx += mv;
     bool movable = true;
-    uint8_t bg = 0;
-    bg = DUNMAP()->getMapBG( TOINT(cx), TOINT(cy) );
-    movable = (bg == 0 );
+    uint8_t bgattr = DUNMAP()->getAttrBG( TOINT(cx), TOINT(cy) );
+    movable = BGisBlock(bgattr);
 
     EnemyTemplate* et = ENTPL( ed->type );
     { //移動当たり判定
@@ -642,9 +644,8 @@ void enOrcUpdate( EnemyData* ed )
   
     cx += mv;
     bool movable = true;
-    uint8_t bg = 0;
-    bg = DUNMAP()->getMapBG( TOINT(cx), TOINT(cy) );
-    movable = (bg == 0 );
+    uint8_t bgattr = DUNMAP()->getAttrBG( TOINT(cx), TOINT(cy) );
+    movable = BGisBlock(bgattr);
 
     EnemyTemplate* et = ENTPL( ed->type );
     { //移動当たり判定

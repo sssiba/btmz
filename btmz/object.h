@@ -13,6 +13,7 @@
  * x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!
  * ・Object は Area 毎に管理され、Area をまたいで移動する事はない。
  * ・Object の生成・破棄は、必ず Area::createObj(), Area::removeObj() を使用して行う。
+ * ・基本的に、X座標は表示上の中央、Y座標は一番上を表している。
  * x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!
  */
 
