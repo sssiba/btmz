@@ -15,6 +15,7 @@
 #define BLKTILEH 6
 #define TILEW 8    //１タイルの横幅
 #define TILEH 8
+#define TILELINEW (BLKTILEW * MAX_BLOCK) //１エリアに於けるタイル最大横幅
 
 //仮想マップのセルサイズ
 #define TMAPW 10
@@ -63,9 +64,13 @@ enum ObjType : uint8_t {
 enum : uint8_t {
   BGATTR_BLOCK = (1<<0), //通過不能
   BGATTR_ENTER = (1<<1), //入れる（ドアとか）
+  BGATTR_FLIPH = (1<<2), //水平方向反転
+  BGATTR_FLIPV = (1<<3), //垂直方向反転
 
   BGATTR_PUTENEMY = (1<<6), //enemy 配置可能(マップ生成時のenemyt配置場所決定時に使用するだけ)
   BGATTR_PUTOBJ = (1<<7), //object 配置可能(マップ生成時のobject配置場所決定時に使用するだけ)
+
+  BGATTR_FLIPHV = (BGATTR_FLIPH|BGATTR_FLIPV),
 };
 
 //--------------------------------------------------------------------------
@@ -128,6 +133,7 @@ public:
     };
     //部屋の種類（フロアのタイプ、フロアによってどれがあるか決まる）
     enum : uint8_t {
+      RTYPE_CORRIDOR, //通路（部屋じゃないけど）
       RTYPE_BARRACKS, //兵舎（敵が一杯？強い敵がいる？）
       RTYPE_PRIVATEROOM, //個室（テーブルとか家具がある？）
       RTYPE_PRISON, //牢獄（壁が牢屋になってる？）
@@ -141,19 +147,35 @@ public:
       RTYPE_HALL, //広間（大きいエリアのみ？なんかある？）
       MAXRTYPE
     };
+    //部屋に出現する map object flag
+    enum : uint16_t {
+      MOBJ_NONE = 0,
+      MOBJ_TABLE = (1<<0), //テーブル
+      MOBJ_TAPESTRY = (1<<1), //タペストリー
+      MOBJ_STATUE = (1<<2), //彫像
+      MOBJ_FOUNTAIN = (1<<3), //泉
+      MOBJ_SKELTON = (1<<4), //壁の骸骨
+      MOBJ_TOMB = (1<<5), //墓石
+      MOBJ_SHELF = (1<<6), //棚
+      MOBJ_CHAIN = (1<<7), //壁の鎖
+    };
     //部屋の情報
     typedef struct {
       uint8_t minsize; //最低blockサイズ
+      uint8_t brokenrate; //壊れ度(壁とか壊れた感じにする割合(0-100))
       uint8_t itemrate; //アイテムが落ちてる割合(0-100)
       uint8_t chestrate; //宝箱がある割合(0-100)
       uint8_t droplvlcorrection; //ドロップレベル補正
       uint8_t enemyrate; //敵出現率
       uint8_t minenemy; //敵最小数
       uint8_t maxenemy; //敵最大数
+      uint8_t minmapobj; //最低限配置する mapobject 数
+      uint16_t mapobjflag; //出現する mapobject
     } ROOMDATA;
 
 private:
   typedef bool (*InitRoomFunc)( CellMaker*, AREABASE* );
+  static bool initRoomCorridor( CellMaker* cm, AREABASE* ab ); //部屋じゃないけど
   static bool initRoomBarracks( CellMaker* cm, AREABASE* ab );
   static bool initRoomPrivateRoom( CellMaker* cm, AREABASE* ab );
   static bool initRoomPrison( CellMaker* cm, AREABASE* ab );
@@ -194,8 +216,9 @@ private:
   CELL m_cell[ TMAPW * TMAPH ];
   AREABASE m_areabase[ MAX_AREA ];
   uint8_t m_areacnt;
-  static const ROOMDATA m_roomdata[ MAXRTYPE ];
   uint8_t m_tgtfloor;
+public:
+  static const ROOMDATA m_roomdata[ MAXRTYPE ];
 };
 
 
@@ -221,7 +244,7 @@ public:
   ~Block();
 
 
-  void draw( const uint8_t* bg, int16_t x, int16_t y );
+  void draw( const uint8_t* bg, const uint8_t* attr, int16_t x, int16_t y );
   void setInfo( uint8_t dir, BlockDirInfo info );
   inline BlockDirInfo getInfo( uint8_t dir ) {
     return m_dirinfo[dir];
@@ -229,7 +252,7 @@ public:
   BDIDATA* getBDIData( uint8_t dir ) { return &m_bdidata[dir]; }
   inline uint8_t getDist() { return m_dist; }
 
-  void makeBG( uint8_t* out, uint8_t* aout );
+  void makeBG( Area* area, uint8_t* out, uint8_t* aout );
 
   bool isWall( uint8_t dir ); //指定の方向が壁か調べる
 
@@ -247,7 +270,7 @@ public:
   bool load( File& f );
    
 private:
-  void writeBGparts( const uint8_t* parts, uint8_t* out, uint8_t* attr );
+  void writeBGparts( Area* area, const uint8_t* parts, uint8_t* out, uint8_t* attr );
   
 private:
   BlockDirInfo m_dirinfo[BDIRMAX]; //左右奥手前の４方向の状況。壁とかドアとか何も無いとか。
@@ -277,9 +300,13 @@ public:
 
   BlockDir getEnterPos( uint8_t blk, int8_t prvarea, int8_t prvblk, int16_t& x, int16_t& y );
 
-  void makeBG( uint8_t* out, uint8_t* aout );
+  void makeBG( uint8_t id, uint8_t* out, uint8_t* aout );
 
   int16_t getWidth(); //横幅(dot)を返す
+
+  inline uint8_t getRoomType() {
+    return m_roomtype;
+  }
 
 #if defined( DBG_MAP )
   //for Debug
@@ -292,13 +319,11 @@ public:
    * Object の生成
    * x!x! Object は全てこれを使用して生成する事。勝手に作ると、Area 削除時に自動で削除されない事になるかも。
    */
-  ObjBase* createObj( uint8_t blk, uint8_t objid );
-  bool entryObj( uint8_t blk, ObjBase* obj );
+  ObjBase* createObj( uint8_t objid );
+  bool entryObj( ObjBase* obj );
   ObjBase* getObj( uint8_t idx );
   void removeObj( ObjBase* obj );
   void removeObj( uint8_t idx );
-  void setObjPosWall( ObjBase* obj );
-  void setObjPosGround( ObjBase* obj );
   
 
   /*
@@ -325,11 +350,25 @@ public:
 
 private:
   ObjBase* createObjInstance( uint8_t objid );
+  /*
+   * object が占めるタイルのサイズを取得
+   */
+  void getObjTileSize( ObjBase* obj, int8_t& tw, int8_t& th );
+  bool isSetAttrRect( uint8_t x, uint8_t y, int8_t w, int8_t h, uint8_t attr );
+  void clrAttrRect( uint8_t x, uint8_t y, int8_t w, int8_t h, uint8_t attr );
+
+  /*
+   * object が占める場所の指定の BG attr をクリアする
+   * object の座標、Picのサイズ等を元に行うので、場所設定など終わった後に呼ばないと駄目
+   */
+  void clrAttrByObj( ObjBase* obj, uint8_t attr );
+
 
 protected:
   uint8_t m_blkcnt;
   Block** m_blk;
   ObjBase* m_obj[MAX_OBJECT];
+  uint8_t m_roomtype;
 
 #if defined( DBG_MAP )
 public:
@@ -411,10 +450,25 @@ public:
 
   //指定位置(マップ座標)のBGを取得
   uint8_t getMapBG( int16_t x, int16_t y );
+  //タイル座標で BG 取得
+  inline uint8_t getMapBGByTile( uint8_t tx, uint8_t ty )
+  {
+    return m_areaBG[ ty * TILELINEW + tx ];
+  }
   //指定位置(マップ座標)のBG attributeを取得
   uint8_t getAttrBG( int16_t x, int16_t y );
+  //タイル座標で BG attribute 取得
+  inline uint8_t getAttrBGByTile( uint8_t tx, uint8_t ty )
+  {
+    return m_attrBG[ ty * TILELINEW + tx ];
+  }
+
+  
   //指定位置(タイル座標)の指定のBG attributeをクリア
-  void clrAttrBG( uint8_t bx, uint8_t by, uint8_t attr );
+  inline void clrAttrBGByTile( uint8_t bx, uint8_t by, uint8_t attr )
+  {
+    m_attrBG[ by * TILELINEW + bx ] &= ~(attr);
+  }
 
   //指定ブロックの指定タイルの、現在のエリアの座標上の位置を取得
   inline void getBlockTilePos( uint8_t blk, uint8_t bx, uint8_t by, int16_t& x, int16_t& y )
@@ -430,6 +484,7 @@ public:
 
   inline uint8_t getMapFloor() { return m_mapfloor; }
 
+  inline uint32_t getBaseSeed() { return m_baseseed; }
 
 #if defined( DBG_MAP )
   void DBGout();
@@ -441,19 +496,10 @@ protected:
   Area** m_area;
   int16_t m_homex, m_homey;
   uint8_t m_curareaidx;
+  uint32_t m_baseseed; //xorshift32 の乱数シード。create() 毎に再設定される。
 
-  /*
-   * 各ブロックが１ライン毎に並ぶのではなく、
-   * 00: 001122
-   * 06: 001122
-   * 0c: 001122
-   * ↓の様にブロック丸ごと単位に並ぶ
-   * 00: 000000
-   * 06: 111111
-   * 0c: 222222
-   */
-  uint8_t m_areaBG[BLKTILEW*BLKTILEH*MAX_BLOCK]; //x!x! 引数で渡さなくても良い様にグローバル変数にする？
-  uint8_t m_attrBG[BLKTILEW*BLKTILEH*MAX_BLOCK]; //x!x! BG の attribute (通過可能とかのフラグ？ m_areaBG の上位ビットとかに統合する？ bgは0-63なので、上位2bit余るはず)
+  uint8_t m_areaBG[TILELINEW*BLKTILEH]; //x!x! 引数で渡さなくても良い様にグローバル変数にする？
+  uint8_t m_attrBG[TILELINEW*BLKTILEH]; //x!x! BG の attribute (通過可能とかのフラグ？ m_areaBG の上位ビットとかに統合する？ bgは0-63なので、上位2bit余るはず)
 };
 
 

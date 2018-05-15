@@ -24,6 +24,8 @@
 
 #define DBG_SAVELOAD
 
+#define DBG_SHOW_ROOMNAME
+
 #define SCRW 80
 #define SCRH 64
 
@@ -33,9 +35,9 @@
 #define MAX_AREA 24   //１マップ内の最大エリア数
 #define MIN_AREA 3    //１マップ内の最低エリア数。ランダムに作るけど、これを下回る事は無いはず。
 #define MAX_BLOCK 7   //１エリア内の最大 block 数
-#define MAX_OBJECT 24 //１エリア内の最大 object 数
+#define MAX_OBJECT 32 //１エリア内の最大 object 数
 
-#define VER_SAVEDATA 1
+#define VER_SAVEDATA 2
 
 #define MAX_PLITEM 16 //プレイヤーの持てるアイテム数
 enum { //装備可能箇所

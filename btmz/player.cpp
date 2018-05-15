@@ -1001,6 +1001,7 @@ bool enter( uint8_t bdir, int16_t cx, int16_t cy )
     case BDIR_LEFT: //左右の出入り
     case BDIR_RIGHT:
       {
+#if 0
         if ( ((TOINT(g_plx) - 4) < 0) || ((TOINT(g_plx) + 4) >= (DUNMAP()->getCurArea()->getWidth())) ) {
           char s[64];
           sprintf( s, "enter pos [%d] %d  %d", bdir, g_plx, DUNMAP()->getCurArea()->getWidth() );
@@ -1028,6 +1029,15 @@ bool enter( uint8_t bdir, int16_t cx, int16_t cy )
           }
 #endif
         }
+#else
+        uint8_t bgattr = DUNMAP()->getAttrBG( cx, cy );
+        ok = BGisEnter( bgattr );
+        if( ok ) {
+          char s[64];
+          sprintf( s, "enter bg [%d] %d", bdir, DUNMAP()->getMapBG(cx,cy) );
+          TRACE( s );
+        }
+#endif
       }
       break;
   }

@@ -8,6 +8,8 @@
 
 #include "enemy.h"
 
+
+
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -62,44 +64,51 @@ void dunFinish()
   BGidx(絵のindex。絵は同じでも attribute が異なる場合がある), Attr
 
   ここまで細かく設定出来なくても良い気もするけど、後でやりたくなった時の為にやっておく
- */
+
+  x!x! 左右反転使えばもっと少なくて済むけどどうしよう
+*/
 static const  uint8_t g_BGchip[] PROGMEM = {
-   0, 0, //0:空白
-   1, (BGATTR_BLOCK|BGATTR_PUTOBJ|BGATTR_PUTENEMY), //1:奥側壁
-   2, (BGATTR_ENTER), //2:奥通路左上
-   3, (BGATTR_ENTER), //3:奥通路左中
-   4, (BGATTR_ENTER), //4:奥通路左下
-   5, (BGATTR_ENTER), //5:奥通路右上
-   6, (BGATTR_ENTER), //6:奥通路右中
-   7, (BGATTR_ENTER), //7:奥通路右下
-   8, (BGATTR_BLOCK), //8:左壁一番上
-   9, (BGATTR_BLOCK), //9:左壁上
-  10, (BGATTR_BLOCK), //10:左壁中
-  11, (BGATTR_BLOCK), //11:左壁下
-  12, (BGATTR_BLOCK), //12:左壁一番下
-  13, (BGATTR_BLOCK), //13:右壁一番上
-  14, (BGATTR_BLOCK), //14:右壁上
-  15, (BGATTR_BLOCK), //15:右壁中
-  16, (BGATTR_BLOCK), //16:右壁下
-  17, (BGATTR_BLOCK), //17:右壁一番下
-  18, (BGATTR_ENTER), //18:奥ドア左上
-  19, (BGATTR_ENTER), //19:奥ドア左下
-  20, (BGATTR_ENTER), //20:奥ドア右上
-  21, (BGATTR_ENTER), //21:奥ドア右下
-  22, (BGATTR_ENTER), //22:手前ドア一番左
-  23, (BGATTR_ENTER), //23:手前ドア左
-  24, (BGATTR_ENTER), //24:手前ドア右
-  25, (BGATTR_ENTER), //25:手前ドア一番右
-  26, (BGATTR_ENTER), //26:左ドア上
-  27, (BGATTR_ENTER), //27:左ドア中
-  28, (BGATTR_ENTER), //28:左ドア下
-  29, (BGATTR_ENTER), //29:右ドア上
-  30, (BGATTR_ENTER), //30:右ドア中
-  31, (BGATTR_ENTER), //31:右ドア下
-   0, (BGATTR_ENTER), //32:下側通路(上下はエリア切り替え時の移動だけなので、ENTERの付いた空白が必要)
-   1, (BGATTR_BLOCK|BGATTR_PUTENEMY), //33:手前壁(こいつは PUTOBJ がついてない)
-   4, (BGATTR_ENTER), //34:手前通路左
-   7, (BGATTR_ENTER), //35:手前通路右
+  0, 0, //0:空白
+  1, (BGATTR_BLOCK | BGATTR_PUTOBJ | BGATTR_PUTENEMY), //1:奥側壁
+  2, (BGATTR_ENTER), //2:奥通路左上
+  3, (BGATTR_ENTER), //3:奥通路左中
+  2, (BGATTR_ENTER|BGATTR_FLIPV), //4:奥通路左下
+  2, (BGATTR_ENTER|BGATTR_FLIPH), //5:奥通路右上
+  3, (BGATTR_ENTER|BGATTR_FLIPH), //6:奥通路右中
+  2, (BGATTR_ENTER|BGATTR_FLIPHV), //7:奥通路右下
+  4, (BGATTR_BLOCK), //8:左壁一番上
+  5, (BGATTR_BLOCK), //9:左壁上
+  6, (BGATTR_BLOCK), //10:左壁中
+  5, (BGATTR_BLOCK|BGATTR_FLIPV), //11:左壁下
+  4, (BGATTR_BLOCK|BGATTR_FLIPV), //12:左壁一番下
+  4, (BGATTR_BLOCK|BGATTR_FLIPH), //13:右壁一番上
+  5, (BGATTR_BLOCK|BGATTR_FLIPH), //14:右壁上
+  6, (BGATTR_BLOCK|BGATTR_FLIPH), //15:右壁中
+  5, (BGATTR_BLOCK|BGATTR_FLIPHV), //16:右壁下
+  4, (BGATTR_BLOCK|BGATTR_FLIPHV), //17:右壁一番下
+  7, (BGATTR_ENTER), //18:奥ドア左上
+  8, (BGATTR_ENTER), //19:奥ドア左下
+  9, (BGATTR_ENTER), //20:奥ドア右上
+  10, (BGATTR_ENTER), //21:奥ドア右下
+  11, (BGATTR_ENTER), //22:手前ドア一番左
+  12, (BGATTR_ENTER), //23:手前ドア左
+  12, (BGATTR_ENTER|BGATTR_FLIPH), //24:手前ドア右
+  11, (BGATTR_ENTER|BGATTR_FLIPH), //25:手前ドア一番右
+  13, (BGATTR_ENTER), //26:左ドア上
+  14, (BGATTR_ENTER), //27:左ドア中
+  15, (BGATTR_ENTER), //28:左ドア下
+  13, (BGATTR_ENTER|BGATTR_FLIPH), //29:右ドア上
+  14, (BGATTR_ENTER|BGATTR_FLIPH), //30:右ドア中
+  15, (BGATTR_ENTER|BGATTR_FLIPH), //31:右ドア下
+
+  0, (BGATTR_ENTER), //32:左右通路時の通路の空白
+  16, (BGATTR_BLOCK), //33:左通路時の壁
+  17, (BGATTR_BLOCK), //34:右通路時の壁
+
+  0, (BGATTR_ENTER), //35:下側通路(上下はエリア切り替え時の移動だけなので、ENTERの付いた空白が必要)
+  1, (BGATTR_BLOCK|BGATTR_PUTENEMY), //36:手前壁(こいつは PUTOBJ がついてない)
+  2, (BGATTR_ENTER|BGATTR_FLIPV), //37:手前通路左
+  2, (BGATTR_ENTER|BGATTR_FLIPHV), //38:手前通路右
 };
 
 /*
@@ -138,23 +147,28 @@ static const uint8_t farDoor[] PROGMEM = { //奥のドア x!x! ドア部分だ�
 static const uint8_t nearWall[] PROGMEM = { //手前の壁
   0, 5, //x, y
   6, 1, //w, h
-  33, 33, 33, 33, 33, 33,
+  36, 36, 36, 36, 36, 36,
 };
 static const uint8_t nearCorridor[] PROGMEM = { //手前の通路
   0, 5, //x, y
   6, 1, //w, h
-  33, 34, 32, 32, 35, 33,
+  36, 37, 35, 35, 38, 36,
 };
 static const uint8_t nearDoor[] PROGMEM = { //手前のドア
   0, 5, //x, y
   6, 1, //w, h
-  33, 22, 23, 24, 25, 33,
+  36, 22, 23, 24, 25, 36,
 };
 
 static const uint8_t leftWall[] PROGMEM = { //左の壁
   0, 0,
   1, 5,
   8, 9, 10, 11, 12,
+};
+static const uint8_t leftCorridor[] PROGMEM = { //左通路
+  0, 1,
+  1, 5,
+  33, 33, 33, 32, 33,
 };
 static const uint8_t leftDoor[] PROGMEM = { //左のドア
   0, 0,
@@ -167,7 +181,11 @@ static const uint8_t rightWall[] PROGMEM = { //右の壁
   1, 5,
   13, 14, 15, 16, 17,
 };
-
+static const uint8_t rightCorridor[] PROGMEM = { //右通路
+  5, 1,
+  1, 5,
+  34, 34, 34, 32, 34,
+};
 static const uint8_t rightDoor[] PROGMEM = { //右のドア
   5, 0,
   1, 5,
@@ -256,16 +274,16 @@ Block::Block( Area* area, CellMaker* cm, CellMaker::AREABASE* abase, CellMaker::
   switch ( cell->mapobject ) {
     case CellMaker::O_UPSTAIR:
       {
-        ObjUpStair* o = static_cast<ObjUpStair*>( area->createObj( m_dist, OBJID_UPSTAIR ) );
-        if( o ) {
+        ObjUpStair* o = static_cast<ObjUpStair*>( area->createObj( OBJID_UPSTAIR ) );
+        if ( o ) {
           setObjCeiling( o );
         }
       }
       break;
     case CellMaker::O_DOWNSTAIR:
       {
-        ObjDownStair* o = static_cast<ObjDownStair*>( area->createObj( m_dist, OBJID_DOWNSTAIR ) );
-        if( o ) {
+        ObjDownStair* o = static_cast<ObjDownStair*>( area->createObj( OBJID_DOWNSTAIR ) );
+        if ( o ) {
           setObjGround( o );
         }
       }
@@ -274,36 +292,39 @@ Block::Block( Area* area, CellMaker* cm, CellMaker::AREABASE* abase, CellMaker::
 
 
   //--- attribute 処理
+#if 0
   uint8_t mapfloor = DUNMAP()->getMapFloor();
   //dark
-  if( !(cell->attr & CellMaker::AATTR_DARK) ) {
+  if ( !(cell->attr & CellMaker::AATTR_DARK) ) {
     //暗闇じゃなかったら明かり
-    ObjBase* o = area->createObj( m_dist, OBJID_TORCH );
-    if( o ) {
+    ObjBase* o = area->createObj( OBJID_TORCH );
+    if ( o ) {
       setObjWall( o ); //壁に配置
     }
 
     //ろうそくも有りにする？暗闇も偶にろうそくとか置く？
-    //ObjBase* o = createObj( i, OBJID_CANDLE );
+    //ObjBase* o = createObj( OBJID_CANDLE );
     //m_blk[i]->setObjGround( o );  //床に配置
-  
   }
+#endif
+
+  
 #if 0
   //itemdrop (総数をカウントしておいて、全然無ければ最後に適当にばらまく？）
-  if( cell->attr & CellMaker::AATTR_ITEMDROP ) {
-      ObjDropItem* o = static_cast<ObjDropItem*>( area->createObj( m_dist, OBJID_DROPITEM ) );
-      if ( o ) {
-        ITEM* item = itGenerateFloor( mapfloor );
-        o->attachItem( item );
-        setObjCenter( o ); //通路上に置く
-      }
+  if ( cell->attr & CellMaker::AATTR_ITEMDROP ) {
+    ObjDropItem* o = static_cast<ObjDropItem*>( area->createObj( OBJID_DROPITEM ) );
+    if ( o ) {
+      ITEM* item = itGenerateFloor( mapfloor );
+      o->attachItem( item );
+      setObjCenter( o ); //通路上に置く
+    }
   }
 
   //treasure
-  if( cell->attr & CellMaker::AATTR_TREASURE ) {
+  if ( cell->attr & CellMaker::AATTR_TREASURE ) {
     //部屋によっては table とか別のコンテナにする？
-    ObjBase* o = area->createObj( m_dist, OBJID_CHEST );
-    if( o ) {
+    ObjBase* o = area->createObj( OBJID_CHEST );
+    if ( o ) {
       area->setupContainer( static_cast<ObjContainer*>(o), mapfloor, 0 ); //中身を入れる
       setObjGround( o );
     }
@@ -322,9 +343,11 @@ void Block::setInfo( uint8_t dir, BlockDirInfo info )
   m_dirinfo[dir] = info;
 }
 
-void Block::writeBGparts( const uint8_t* parts, uint8_t* out, uint8_t* attr )
+void Block::writeBGparts( Area* area, const uint8_t* parts, uint8_t* out, uint8_t* attr )
 {
   if ( !parts ) return;
+
+  const CellMaker::ROOMDATA* rd = &CellMaker::m_roomdata[ area->getRoomType() ];
 
   uint8_t x, y, w, h;
   x = *parts++;
@@ -334,20 +357,39 @@ void Block::writeBGparts( const uint8_t* parts, uint8_t* out, uint8_t* attr )
   for ( int i = y; i < h; i++ ) {
     for ( int j = x; j < w; j++ ) {
       uint16_t bg = *parts++;
-      out[ j + i * BLKTILEW ] = g_BGchip[ bg*2+0 ];
-      attr[ j+ i * BLKTILEW ] = g_BGchip[ bg*2+1 ];
+      uint8_t frm = g_BGchip[bg * 2 + 0];
+
+      
+      if ( (frm == 1) && //壁を違うパターンと置き換えてみるテスト
+           ((gamemain.randxs32()%100) < rd->brokenrate)
+         ) {
+        frm = 18; //壊れ壁
+      }
+      
+      out[ j + i * TILELINEW ] = frm;
+      attr[ j + i * TILELINEW ] = g_BGchip[ bg * 2 + 1 ];
     }
   }
 }
 
-void Block::draw( const uint8_t* bg, int16_t x, int16_t y )
+/*
+ * bg ... 描画するブロックの左上ブロック
+ * x, y ... 描画するブロックの左上ブロックの座標
+ */
+void Block::draw( const uint8_t* bg, const uint8_t* attr, int16_t x, int16_t y )
 {
   int16_t tx, ty, dx, dy;
 
   for ( int i = 0; i < BLKTILEH; i++ ) {
     for ( int j = 0; j < BLKTILEW; j++ ) {
-      getPic( PIC_DUNGEONBG )->setFrame( bg[ j + i * BLKTILEW ] );
-      gb.display.drawImage( x + TILEW * j, y + TILEH * i, *getPic( PIC_DUNGEONBG ) );
+      uint16_t idx = j + i*TILELINEW;
+      uint8_t a = attr[ idx ];
+      getPic( PIC_DUNGEONBG )->setFrame( bg[ idx ] );
+      gb.display.drawImage( x + TILEW * j, y + TILEH * i,
+                            *getPic( PIC_DUNGEONBG ),
+                            (a & BGATTR_FLIPH) ? -TILEW : TILEW,
+                            (a & BGATTR_FLIPV) ? -TILEH : TILEH
+                            );
     }
   }
 }
@@ -357,7 +399,7 @@ bool Block::isWall( uint8_t dir )
   return m_dirinfo[ dir ] == BDINFO_WALL;
 }
 
-void Block::makeBG( uint8_t* out, uint8_t* aout )
+void Block::makeBG( Area* area, uint8_t* out, uint8_t* aout )
 {
   const uint8_t* bg;
 
@@ -367,23 +409,7 @@ void Block::makeBG( uint8_t* out, uint8_t* aout )
     case BDINFO_CORRIDOR: bg = farCorridor; break;
     case BDINFO_DOOR: bg = farDoor; break;
   }
-  writeBGparts( bg, out, aout );
-
-  //左
-  switch ( m_dirinfo[BDIR_LEFT] ) {
-    case BDINFO_WALL: bg = leftWall; break;
-    case BDINFO_CORRIDOR: bg = NULL; break;
-    case BDINFO_DOOR: bg = leftDoor; break;
-  }
-  writeBGparts( bg, out, aout );
-
-  //右
-  switch ( m_dirinfo[BDIR_RIGHT] ) {
-    case BDINFO_WALL: bg = rightWall; break;
-    case BDINFO_CORRIDOR: bg = NULL; break;
-    case BDINFO_DOOR: bg = rightDoor; break;
-  }
-  writeBGparts( bg, out, aout );
+  writeBGparts( area, bg, out, aout );
 
   //手前
   switch ( m_dirinfo[BDIR_NEAR] ) {
@@ -391,8 +417,25 @@ void Block::makeBG( uint8_t* out, uint8_t* aout )
     case BDINFO_CORRIDOR: bg = nearCorridor; break;
     case BDINFO_DOOR: bg = nearDoor; break;
   }
-  writeBGparts( bg, out, aout );
+  writeBGparts( area, bg, out, aout );
 
+  //左右通路が手前も上書くので左右は最後にやる
+
+  //左
+  switch ( m_dirinfo[BDIR_LEFT] ) {
+    case BDINFO_WALL: bg = leftWall; break;
+    case BDINFO_CORRIDOR: bg = leftCorridor; break;
+    case BDINFO_DOOR: bg = leftDoor; break;
+  }
+  writeBGparts( area, bg, out, aout );
+
+  //右
+  switch ( m_dirinfo[BDIR_RIGHT] ) {
+    case BDINFO_WALL: bg = rightWall; break;
+    case BDINFO_CORRIDOR: bg = rightCorridor; break;
+    case BDINFO_DOOR: bg = rightDoor; break;
+  }
+  writeBGparts( area, bg, out, aout );
 }
 
 /*
@@ -402,19 +445,19 @@ void Block::setObjWall( ObjBase* obj )
 {
   int16_t x, y;
   uint8_t bx, by;
-  bool center = false;
+//  bool center = false;
   by = 2;
   if ( isWall( BDIR_FAR ) ) { //奥側が壁なら中央に配置
-    bx = (BLKTILEW/2-1);
-    center = true;
+    bx = (BLKTILEW / 2 - 1);
+//    center = true;
   } else {
     //通路・ドアなら左右のどっちかに配置。両方もあり？
-    //  1  4 
+    //  1  4
     // ==||==
-    bx = (random(100) & 1) ? (BLKTILEW/2-2) : (BLKTILEW/2+1);
+    bx = (random(100) & 1) ? (BLKTILEW / 2 - 2) : (BLKTILEW / 2 + 1);
   }
 
-  x = ( m_dist * BLKTILEW + bx) * TILEW + (center ? (TILEW/2) : 0);
+  x = ( m_dist * BLKTILEW + bx) * TILEW + TILEW/2; //(center ? (TILEW / 2) : 0);
   y = by * TILEH;
 
   x += obj->getOfstX();
@@ -422,13 +465,14 @@ void Block::setObjWall( ObjBase* obj )
   obj->setPos( x, y );
 }
 
+
 /*
    指定の object を床(奥側)に配置する
 */
 void Block::setObjGround( ObjBase* obj )
 {
   int16_t x, y;
-  x = ( m_dist * BLKTILEW + (BLKTILEW/2)) * TILEW;
+  x = ( m_dist * BLKTILEW + (BLKTILEW / 2)) * TILEW;
   y = 3 * TILEH;
 
   x += obj->getOfstX();
@@ -438,11 +482,11 @@ void Block::setObjGround( ObjBase* obj )
 
 /*
     指定の object を床（中央）に配置する
- */
+*/
 void Block::setObjCenter( ObjBase* obj )
 {
   int16_t x, y;
-  x = ( m_dist * BLKTILEW + (BLKTILEW/2)) * TILEW;
+  x = ( m_dist * BLKTILEW + (BLKTILEW / 2)) * TILEW;
   y = 4 * TILEH;
 
   x += obj->getOfstX();
@@ -452,11 +496,11 @@ void Block::setObjCenter( ObjBase* obj )
 
 /*
     指定の object を天井に配置
- */
+*/
 void Block::setObjCeiling( ObjBase* obj )
 {
   int16_t x, y;
-  x = ( m_dist * BLKTILEW + (BLKTILEW/2)) * TILEW;
+  x = ( m_dist * BLKTILEW + (BLKTILEW / 2)) * TILEW;
   y = 0 * TILEH;
 
   x += obj->getOfstX();
@@ -538,12 +582,14 @@ void Area::setup( CellMaker* cm, uint8_t id )
   m_blkcnt = abp->len;
   m_blk = new Block*[m_blkcnt];
 
+  m_roomtype = abp->rtype;
+
   int8_t x, y;
   x = abp->sx;
   y = abp->sy;
 
   //Block 生成
-  for ( int i = 0; i < m_blkcnt; i++ ) {
+  for ( uint8_t i = 0; i < m_blkcnt; i++ ) {
     CellMaker::CELL* cell = cm->getCell( x, y );
     m_blk[i] = new Block( this, cm, abp, cell );
 
@@ -551,7 +597,53 @@ void Area::setup( CellMaker* cm, uint8_t id )
   }
 
   //object 配置の為に attribute が必要なので、一旦BGを書き出す
-  makeBG( DUNMAP()->getAreaBG(), DUNMAP()->getAttrBG() );
+  makeBG( id, DUNMAP()->getAreaBG(), DUNMAP()->getAttrBG() );
+
+  //壁に割り当てる object
+  //torch
+  if( !(abp->attr & CellMaker::AATTR_DARK) ) {
+    //暗闇じゃなかったら明かりを１ブロックに１個置く
+    for( uint8_t i=0; i<m_blkcnt; i++ ) {
+      if( random(100) < 5 ) continue; //偶に置かない
+      ObjBase* o = createObj( OBJID_TORCH );
+      if( o ) {
+        m_blk[i]->setObjWall( o );
+        clrAttrByObj( o, BGATTR_PUTOBJ );
+      }
+      
+      //ろうそくも有りにする？暗闇も偶にろうそくとか置く？
+      //ObjBase* o = createObj( OBJID_CANDLE );
+      //m_blk[i]->setObjGround( o );  //床に配置
+    }
+  }
+
+  //mapobj
+  {
+    static const uint8_t mapobjid[] = {
+      OBJID_TABLE, OBJID_TAPESTRY, OBJID_STATUE, OBJID_FOUNTAIN,
+      OBJID_SKELTON, OBJID_TOMB, OBJID_SHELF, OBJID_CHAIN,
+    };
+    const CellMaker::ROOMDATA* rd = &CellMaker::m_roomdata[abp->rtype];
+    uint8_t objtbl[ 16 ];
+    uint8_t objtblsz = 0;
+
+    //x!x! 部屋のタイプ的に絶対必用な物・１個しか置いたら駄目な物とかに対応する事
+    int8_t objcnt = rd->minmapobj + random( m_blkcnt+1 );
+    for( int8_t c=0; c<objcnt; c++ ) {
+      objtblsz = 0;
+      for( int8_t i=0; i<16; i++ ) {
+        if( rd->mapobjflag & (1<<i) ) objtbl[objtblsz++] = mapobjid[i];
+      }
+      if( objtblsz > 0 ) {
+        ObjBase* o = createObj( objtbl[ random(objtblsz) ] );
+        if ( o ) {
+          if ( !setObjToRandomGround( o ) ) {
+            removeObj( o ); //置けなかったので無かった事に。
+          }
+        }
+      }
+    }
+  }
 
 
   uint8_t mapfloor = DUNMAP()->getMapFloor();
@@ -559,10 +651,10 @@ void Area::setup( CellMaker* cm, uint8_t id )
 
   //dropitem
   gamemain.getShuffledIdx( bidx, m_blkcnt );
-  for( uint8_t i=0; i<abp->numitemdrop; i++ ) {
+  for ( uint8_t i = 0; i < abp->numitemdrop; i++ ) {
     uint8_t bi = bidx[i];
 
-    ObjDropItem* o = static_cast<ObjDropItem*>( createObj( bi, OBJID_DROPITEM ) );
+    ObjDropItem* o = static_cast<ObjDropItem*>( createObj( OBJID_DROPITEM ) );
     if ( o ) {
       ITEM* item = itGenerateFloor( mapfloor );
       o->attachItem( item );
@@ -572,15 +664,15 @@ void Area::setup( CellMaker* cm, uint8_t id )
 
   //treasure
   gamemain.getShuffledIdx( bidx, m_blkcnt );
-  for( uint8_t i=0; i<abp->numtreasure; i++ ) {
+  for ( uint8_t i = 0; i < abp->numtreasure; i++ ) {
     uint8_t bi = bidx[i];
-    
+
     //部屋によっては table とか別のコンテナにする？
-    ObjBase* o = createObj( bi, OBJID_CHEST );
-    if( o ) {
+    ObjBase* o = createObj( OBJID_CHEST );
+    if ( o ) {
       //x!x! 基本横2tileあるので、１部屋だと置けない気がする。一部屋用の小さい箱用意する？
       setupContainer( static_cast<ObjContainer*>(o), mapfloor, 0 ); //中身を入れる
-      if( !setObjToRandomGround( o ) ) {
+      if ( !setObjToRandomGround( o ) ) {
         removeObj( o ); //置けなかったので無かった事に。
       }
     }
@@ -588,10 +680,10 @@ void Area::setup( CellMaker* cm, uint8_t id )
 
 
   //enemy
-//    enCreate( ENTYPE( ENTYPE_SLIME + random(ENTYPEMAX - 1) ), 0, id, 0, 0 );
-  for( uint8_t i=0; i<abp->enemynum; i++ ) {
+  //    enCreate( ENTYPE( ENTYPE_SLIME + random(ENTYPEMAX - 1) ), 0, id, 0, 0 );
+  for ( uint8_t i = 0; i < abp->enemynum; i++ ) {
     EnemyData* ed = enCreate( ENTYPE( ENTYPE_SLIME + random(ENTYPEMAX - 1) ), 0, id );
-    if( !setEnemyToRandom( ed ) ) {
+    if ( !setEnemyToRandom( ed ) ) {
       enDelete( ed );
     }
   }
@@ -613,6 +705,7 @@ void Area::draw()
 
   //背景
   uint8_t* bg = DUNMAP()->getAreaBG();
+  uint8_t* attr = DUNMAP()->getAttrBG();
 
   for ( int i = 0; i < m_blkcnt; i++ ) {
     int16_t bx, by;
@@ -620,9 +713,12 @@ void Area::draw()
     bx = -hx + i * BLKTILEW * TILEW;
     by = -hy;
 
-    m_blk[i]->draw( bg, bx, by );
+    //bg ... 描画するブロックの左上ブロック
+    //bx ... 描画するブロックの左上ブロックの座標
+    m_blk[i]->draw( bg, attr, bx, by );
 
-    bg += BLKTILEW * BLKTILEH;
+    bg += BLKTILEW;
+    attr += BLKTILEW;
   }
 
 #if 01
@@ -689,12 +785,51 @@ BlockDir Area::getEnterPos( uint8_t blk, int8_t prvarea, int8_t prvblk, int16_t&
    背景BGを生成して格納する。
    保持する全ブロック分を一度に作成。
 */
-void Area::makeBG( uint8_t* out, uint8_t* aout )
+void Area::makeBG( uint8_t id, uint8_t* out, uint8_t* aout )
 {
-  for ( int i = 0; i < m_blkcnt; i++ ) {
-    m_blk[i]->makeBG( out, aout );
-    out += BLKTILEW * BLKTILEH;
-    aout += BLKTILEW * BLKTILEH;
+  //マップ用 xorshift32 乱数初期化
+  gamemain.initXorshift32( DUNMAP()->getBaseSeed() + id );
+
+  uint8_t* aoutorg;
+  for ( int8_t i = 0; i < m_blkcnt; i++ ) {
+    m_blk[i]->makeBG( this, out, aout );
+    out += BLKTILEW;
+    aout += BLKTILEW;
+  }
+
+  //x!x! マップ左右の出入り口となる場所には敵が置けないようにしないと駄目
+  //x!x! 上の方は置ける様にしておく？
+  //左端が出入り口になってる？
+  uint8_t* ca = &aoutorg[ 0 * BLKTILEW + 3 * TILELINEW ];
+  if ( *ca & BGATTR_PUTENEMY ) {
+    //出入り口とその隣は敵置けない
+    *ca &= ~BGATTR_PUTENEMY;
+    *(ca + 1) &= ~BGATTR_PUTENEMY;
+  }
+
+  //右端が出入り口になってる？
+  ca = &aoutorg[ (m_blkcnt - 1) * BLKTILEW + (BLKTILEW-1) + 3 * TILELINEW ];
+  if ( *ca & BGATTR_PUTENEMY ) {
+    //出入り口とその隣は敵置けない
+    *ca &= ~BGATTR_PUTENEMY;
+    *(ca - 1) &= ~BGATTR_PUTENEMY;
+  }
+
+
+  //開始位置に敵置けない（階段のある場所）
+  { //上り
+    Map::OBJFINDER of( OBJID_UPSTAIR );
+    ObjBase* obj = DUNMAP()->findObject( of );
+    if ( obj ) {
+      DUNMAP()->clrAttrBGByTile( obj->getX(), 3 * TILEH, BGATTR_PUTENEMY );
+    }
+  }
+  { //下り
+    Map::OBJFINDER of( OBJID_DOWNSTAIR );
+    ObjBase* obj = DUNMAP()->findObject( of );
+    if ( obj ) {
+      DUNMAP()->clrAttrBGByTile( obj->getX(), 3 * TILEH, BGATTR_PUTENEMY );
+    }
   }
 }
 
@@ -703,12 +838,12 @@ int16_t Area::getWidth()
   return m_blkcnt * BLKTILEW * TILEW;
 }
 
-ObjBase* Area::createObj( uint8_t blk, uint8_t objid )
+ObjBase* Area::createObj( uint8_t objid )
 {
   ObjBase* obj = createObjInstance( objid );
 
   if ( obj ) {
-    if ( !entryObj( blk, obj ) ) {
+    if ( !entryObj( obj ) ) {
       //登録出来なかった
       delete obj;
       obj = NULL;
@@ -720,7 +855,7 @@ ObjBase* Area::createObj( uint8_t blk, uint8_t objid )
   return obj;
 }
 
-bool Area::entryObj( uint8_t blk, ObjBase* obj )
+bool Area::entryObj( ObjBase* obj )
 {
   uint8_t i;
   for ( i = 0; i < MAX_OBJECT; i++ ) {
@@ -730,7 +865,7 @@ bool Area::entryObj( uint8_t blk, ObjBase* obj )
 
   m_obj[i] = obj;
   obj->setUID( i );
-  obj->setBlock( blk );
+//  obj->setBlock( blk );
   obj->init();
 
   return true;
@@ -747,6 +882,12 @@ ObjBase* Area::createObjInstance( uint8_t objid )
     case OBJID_UPSTAIR: obj = new ObjUpStair(); break;
     case OBJID_DOWNSTAIR: obj = new ObjDownStair(); break;
     case OBJID_DROPITEM: obj = new ObjDropItem(); break;
+    case OBJID_TAPESTRY: obj = new ObjTapestry(); break;
+    case OBJID_STATUE: obj = new ObjStatue(); break;
+    case OBJID_SKELTON: obj = new ObjSkelton(); break;
+    case OBJID_TOMB: obj = new ObjTomb(); break;
+    case OBJID_SHELF: obj = new ObjShelf(); break;
+    case OBJID_CHAIN: obj = new ObjChain(); break;
   }
 
   if ( obj ) {
@@ -757,119 +898,170 @@ ObjBase* Area::createObjInstance( uint8_t objid )
 }
 
 
-void Area::setObjPosWall( ObjBase* obj )
-{
-}
-
-void Area::setObjPosGround( ObjBase* obj )
-{
-}
-
+/*
+ * 通路の奥側のランダムな場所に object を配置
+ */
 bool Area::setObjToRandomGround( ObjBase* obj )
 {
   static const int8_t GRNDTY = 3;
   uint8_t* attr = DUNMAP()->getAttrBG();
   uint8_t tbl[ MAX_BLOCK * BLKTILEW ];
   uint8_t cnt = 0;
-  
+
   uint8_t btmax = BLKTILEW * m_blkcnt;
-  for( uint8_t i=0; i<btmax; i++ ) {
+  int8_t tw, th; //object のタイルサイズ
+  getObjTileSize( obj, tw, th );
+
+  //置くことが可能な場所を探す
+  for ( uint8_t i = 0; i < btmax; i++ ) {
     //置くことが可能な場所を抽出
-    if( DUNMAP()->getAttrBG(i*TILEW, GRNDTY*TILEH) & BGATTR_PUTOBJ ) {
+    if( isSetAttrRect( i, GRNDTY, tw, -th, BGATTR_PUTOBJ ) ) { //床から上方向に調べるので高さを -
       tbl[cnt++] = i;
     }
   }
-  gamemain.shuffle( tbl, cnt );
 
-  //配置objectが占めるブロック数を計算
-  int16_t w = obj->getOfstX() * 2; //x!x! object の x 座標は中央なので、オフセットの２倍が横幅のはず。
-  if( w < 0 ) w = -w;
-  uint8_t bx = (w/TILEW);
-  if( w%TILEW ) bx++;
+  if( cnt > 0 ) {
+    //置ける場所があった。
+    uint8_t ti = tbl[ random( cnt ) ];
+    int16_t x = ti * TILEW + (tw*TILEW) / 2;
+    x += obj->getOfstX();
+    obj->setPos( x, GRNDTY * TILEH + obj->getOfstY() );
 
-  //横幅ブロック分連続で配置可能領域なら置ける
-  for( uint8_t i=0; i<cnt; i++ ) {
-    uint8_t ti = tbl[i];
-    uint8_t x;
-    for( x=1; x<bx; x++ ) { //ti の場所はそもそも置ける場所なので、+1 から調べる
-      if( !(DUNMAP()->getAttrBG( (ti+x)*TILEW, GRNDTY*TILEH ) & BGATTR_PUTOBJ) ) {
-        break; //置けない場所ならダメ
-      }
-    }
-    if( x >= bx ) {
-      //object の幅分置けるので設置
-      int16_t x;
-//      x = ( m_dist * BLKTILEW + (BLKTILEW/2)) * TILEW;
-      x = (ti + bx/2) * TILEW;
+    clrAttrRect( ti, GRNDTY, tw, -th, BGATTR_PUTOBJ );
 
-      x += obj->getOfstX();
-      obj->setPos( x, GRNDTY * TILEH + obj->getOfstY() );
-
-
-      //接地可能 attribute 削除
-      for( x=0; x<bx; x++ ) {
-        DUNMAP()->clrAttrBG( (ti+x), GRNDTY, BGATTR_PUTOBJ );
-      }
-
-      return true;
-    }
+    return true;
   }
 
   return false;
 }
 
+/*
+ * object が占めるタイルのサイズを取得
+ */
+void Area::getObjTileSize( ObjBase* obj, int8_t& tw, int8_t& th )
+{
+  Image* img = getPic( obj->getPicID() );
+  int16_t w, h;
+  w = img->width();
+  h = img->height();
+
+  tw = w / TILEW;
+  if( w % TILEW ) tw++;
+  th = h / TILEH;
+  if( h % TILEH ) th++;
+}
+
+/*
+ * 指定の矩形の中に、指定の BG attr が全て存在しているか調べる
+ */
+bool Area::isSetAttrRect( uint8_t x, uint8_t y, int8_t w, int8_t h, uint8_t attr )
+{
+  uint8_t x1 = x + w;
+  uint8_t y1 = y + h;
+  if( x1 < x ) {
+    uint8_t t = x;
+    x = x1;
+    x1 = t;
+  }
+  if( y1 < y ) {
+    uint8_t t = y;
+    y = y1;
+    y1 = t;
+  }
+  for( ; y<y1; y++ ) {
+    for( uint8_t tx=x; tx<x1; tx++ ) {
+      if( !(DUNMAP()->getAttrBGByTile( tx, y ) & attr) ) return false; //無い
+    }
+  }
+  return true;
+}
+
+/*
+ * 指定の矩形の中の指定の BG attr を全てクリア
+ */
+void Area::clrAttrRect( uint8_t x, uint8_t y, int8_t w, int8_t h, uint8_t attr )
+{
+  uint8_t x1 = x + w;
+  uint8_t y1 = y + h;
+  if( x1 < x ) {
+    uint8_t t = x;
+    x = x1;
+    x1 = t;
+  }
+  if( y1 < y ) {
+    uint8_t t = y;
+    y = y1;
+    y1 = t;
+  }
+  for( ; y<y1; y++ ) {
+    for( uint8_t tx=x; tx<x1; tx++ ) {
+      DUNMAP()->clrAttrBGByTile( tx, y, attr );
+    }
+  }
+}
+
+void Area::clrAttrByObj( ObjBase* obj, uint8_t attr )
+{
+  uint8_t x0 = obj->getX() / TILEW;
+  uint8_t y0 = obj->getY() / TILEH;
+  int8_t tw, th;
+  getObjTileSize( obj, tw, th );
+  clrAttrRect( x0, y0, tw, th, attr );
+}
+
 bool Area::setEnemyToRandom( EnemyData* ed )
 {
   static const int8_t GRNDTY = 3;
-  static const int8_t NEARTY = GRNDTY+2;
+  static const int8_t NEARTY = GRNDTY + 2;
   uint8_t* attr = DUNMAP()->getAttrBG();
   uint8_t tbl[ MAX_BLOCK * BLKTILEW ];
   uint8_t cnt = 0;
-  
+
   uint8_t btmax = BLKTILEW * m_blkcnt;
-  for( uint8_t i=0; i<btmax; i++ ) {
+  for ( uint8_t i = 0; i < btmax; i++ ) {
     //置くことが可能な場所を抽出
-    if( (DUNMAP()->getAttrBG(i*TILEW, GRNDTY*TILEH) & BGATTR_PUTENEMY) &&
-        (DUNMAP()->getAttrBG(i*TILEW, NEARTY*TILEH) & BGATTR_PUTENEMY)
-    ) {
+    if ( (DUNMAP()->getAttrBGByTile(i, GRNDTY) & BGATTR_PUTENEMY) &&
+         (DUNMAP()->getAttrBGByTile(i, NEARTY) & BGATTR_PUTENEMY)
+       ) {
       tbl[cnt++] = i;
     }
   }
   gamemain.shuffle( tbl, cnt );
 
   EnemyTemplate* et = ENTPL( ed->type );
-  
+
   //配置objectが占めるブロック数を計算
   int16_t w = et->w; //obj->getOfstX() * 2; //x!x! object の x 座標は中央なので、オフセットの２倍が横幅のはず。
-  if( w < 0 ) w = -w;
-  uint8_t bx = (w/TILEW);
-  if( w%TILEW ) bx++;
+  if ( w < 0 ) w = -w;
+  uint8_t bx = (w / TILEW);
+  if ( w % TILEW ) bx++;
 
   //横幅ブロック分連続で配置可能領域なら置ける
-  for( uint8_t i=0; i<cnt; i++ ) {
+  for ( uint8_t i = 0; i < cnt; i++ ) {
     uint8_t ti = tbl[i];
     uint8_t x;
-    for( x=1; x<bx; x++ ) { //ti の場所はそもそも置ける場所なので、+1 から調べる
-      if( !(DUNMAP()->getAttrBG( (ti+x)*TILEW, GRNDTY*TILEH ) & BGATTR_PUTENEMY) ||
-          !(DUNMAP()->getAttrBG( (ti+x)*TILEW, NEARTY*TILEH ) & BGATTR_PUTENEMY)
-      ) {
+    for ( x = 1; x < bx; x++ ) { //ti の場所はそもそも置ける場所なので、+1 から調べる
+      if ( !(DUNMAP()->getAttrBGByTile( (ti + x), GRNDTY ) & BGATTR_PUTENEMY) ||
+           !(DUNMAP()->getAttrBGByTile( (ti + x), NEARTY ) & BGATTR_PUTENEMY)
+         ) {
         break; //置けない場所ならダメ
       }
     }
-    if( x >= bx ) {
+    if ( x >= bx ) {
       //object の幅分置けるので設置
       int16_t x, y;
-      x = (ti + bx/2) * TILEW;
-      y = (GRNDTY+1) * TILEH + (TILEH/2);
+      x = (ti + bx / 2) * TILEW;
+      x = ti * TILEW + (bx*TILEW) / 2;
+      y = (GRNDTY + 1) * TILEH + (TILEH / 2);
       x += et->w / 2;
 
       enSetPos( ed, TOFIX(x), TOFIX(y) );
 
 
       //接地可能 attribute 削除
-      for( x=0; x<bx; x++ ) {
-        DUNMAP()->clrAttrBG( (ti+x), GRNDTY, BGATTR_PUTENEMY );
-        DUNMAP()->clrAttrBG( (ti+x), NEARTY, BGATTR_PUTENEMY ); //上だけでいい気もする
+      for ( x = 0; x < bx; x++ ) {
+        DUNMAP()->clrAttrBGByTile( (ti + x), GRNDTY, BGATTR_PUTENEMY );
+        DUNMAP()->clrAttrBGByTile( (ti + x), NEARTY, BGATTR_PUTENEMY ); //上だけでいい気もする
       }
 
       return true;
@@ -912,7 +1104,7 @@ void Area::setupContainer( ObjContainer* objc, uint8_t mapfloor, uint8_t droplvl
   uint8_t num = random( ObjContainer::MAX_CONTENTS - 1 ) + 1;
 
   for ( int8_t i = 0; i < num; i++ ) {
-    ObjDropItem* o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
+    ObjDropItem* o = static_cast<ObjDropItem*>( createObj( OBJID_DROPITEM ) );
     if ( o ) {
       ITEM* item = itGenerateFloor( mapfloor );
       o->attachItem( item );
@@ -941,6 +1133,8 @@ bool Area::save( File& f )
       if ( !ObjBase::saveInvalidIDs(f) ) return false;
     }
   }
+
+  f.write( &m_roomtype, sizeof(m_roomtype));
 
   return true;
 }
@@ -1042,6 +1236,8 @@ bool Area::load( File& f )
     }
   }
 
+  f.read( &m_roomtype, sizeof(m_roomtype));
+
   return true;
 }
 
@@ -1067,8 +1263,10 @@ Map::~Map()
 
 void Map::create( uint8_t mapfloor )
 {
+  m_baseseed = random( 0xffffffff );
+
   m_mapfloor = mapfloor;
-  
+
   //仮想マップ構築
   CellMaker* cm = new CellMaker();
   cm->make( mapfloor );
@@ -1097,6 +1295,34 @@ void Map::create( uint8_t mapfloor )
 void Map::draw()
 {
   getCurArea()->draw();
+
+#if defined( DBG_SHOW_ROOMNAME )
+  {
+    Area* a = getCurArea();
+    gb.display.setColor( ColorIndex::gray );
+    gb.display.setCursor( 12, 58 );
+    /*
+      RTYPE_CORRIDOR, //通路（部屋じゃないけど）
+      RTYPE_BARRACKS, //兵舎（敵が一杯？強い敵がいる？）
+      RTYPE_PRIVATEROOM, //個室（テーブルとか家具がある？）
+      RTYPE_PRISON, //牢獄（壁が牢屋になってる？）
+      RTYPE_THRONE, //玉座の間（ボス的なのがいる？）
+      RTYPE_FOUNTAIN, //泉の間（色々な効果の泉がある？）
+      RTYPE_ALTAR, //祭壇の間（色々な効果のある祭壇がある）
+      RTYPE_CEMETERY, //墓地（骸骨とか幽霊とか？）
+      RTYPE_LABORATORY, //実験室（テーブルと実験器具？）
+      RTYPE_RUIN, //廃墟(強的と強いアイテムがある？ぼろぼろの壁？）
+      RTYPE_TREASURE, //宝物庫(必ず１個以上宝箱がある？）
+      RTYPE_HALL, //広間（大きいエリアのみ？なんかある？）
+     */
+    static const char* name[] = {
+      "Corridor", "Barracks", "Privateroom", "Prison", "Throne",
+      "Fountain", "Altar", "Cemetery", "Laboratory", "Ruin",
+      "Treasure", "Hall"
+    };
+    gb.display.print( name[a->getRoomType()] );
+  }
+#endif
 }
 
 
@@ -1154,7 +1380,7 @@ void Map::enterFloor( bool descend )
   int16_t x, y;
 
   //入るエリアの BG マップ作成
-  m_area[ area ]->makeBG( m_areaBG, m_attrBG );
+  m_area[ area ]->makeBG( area, m_areaBG, m_attrBG );
 
   //階段の位置に出現
   x = obj->getX() + 6;
@@ -1173,7 +1399,7 @@ BlockDir Map::enter( int8_t area, int8_t blk, int8_t prvarea, int8_t prvblk )
   int16_t x, y;
 
   //入るエリアの BG マップ作成
-  m_area[ area ]->makeBG( m_areaBG, m_attrBG );
+  m_area[ area ]->makeBG( area, m_areaBG, m_attrBG );
 
   BlockDir ed = m_area[ area ]->getEnterPos( blk, prvarea, prvblk, x, y );
 
@@ -1197,46 +1423,36 @@ void Map::update()
 //現在表示中のエリアの値をとる。
 uint8_t Map::getMapBG( int16_t x, int16_t y )
 {
-  int8_t bgx, bgy, block;
+  int8_t bgx, bgy;//, block;
 
   bgx = x / TILEW;
   bgy = y / TILEH;
+#if 0
   block = bgx / BLKTILEW;
   bgx %= BLKTILEW;
   uint8_t ret = m_areaBG[ block * BLKTILEW * BLKTILEH + bgx + bgy * BLKTILEW ];
-
-#if 0
-  {
-    gb.display.setColor( ColorIndex::gray );
-    gb.display.setCursor( 0, 8 );
-    char s[64];
-    sprintf( s, PSTR("A:%d [%d,%d] %d"), area, bgx, bgy, ret );
-    gb.display.print( s );
-  }
+  return ret;
+#else
+  return getMapBGByTile( bgx, bgy );
 #endif
 
-  return ret;
 }
 
 uint8_t Map::getAttrBG( int16_t x, int16_t y )
 {
-  int8_t bgx, bgy, block;
+  int8_t bgx, bgy;//, block;
 
   bgx = x / TILEW;
   bgy = y / TILEH;
+#if 0
   block = bgx / BLKTILEW;
   bgx %= BLKTILEW;
   uint8_t ret = m_attrBG[ block * BLKTILEW * BLKTILEH + bgx + bgy * BLKTILEW ];
-
   return ret;
-}
+#else
+  return getAttrBGByTile( bgx, bgy );
+#endif
 
-void Map::clrAttrBG( uint8_t bx, uint8_t by, uint8_t attr )
-{
-  int8_t block;
-  block = bx / BLKTILEW;
-  bx %= BLKTILEW;
-  m_attrBG[ block * BLKTILEW * BLKTILEH + bx + by * BLKTILEW ] &= ~(attr);
 }
 
 
@@ -1264,6 +1480,7 @@ bool Map::save()
   f.write( &m_homex, sizeof(m_homex));
   f.write( &m_homey, sizeof(m_homey));
   f.write( &m_curareaidx, sizeof(m_curareaidx));
+  f.write( &m_baseseed, sizeof(m_baseseed) );
 
   for ( int8_t i = 0; i < m_areacnt; i++ ) {
     if ( !m_area[i]->save(f) ) {
@@ -1296,11 +1513,12 @@ bool Map::load()
   f.read( &m_homex, sizeof(m_homex));
   f.read( &m_homey, sizeof(m_homey));
   f.read( &m_curareaidx, sizeof(m_curareaidx));
+  f.read( &m_baseseed, sizeof(m_baseseed));
 
 #if defined( DBG_SAVELOAD )
   {
     char s[128];
-    sprintf( s, "LOAD>v:%d  ac:%d  hx:%d  hy:%d  ca:%d", v, m_areacnt, m_homex, m_homey, m_curareaidx );
+    sprintf( s, "LOAD>v:%d  ac:%d  hx:%d  hy:%d  ca:%d  seed:%d", v, m_areacnt, m_homex, m_homey, m_curareaidx, m_baseseed );
     TRACE( s );
   }
 #endif
@@ -1332,7 +1550,7 @@ bool Map::load()
   }
 
   //BG マップを再生成
-  m_area[ m_curareaidx ]->makeBG( m_areaBG, m_attrBG );
+  m_area[ m_curareaidx ]->makeBG( m_curareaidx, m_areaBG, m_attrBG );
 
   //敵データ
   enLoad( f );
@@ -1478,25 +1696,44 @@ void Map::DBGout()
     //部屋の情報
     typedef struct {
       uint8_t minsize; //最低blockサイズ
+      uint8_t brokenrate; //壊れ度(壁とか壊れた感じにする割合(0-100))
       uint8_t itemrate; //アイテムが落ちてる割合(0-100)
       uint8_t chestrate; //宝箱がある割合(0-100)
       uint8_t droplvlcorrection; //ドロップレベル補正
       uint8_t enemyrate; //敵出現率
       uint8_t minenemy; //敵最小数
       uint8_t maxenmey; //敵最大数
+      uint8_t minmapobj; //最低限配置する mapobject 数
+      uint16_t mapobjflag; //出現する mapobject
     } ROOMDATA;
+    
+      RTYPE_CORRIDOR, //通路（部屋じゃないけど）
+      RTYPE_BARRACKS, //兵舎（敵が一杯？強い敵がいる？）
+      RTYPE_PRIVATEROOM, //個室（テーブルとか家具がある？）
+      RTYPE_PRISON, //牢獄（壁が牢屋になってる？）
+      RTYPE_THRONE, //玉座の間（ボス的なのがいる？）
+      RTYPE_FOUNTAIN, //泉の間（色々な効果の泉がある？）
+      RTYPE_ALTAR, //祭壇の間（色々な効果のある祭壇がある）
+      RTYPE_CEMETERY, //墓地（骸骨とか幽霊とか？）
+      RTYPE_LABORATORY, //実験室（テーブルと実験器具？）
+      RTYPE_RUIN, //廃墟(強的と強いアイテムがある？ぼろぼろの壁？）
+      RTYPE_TREASURE, //宝物庫(必ず１個以上宝箱がある？）
+      RTYPE_HALL, //広間（大きいエリアのみ？なんかある？）
 */
 const CellMaker::ROOMDATA CellMaker::m_roomdata[CellMaker::MAXRTYPE] = {
-  { 4, 15, 40, 0, 100, 3, 6 }, //barracks
-  { 1, 30, 30, 0, 30, 1, 3 }, //privateroom
-  { 1, 5, 5, 0, 40, 1, 4 }, //prison
-  { 1, 10, 5, 1, 0, 0, 0 }, //fountain
-  { 1, 5, 10, 0, 10, 1, 1 }, //altar
-  { 3, 50, 10, 0, 80, 1, 3 }, //cemetery
-  { 2, 50, 50, 0, 30, 1, 2 }, //laboratory
-  { 3, 100, 0, 5, 100, 1, 1 }, //ruin
-  { 2, 0, 100, 2, 60, 2, 5 }, //treasure
-  { 5, 20, 20, 0, 75, 2, 6 }, //hall
+  //minsize, brokenrate, itemrate, chestrate, droplvlcorrection, enemyrate, minenemy, maxenemy, minmapobj, mapobjflag
+  { 1,  5,   2,   2, 0,   5, 1, 2, 0, (MOBJ_TAPESTRY|MOBJ_STATUE|MOBJ_CHAIN) }, //corridor
+  { 4,  2,  15,  40, 0, 100, 3, 6, 3, (MOBJ_TAPESTRY|MOBJ_SHELF) }, //barracks
+  { 1,  3,  30,  30, 0,  30, 1, 3, 2, (MOBJ_TABLE|MOBJ_TAPESTRY|MOBJ_SHELF) }, //privateroom
+  { 1,  8,   5,   5, 0,  40, 1, 4, 2, (MOBJ_SKELTON|MOBJ_CHAIN) }, //prison
+  { 4,  0,  10,  50, 1,  80, 2, 5, 3, (MOBJ_STATUE|MOBJ_TAPESTRY) }, //throne
+  { 1,  3,  10,   5, 1,   0, 0, 0, 0, (MOBJ_NONE)},//(MOBJ_FOUNTAIN) }, //fountain
+  { 1,  5,   5,  10, 0,  10, 1, 1, 0, (MOBJ_STATUE|MOBJ_TOMB) }, //altar
+  { 3, 10,  50,  10, 0,  80, 1, 3, 3, (MOBJ_TOMB|MOBJ_SKELTON) }, //cemetery
+  { 2,  3,  50,  50, 0,  30, 1, 2, 2, (MOBJ_TABLE|MOBJ_SHELF) }, //laboratory
+  { 2, 50, 100,   0, 5, 100, 1, 1, 3, (MOBJ_STATUE) }, //ruin
+  { 2, 10,   0, 100, 2,  60, 2, 5, 2, (MOBJ_TAPESTRY|MOBJ_SHELF) }, //treasure
+  { 5, 10,  20,  20, 0,  75, 2, 6, 4, (MOBJ_TAPESTRY) }, //hall
 };
 
 CellMaker::CellMaker()
@@ -1897,6 +2134,7 @@ void DBGdumpMap()
 void CellMaker::makeRoom()
 {
   static const InitRoomFunc initRoomTbl[ MAXRTYPE ] = {
+    initRoomCorridor, //corridor
     initRoomBarracks, initRoomPrivateRoom, initRoomPrison, initRoomThrone,
     initRoomFountain, initRoomAltar, initRoomCemetery, initRoomLaboratory,
     initRoomRuin, initRoomTreasure, initRoomHall
@@ -1918,7 +2156,7 @@ void CellMaker::makeRoom()
     //サイズが合っていて使える部屋を集める
     //x!x! フロアのタイプ毎に使える部屋タイプを制限する？
     //x!x! 同じフロアに何個も出ない設定もいる？
-    for ( uint8_t j = 0; j < MAXRTYPE; j++ ) {
+    for ( uint8_t j = RTYPE_BARRACKS; j < MAXRTYPE; j++ ) { //Corridor は実際は通路なので含めない
       if ( len >= m_roomdata[j].minsize ) {
         roomtbl[vrcnt++] = j;
       }
@@ -1936,11 +2174,11 @@ void CellMaker::makeRoom()
     ab->droplvlcorrection = rd->droplvlcorrection; //ドロップレベル補正
     if ( random(100) < rd->itemrate ) { //アイテムが落ちてる割合
       ab->attr |= AATTR_ITEMDROP;
-      ab->numitemdrop = 1 + random( (ab->len+1) / 2 ); //1:1 2:1 3:1-2 4:1-2 5:1-3 6:1-3
+      ab->numitemdrop = 1 + random( (ab->len + 1) / 2 ); //1:1 2:1 3:1-2 4:1-2 5:1-3 6:1-3
     }
     if ( random(100) < rd->chestrate ) { //宝箱がある割合
       ab->attr |= AATTR_TREASURE;
-      ab->numtreasure = 1 + random( (ab->len+1) / 3 ); //1:1 2:1 3:1 4:1 5:1-2 6:1-2
+      ab->numtreasure = 1 + random( (ab->len + 1) / 3 ); //1:1 2:1 3:1 4:1 5:1-2 6:1-2
     }
     if ( random(100) < rd->enemyrate ) { //敵出現
       ab->attr |= AATTR_ENEMY;
@@ -1963,9 +2201,9 @@ void CellMaker::makeRoom()
   }
 
   //部屋以外の場所への設定
-  for( int8_t i=0; i<m_areacnt; i++ ) {
+  for ( int8_t i = 0; i < m_areacnt; i++ ) {
     AREABASE* ab = &m_areabase[ areaidx[i] ];
-    if( ab->attr & AATTR_ROOM ) continue; //部屋は無視
+    if ( ab->attr & AATTR_ROOM ) continue; //部屋は無視
 
     //暗闇
     if ( random(100) < 30 ) { //floor で変える？
@@ -1973,17 +2211,22 @@ void CellMaker::makeRoom()
     }
 
     //敵
-    if( random(100) < 20 ) { //floor で変える？
+    if ( random(100) < 20 ) { //floor で変える？
       ab->attr |= AATTR_ENEMY;
-      ab->enemynum += 1 + (ab->len-1);
-      if( ab->enemynum > 3 ) ab->enemynum = 3;
+      ab->enemynum += 1 + (ab->len - 1);
+      if ( ab->enemynum > 3 ) ab->enemynum = 3;
     }
 
     //落ちてるアイテム
-    if( random(100) < 10 ) { //floor で変える？
+    if ( random(100) < 10 ) { //floor で変える？
       ab->attr |= AATTR_ITEMDROP;
     }
   }
+}
+
+bool CellMaker::initRoomCorridor( CellMaker* cm, AREABASE* ab )
+{
+  return true;
 }
 
 bool CellMaker::initRoomBarracks( CellMaker* cm, AREABASE* ab )
@@ -2046,27 +2289,27 @@ bool CellMaker::initRoomHall( CellMaker* cm, AREABASE* ab )
 //--------------------------------------------------------------------------
 void CellMaker::setupCell()
 {
-  for( int8_t i=0; i<m_areacnt; i++ ) {
+  for ( int8_t i = 0; i < m_areacnt; i++ ) {
     AREABASE *ab = &m_areabase[i];
     int8_t cx, cy;
     cx = ab->sx;
     cy = ab->sy;
 
-    for( int8_t j=0; j<ab->len; j++ ) {
-      CELL* c = &m_cell[ cy*TMAPH + cx ];
+    for ( int8_t j = 0; j < ab->len; j++ ) {
+      CELL* c = &m_cell[ cy * TMAPH + cx ];
       c->attr = 0;
       //dark
-      if( ab->attr & AATTR_DARK ) c->attr |= AATTR_DARK; //暗闇はエリア全体に適用。偶に抜く？
+      if ( ab->attr & AATTR_DARK ) c->attr |= AATTR_DARK; //暗闇はエリア全体に適用。偶に抜く？
 #if 0
       //itemdrop
-      if( ab->attr & AATTR_ITEMDROP ) c->attr |= AATTR_ITEMDROP; //エリアの何処に置くか選ぶ。数もチェック。
+      if ( ab->attr & AATTR_ITEMDROP ) c->attr |= AATTR_ITEMDROP; //エリアの何処に置くか選ぶ。数もチェック。
       //treasure
-      if( ab->attr & AATTR_TREASURE ) c->attr |= AATTR_TREASURE; //エリアの何処に置くか選ぶ。数もチェック。
-#endif      
-      
+      if ( ab->attr & AATTR_TREASURE ) c->attr |= AATTR_TREASURE; //エリアの何処に置くか選ぶ。数もチェック。
+#endif
+
       ab->fwdPos( cx, cy );
     }
-    
+
   }
 }
 
@@ -2081,60 +2324,60 @@ void CellMaker::setupCell()
 
 
 #if 0
-    //object 配置test
-    if ( random(100) < 45 ) {
-      if ( random(100) < 75 ) {
-        ObjBase* o = createObj( i, OBJID_TORCH );
-        m_blk[i]->setObjWall( o ); //壁に配置
-      } else {
-        ObjBase* o = createObj( i, OBJID_CANDLE );
-        m_blk[i]->setObjGround( o );  //床に配置
-      }
-    }
+//object 配置test
+if ( random(100) < 45 ) {
+  if ( random(100) < 75 ) {
+    ObjBase* o = createObj( OBJID_TORCH );
+    m_blk[i]->setObjWall( o ); //壁に配置
+  } else {
+    ObjBase* o = createObj( OBJID_CANDLE );
+    m_blk[i]->setObjGround( o );  //床に配置
+  }
+}
 #if 01 //container
-    if ( random(100) < 15 ) {
-      if ( random(100) < 30 ) {
-        ObjBase* o = createObj( i, OBJID_CHEST );
+if ( random(100) < 15 ) {
+  if ( random(100) < 30 ) {
+    ObjBase* o = createObj( OBJID_CHEST );
 #if 01
-        setupContainer( static_cast<ObjContainer*>(o), plGetFloor(), 0 ); //中身を入れる
+    setupContainer( static_cast<ObjContainer*>(o), plGetFloor(), 0 ); //中身を入れる
 #endif
-        m_blk[i]->setObjGround( o );
-      } else {
-        ObjTable* tbl = static_cast<ObjTable*>( createObj( i, OBJID_TABLE ) );
-        m_blk[i]->setObjGround( tbl );
-        //直接作成して机に置く
-        ObjCandle* c = static_cast<ObjCandle*>( createObj( i, OBJID_CANDLE ) );
-        if ( c ) {
-          tbl->addObj( c ); //ろうそくを机におく
-        }
-      }
+    m_blk[i]->setObjGround( o );
+  } else {
+    ObjTable* tbl = static_cast<ObjTable*>( createObj( OBJID_TABLE ) );
+    m_blk[i]->setObjGround( tbl );
+    //直接作成して机に置く
+    ObjCandle* c = static_cast<ObjCandle*>( createObj( OBJID_CANDLE ) );
+    if ( c ) {
+      tbl->addObj( c ); //ろうそくを机におく
     }
+  }
+}
 #endif
 #if 01 //item
-    if ( random(100) < 7 ) {
-      ObjDropItem* o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
-      if ( o ) {
-        ITEM* item = itGenerateFloor( plGetFloor() );
-        o->attachItem( item );
-        m_blk[i]->setObjCenter( o ); //通路上に置く
-      }
+if ( random(100) < 7 ) {
+  ObjDropItem* o = static_cast<ObjDropItem*>( createObj( OBJID_DROPITEM ) );
+  if ( o ) {
+    ITEM* item = itGenerateFloor( plGetFloor() );
+    o->attachItem( item );
+    m_blk[i]->setObjCenter( o ); //通路上に置く
+  }
 #if 0
-      //同じ場所に２個おいて実験
-      o = static_cast<ObjDropItem*>( createObj( i, OBJID_DROPITEM ) );
-      if ( o ) {
-        ITEM* item = itGenerateFloor( plGetFloor() );
-        o->attachItem( item );
-        m_blk[i]->setObjCenter( o ); //通路上に置く
-      }
+  //同じ場所に２個おいて実験
+  o = static_cast<ObjDropItem*>( createObj( OBJID_DROPITEM ) );
+  if ( o ) {
+    ITEM* item = itGenerateFloor( plGetFloor() );
+    o->attachItem( item );
+    m_blk[i]->setObjCenter( o ); //通路上に置く
+  }
 #endif
-    }
+}
 #endif
 #endif
 
 
 #if 0 //敵配置 test
-  if ( m_blkcnt > 1 ) {
-    enCreate( ENTYPE( ENTYPE_SLIME + random(ENTYPEMAX - 1) ), 0, id, random(m_blkcnt - 1) + 1 );
-  }
+if ( m_blkcnt > 1 ) {
+  enCreate( ENTYPE( ENTYPE_SLIME + random(ENTYPEMAX - 1) ), 0, id, random(m_blkcnt - 1) + 1 );
+}
 #endif
 

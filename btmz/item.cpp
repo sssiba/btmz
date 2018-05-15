@@ -154,14 +154,23 @@ ITEMBASE g_itembasetbl[] = {
 
 };
 
-static const char* g_prefixname[ITPREFIXMAX] = {
+//x!x! 装備の種類によってつく、つかないを設定する？
+static const char* g_prefixname[ITPREFIXMAX] = { //7文字
   "",
-  "Red ", "Blue ", "Shiny ",
+  "Shiny ", "Light ", "Glowing", //light
+  "Agile ", "Hard ", "Stable ",  //
+  "Ogre ", "Titan ",
+  "Holy ", "Devout ",
 };
 
-static const char* g_suffixname[ITSUFFIXMAX] = {
+static const char* g_suffixname[ITSUFFIXMAX] = { //12文字
   "",  
-  "of Soul", "of Moon", "of Star",
+  "of Moon", "of Star", "of Sun",
+  "of Power", "of Force", 
+  "of Mind", "of Soul",
+  "of Healing", "of Recovery",
+  "the King", "the Queen", "the Emperor",
+  "of Fire", "of Flame", "of Cold", "of Ice",
 };
 
 static void setupAffix( ITEM* item );

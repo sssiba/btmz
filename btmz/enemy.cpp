@@ -433,7 +433,7 @@ void enSlimeUpdate( EnemyData* ed )
     cx += mv;
     bool movable = true;
     uint8_t bgattr = DUNMAP()->getAttrBG( TOINT(cx), TOINT(cy) );
-    movable = BGisBlock(bgattr);
+    movable = !BGisBlock(bgattr);
 
     EnemyTemplate* et = ENTPL( ed->type );
     { //移動当たり判定
@@ -539,7 +539,7 @@ void enGhostUpdate( EnemyData* ed )
     cx += mv;
     bool movable = true;
     uint8_t bgattr = DUNMAP()->getAttrBG( TOINT(cx), TOINT(cy) );
-    movable = BGisBlock(bgattr);
+    movable = !BGisBlock(bgattr);
 
     EnemyTemplate* et = ENTPL( ed->type );
     { //移動当たり判定
@@ -645,7 +645,7 @@ void enOrcUpdate( EnemyData* ed )
     cx += mv;
     bool movable = true;
     uint8_t bgattr = DUNMAP()->getAttrBG( TOINT(cx), TOINT(cy) );
-    movable = BGisBlock(bgattr);
+    movable = !BGisBlock(bgattr);
 
     EnemyTemplate* et = ENTPL( ed->type );
     { //移動当たり判定

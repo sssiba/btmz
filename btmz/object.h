@@ -13,7 +13,7 @@
  * x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!
  * ・Object は Area 毎に管理され、Area をまたいで移動する事はない。
  * ・Object の生成・破棄は、必ず Area::createObj(), Area::removeObj() を使用して行う。
- * ・基本的に、X座標は表示上の中央、Y座標は一番上を表している。
+ * ・基本的に、X座標は表示上の中央、Y座標は一番下を表している。
  * x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!x!
  */
 
@@ -25,15 +25,22 @@ enum : uint8_t {
   OBJID_UPSTAIR,
   OBJID_DOWNSTAIR,
   OBJID_DROPITEM,
-
+  OBJID_TAPESTRY,
+  OBJID_STATUE,
+  OBJID_FOUNTAIN,
+  OBJID_SKELTON,
+  OBJID_TOMB,
+  OBJID_SHELF,
+  OBJID_CHAIN,
   OBJID_ALL,
   MAX_OBJID = OBJID_ALL
 };
 
 enum : uint8_t { //描画順番
-  DRAWLYR_FAR, //一番最初に描く
-  DRAWLYR_NORMAL, //２番めに描く
-  DRAWLYR_NEAR, //最後に描く
+  DRAWLYR_WALL, //一番最初に描く。壁のもの。
+  DRAWLYR_FAR, //２番めに描く。通路の奥側のもの。
+  DRAWLYR_NORMAL, //３番めに描く。通路の真ん中のもの。
+  DRAWLYR_NEAR, //最後に描く。通路の手前側のもの。
   MAX_DRAWLYR
 };
 
@@ -63,11 +70,11 @@ public:
 
   inline uint8_t getID() const { return m_id; }
   inline uint8_t getUID() { return m_uid; }
-  inline uint8_t getBlock() const { return m_blk; }
+//  inline uint8_t getBlock() const { return m_blk; }
   inline int16_t getX() const { return m_x; }
   inline int16_t getY() const { return m_y; }
   inline PICID getPicID() const { return m_picid; }
-  inline void setBlock( uint8_t blk ) { m_blk = blk; }
+//  inline void setBlock( uint8_t blk ) { m_blk = blk; }
   inline void setX( const int16_t x ) { m_x = x; }
   inline void setY( const int16_t y ) { m_y = y; }
   inline void setPos( const int16_t x, const int16_t y ) { m_x = x; m_y = y; }
@@ -112,7 +119,7 @@ protected:
 protected:
   uint8_t m_id; //object id  (OBJID_xxx)
   uint8_t m_uid; //unique id (実際は Area::m_obj[] の index の流用)。object は area 単位で管理されるので、これで同エリア内でかぶる事は無いはず。
-  uint8_t m_blk;
+//  uint8_t m_blk;
   int16_t m_x;
   int16_t m_y;
   PICID m_picid;
@@ -230,6 +237,8 @@ public:
   virtual void init();
   virtual void update();
   virtual void draw();
+  virtual int8_t getOfstX() const { return -4; }
+  virtual int8_t getOfstY() const { return 0; }
 private:
   uint8_t m_interval; //光マスクのちらつき間隔
   uint8_t m_fireanm;
@@ -374,6 +383,114 @@ private:
   ITEM* m_item;
 };
 
+//-----------------------------------------------
+/*
+ * タペストリー
+ */
+class ObjTapestry : public NotContainable
+{
+  typedef NotContainable super;
+  friend class Area;
+  
+protected:
+  ObjTapestry();
+  virtual ~ObjTapestry() {}
+
+public:
+  virtual void draw();
+  virtual int8_t getOfstX() const { return -4; }
+  virtual int8_t getOfstY() const { return -12; }
+};
+
+/*
+ * 彫像
+ */
+class ObjStatue : public NotContainable
+{
+  typedef NotContainable super;
+  friend class Area;
+  
+protected:
+  ObjStatue();
+  virtual ~ObjStatue() {}
+
+public:
+  virtual void draw();
+  virtual int8_t getOfstX() const { return -4; }
+  virtual int8_t getOfstY() const { return -7; }
+};
+
+/*
+ * 壁の骸骨
+ */
+class ObjSkelton : public NotContainable
+{
+  typedef NotContainable super;
+  friend class Area;
+  
+protected:
+  ObjSkelton();
+  virtual ~ObjSkelton() {}
+
+public:
+  virtual void draw();
+  virtual int8_t getOfstX() const { return -4; }
+  virtual int8_t getOfstY() const { return -6; }
+};
+
+/*
+ * 墓石
+ */
+class ObjTomb : public NotContainable
+{
+  typedef NotContainable super;
+  friend class Area;
+  
+protected:
+  ObjTomb();
+  virtual ~ObjTomb() {}
+
+public:
+  virtual void draw();
+  virtual int8_t getOfstX() const { return -4; }
+  virtual int8_t getOfstY() const { return -7; }
+};
+
+/*
+ * 棚
+ */
+class ObjShelf : public NotContainable
+{
+  typedef NotContainable super;
+  friend class Area;
+  
+protected:
+  ObjShelf();
+  virtual ~ObjShelf() {}
+
+public:
+  virtual void draw();
+  virtual int8_t getOfstX() const { return -4; }
+  virtual int8_t getOfstY() const { return -6; } //通路に2dotはみ出し
+};
+
+/*
+ * 壁の鎖
+ */
+class ObjChain : public NotContainable
+{
+  typedef NotContainable super;
+  friend class Area;
+  
+protected:
+  ObjChain();
+  virtual ~ObjChain() {}
+
+public:
+  virtual void draw();
+  virtual int8_t getOfstX() const { return -4; }
+  virtual int8_t getOfstY() const { return -12; }
+};
 
 //-----------------------------------------------
 

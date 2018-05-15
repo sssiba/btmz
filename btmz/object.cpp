@@ -27,7 +27,7 @@ bool ObjBase::save( File& f )
 {
   FS( m_id );
   FS( m_uid );
-  FS( m_blk );
+//  FS( m_blk );
   FS( m_x );
   FS( m_y );
   FS( m_picid );
@@ -41,7 +41,7 @@ bool ObjBase::load( File& f )
 {
 //  FL( m_id ); x!x! loadIDs() で読む
 //  FL( m_uid ); x!x! loadIDs() で読む
-  FL( m_blk );
+//  FL( m_blk );
   FL( m_x );
   FL( m_y );
   FL( m_picid );
@@ -247,7 +247,7 @@ bool ObjHook::addObj( ObjBase* obj )
       m_hooknum++;
 
       //接続されたコールバックみたいなの呼ぶ？
-      obj->setBlock( getBlock() ); //自分と同じブロックに設定
+//      obj->setBlock( getBlock() ); //自分と同じブロックに設定
       obj->init(); //x!x! ここで初期化。new した直後に接続したらこれが必要。だけど既に初期化済みだったらまずい？初期化済みフラグつけて最初期化されないようにする？
       obj->setFlag( FLAG_HOOKED );
 
@@ -321,6 +321,7 @@ ObjTorch::ObjTorch()
   , m_fireanm( 0 )
   , m_fireanmwait( 0 )
 {
+  setDrawLayer( DRAWLYR_WALL );
   setPicID( PIC_OBJECT );
 }
 
@@ -330,11 +331,6 @@ ObjTorch::~ObjTorch()
 
 void ObjTorch::init()
 {
-#if 0
-  DUNMAP()->getBlockTilePos( getBlock(), 1, 2, m_x, m_y );
-//  m_x += 4;
-//  m_y += 4;
-#endif
 }
 
 void ObjTorch::update()
@@ -350,8 +346,8 @@ void ObjTorch::draw()
   int16_t sx = DUNMAP()->toScrX( m_x );
   int16_t sy = DUNMAP()->toScrY( m_y );
   //土台
-  getPic( PIC_OBJECT )->setFrame( 2 );
-  gb.display.drawImage( sx, sy, *getPic( PIC_OBJECT ) );
+  getPic( getPicID() )->setFrame( 2 );
+  gb.display.drawImage( sx, sy, *getPic( getPicID() ) );
   //炎
   getPic( PIC_OBJECT )->setFrame( m_fireanm ? 1 : 0 );
   gb.display.drawImage( sx, sy - 5, *getPic( getPicID() ) );
@@ -497,11 +493,11 @@ void ObjCandle::draw()
   int16_t sx = DUNMAP()->toScrX( m_x );
   int16_t sy = DUNMAP()->toScrY( m_y );
   //土台
-  getPic( PIC_OBJECT )->setFrame( 5 );
-  gb.display.drawImage( sx, sy, *getPic( PIC_OBJECT ) );
+  getPic( getPicID() )->setFrame( 5 );
+  gb.display.drawImage( sx, sy, *getPic( getPicID() ) );
   //炎
   getPic( PIC_OBJECT )->setFrame( m_fireanm ? 3 : 4 );
-  gb.display.drawImage( sx, sy - 4, *getPic( getPicID() ) );
+  gb.display.drawImage( sx, sy - 4, *getPic( PIC_OBJECT ) );
 
   //ライト
 #if !defined( QUARTERBUF )
@@ -521,19 +517,22 @@ void ObjCandle::draw()
 ObjUpStair::ObjUpStair()
 {
   setDrawLayer( DRAWLYR_NORMAL );
+  setPicID( PIC_OBJECT12x16 );
 }
 void ObjUpStair::draw()
 {
   int16_t sx = DUNMAP()->toScrX( m_x );
   int16_t sy = DUNMAP()->toScrY( m_y );
   //土台
-  getPic( PIC_OBJECT12x16 )->setFrame( 0 );
-  gb.display.drawImage( sx, sy, *getPic( PIC_OBJECT12x16 ) );
+  getPic( getPicID() )->setFrame( 0 );
+  gb.display.drawImage( sx, sy, *getPic( getPicID() ) );
 }
 
+//------------------------------------------------
 ObjDownStair::ObjDownStair()
 {
   setDrawLayer( DRAWLYR_NORMAL );
+  setPicID( PIC_OBJECT12x16 );
 }
 
 void ObjDownStair::draw()
@@ -541,8 +540,8 @@ void ObjDownStair::draw()
   int16_t sx = DUNMAP()->toScrX( m_x );
   int16_t sy = DUNMAP()->toScrY( m_y );
   //土台
-  getPic( PIC_OBJECT12x16 )->setFrame( 1 );
-  gb.display.drawImage( sx, sy, *getPic( PIC_OBJECT12x16 ) );
+  getPic( getPicID() )->setFrame( 1 );
+  gb.display.drawImage( sx, sy, *getPic( getPicID() ) );
 }
 
 //-----------------------------------------------
@@ -552,6 +551,7 @@ ObjDropItem::ObjDropItem()
   : m_item( NULL )
 {
   setDrawLayer( DRAWLYR_NEAR );
+  setPicID(PICINVALID); //x!x! アイテム依存なので定義出来ない
 }
 
 ObjDropItem::~ObjDropItem()
@@ -608,6 +608,97 @@ bool ObjDropItem::load( File& f )
   m_item = itLoad( f );
   
   return true;
+}
+
+//-----------------------------------------------
+//-----------------------------------------------
+//-----------------------------------------------
+ObjTapestry::ObjTapestry()
+{
+  setDrawLayer( DRAWLYR_WALL );
+  setPicID( PIC_OBJECT8x16 );
+}
+void ObjTapestry::draw()
+{
+  int16_t sx = DUNMAP()->toScrX( m_x );
+  int16_t sy = DUNMAP()->toScrY( m_y );
+  getPic( getPicID() )->setFrame( 0 );
+  gb.display.drawImage( sx, sy, *getPic( getPicID() ) );
+}
+
+//-----------------------------------------------
+//-----------------------------------------------
+//-----------------------------------------------
+ObjStatue::ObjStatue()
+{
+  setPicID( PIC_OBJECT8x16 );
+}
+void ObjStatue::draw()
+{
+  int16_t sx = DUNMAP()->toScrX( m_x );
+  int16_t sy = DUNMAP()->toScrY( m_y );
+  getPic( getPicID() )->setFrame( 1 );
+  gb.display.drawImage( sx, sy, *getPic( getPicID() ) );
+}
+
+//-----------------------------------------------
+//-----------------------------------------------
+//-----------------------------------------------
+ObjSkelton::ObjSkelton()
+{
+  setPicID( PIC_OBJECT8x16 );
+}
+void ObjSkelton::draw()
+{
+  int16_t sx = DUNMAP()->toScrX( m_x );
+  int16_t sy = DUNMAP()->toScrY( m_y );
+  getPic( getPicID() )->setFrame( 2 );
+  gb.display.drawImage( sx, sy, *getPic( getPicID() ) );
+}
+
+//-----------------------------------------------
+//-----------------------------------------------
+//-----------------------------------------------
+ObjTomb::ObjTomb()
+{
+  setPicID( PIC_OBJECT8x16 );
+}
+void ObjTomb::draw()
+{
+  int16_t sx = DUNMAP()->toScrX( m_x );
+  int16_t sy = DUNMAP()->toScrY( m_y );
+  getPic( getPicID() )->setFrame( 3 );
+  gb.display.drawImage( sx, sy, *getPic( getPicID() ) );
+}
+
+//-----------------------------------------------
+//-----------------------------------------------
+//-----------------------------------------------
+ObjShelf::ObjShelf()
+{
+  setPicID( PIC_OBJECT8x16 );
+}
+void ObjShelf::draw()
+{
+  int16_t sx = DUNMAP()->toScrX( m_x );
+  int16_t sy = DUNMAP()->toScrY( m_y );
+  getPic( getPicID() )->setFrame( 4 );
+  gb.display.drawImage( sx, sy, *getPic( getPicID() ) );
+}
+
+//-----------------------------------------------
+//-----------------------------------------------
+//-----------------------------------------------
+ObjChain::ObjChain()
+{
+  setPicID( PIC_OBJECT8x16 );
+}
+void ObjChain::draw()
+{
+  int16_t sx = DUNMAP()->toScrX( m_x );
+  int16_t sy = DUNMAP()->toScrY( m_y );
+  getPic( getPicID() )->setFrame( 5 );
+  gb.display.drawImage( sx, sy, *getPic( getPicID() ) );
 }
 
 //-----------------------------------------------

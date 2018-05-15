@@ -107,8 +107,9 @@ private:
 //  bool btnRepFlag;
 
   //drawCommand
-  int8_t s_cx;
-  int8_t s_cy;
+//  int8_t s_cx;
+//  int8_t s_cy;
+  uint32_t m_xs32;
 public:
   GameFlow flow;
   static uint16_t palette[MAXPALIDX*16];
@@ -148,7 +149,17 @@ public:
   /*
    * 指定の配列に、シャッフルされた 0 ～ (sz-1) までの index を入れる
    */
-   void getShuffledIdx( uint8_t* ary, uint8_t sz );
+  void getShuffledIdx( uint8_t* ary, uint8_t sz );
+
+  /*
+   * 疑似乱数 xorshift32 初期化
+   */
+   inline void initXorshift32( uint32_t v ) {
+    m_xs32 = v;
+   }
+   uint32_t randxs32();
+   uint16_t randxs32Mod( uint16_t v );
+
 
   GameFlow& getFlow() { return flow; }
 

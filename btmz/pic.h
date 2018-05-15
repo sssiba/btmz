@@ -7,17 +7,21 @@
 //-------------------------------------------------------
 //-------------------------------------------------------
 //-------------------------------------------------------
-enum PICID {
+enum PICID : uint8_t {
   PIC_DUNGEONBG,
   PIC_CHARACTER,
   PIC_WIZARD,
   PIC_EFFECT8x8,
   PIC_OBJECT, //8x8
+  PIC_OBJECT8x16, //8x16
   PIC_OBJECT16x8, //16x8
   PIC_OBJECT12x16, //12x16
   PIC_ICON6x5, //icon
   PIC_TITLE, //title
   PIC_TITLEFIRE, //タイトルのろうそくの火。わざわざここに入れなくても良い感じ
+
+
+  PICINVALID = 0xff
 };
 
 extern Image* g_pictbl[];
