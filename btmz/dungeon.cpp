@@ -654,38 +654,19 @@ void Area::setup( CellMaker* cm, uint8_t id )
   for ( uint8_t i = 0; i < abp->numitemdrop; i++ ) {
     uint8_t bi = bidx[i];
 
-    ObjDropItem* o = static_cast<ObjDropItem*>( createObj( OBJID_DROPITEM ) );
-    if ( o ) {
-      ITEM* item = itGenerateFloor( mapfloor );
-      o->attachItem( item );
-      m_blk[bi]->setObjCenter( o ); //通路上に置く
-    }
+    allocDropitem( bi );
   }
 
   //treasure
   gamemain.getShuffledIdx( bidx, m_blkcnt );
   for ( uint8_t i = 0; i < abp->numtreasure; i++ ) {
-    uint8_t bi = bidx[i];
-
-    //部屋によっては table とか別のコンテナにする？
-    ObjBase* o = createObj( OBJID_CHEST );
-    if ( o ) {
-      //x!x! 基本横2tileあるので、１部屋だと置けない気がする。一部屋用の小さい箱用意する？
-      setupContainer( static_cast<ObjContainer*>(o), mapfloor, 0 ); //中身を入れる
-      if ( !setObjToRandomGround( o ) ) {
-        removeObj( o ); //置けなかったので無かった事に。
-      }
-    }
+    allocContainer();
   }
-
 
   //enemy
   //    enCreate( ENTYPE( ENTYPE_SLIME + random(ENTYPEMAX - 1) ), 0, id, 0, 0 );
   for ( uint8_t i = 0; i < abp->enemynum; i++ ) {
-    EnemyData* ed = enCreate( ENTYPE( ENTYPE_SLIME + random(ENTYPEMAX - 1) ), 0, id );
-    if ( !setEnemyToRandom( ed ) ) {
-      enDelete( ed );
-    }
+    allocEnemy( id );
   }
 
 
@@ -695,6 +676,44 @@ void Area::setup( CellMaker* cm, uint8_t id )
   m_DBGsy = abp->sy;
   m_DBGdir = abp->dir;
 #endif
+}
+
+void Area::allocDropitem( uint8_t bi )
+{
+  uint8_t mapfloor = DUNMAP()->getMapFloor();
+  ObjDropItem* o = static_cast<ObjDropItem*>( createObj( OBJID_DROPITEM ) );
+  if ( o ) {
+    ITEM* item = itGenerateFloor( mapfloor );
+    o->attachItem( item );
+    m_blk[bi]->setObjCenter( o ); //通路上に置く
+    DUNMAP()->incNumDropitem();
+  }
+}
+
+void Area::allocContainer()
+{
+  uint8_t mapfloor = DUNMAP()->getMapFloor();
+  //部屋によっては table とか別のコンテナにする？
+  ObjBase* o = createObj( OBJID_CHEST );
+  if ( o ) {
+    //x!x! 基本横2tileあるので、１部屋だと置けない気がする。一部屋用の小さい箱用意する？
+    if ( !setObjToRandomGround( o ) ) {
+      removeObj( o ); //置けなかったので無かった事に。
+    } else {
+      setupContainer( static_cast<ObjContainer*>(o), mapfloor, 0 ); //中身を入れる
+      DUNMAP()->incNumContainer();
+    }
+  }
+}
+
+void Area::allocEnemy( uint8_t areaid )
+{
+  EnemyData* ed = enCreate( ENTYPE( ENTYPE_SLIME + random(ENTYPEMAX - 1) ), 0, areaid );
+  if ( !setEnemyToRandom( ed ) ) {
+    enDelete( ed );
+  } else {
+    DUNMAP()->incNumEnemy();
+  }
 }
 
 void Area::draw()
@@ -1279,9 +1298,47 @@ void Map::create( uint8_t mapfloor )
     m_area[i]->setup( cm, i );
   }
 
-  //object 配置test
-  //  m_area[0]->entryObj( 0, new ObjBox() );
+  //色々少なかったら追加する
+  uint8_t tbl[MAX_AREA];
+  uint8_t minnum, tblidx;
+  //dropitem
+  minnum = m_areacnt / 3;
+  //絶対置いては駄目なエリアは除外する必要がある。そんな場所ある？
+  gamemain.getShuffledIdx( tbl, m_areacnt );  
+  tblidx = 0;
+  while( getNumDropitem() < minnum ) {
+    Area* a = m_area[ tbl[tblidx] ];
+    a->allocDropitem( random( a->getBlockCnt() ) );
+    if( ++tblidx == m_areacnt ) break; //もうどうしても置けない
+  }
 
+  //treasure
+  minnum = 1;
+  //絶対置いては駄目なエリアは除外する必要がある。そんな場所ある？
+  gamemain.getShuffledIdx( tbl, m_areacnt );  
+  tblidx = 0;
+  while( getNumContainer() < minnum ) {
+    Area* a = m_area[ tbl[tblidx] ];
+    a->allocContainer();
+    if( ++tblidx == m_areacnt ) break; //もうどうしても置けない
+  }
+
+  //x!x! 固定の敵と、エリアに出入りする度に出現するランダム湧きの敵を用意する？
+  //enemy
+  minnum = ((m_areacnt*2) < MAX_ENEMYENTRY) ? (m_areacnt*2) : MAX_ENEMYENTRY;
+  //絶対置いては駄目なエリアは除外する必要がある。そんな場所ある？
+  gamemain.getShuffledIdx( tbl, m_areacnt );  
+  tblidx = 0;
+  while( getNumEnemy() < minnum ) {
+    Area* a = m_area[ tbl[tblidx] ];
+    uint8_t cnt = 1 + random( a->getBlockCnt() );
+    //x!x! 既に敵がいるエリアはその分減らす？
+    for( int i=0; i<cnt; i++ ) {
+      a->allocEnemy( tbl[tblidx] );
+    }
+    if( ++tblidx == m_areacnt ) break; //もうどうしても置けない
+  }
+  
   m_homex = 0;
 
 #if defined( DBG_MAP )
@@ -1389,7 +1446,7 @@ void Map::enterFloor( bool descend )
   plSetEnterPos( x, y );
 
   //プレイヤーが中心に来る様にホーム修正
-  m_homex = (x + 4) - (80 / 2);
+  m_homex = (x + 4) - (SCRW / 2);
 
   m_curareaidx = area;
 }
@@ -1406,7 +1463,7 @@ BlockDir Map::enter( int8_t area, int8_t blk, int8_t prvarea, int8_t prvblk )
   plSetEnterPos( x, y );
 
   //プレイヤーが中心に来る様にホーム修正
-  m_homex = (x + 4) - (80 / 2);
+  m_homex = (x + 4) - (SCRW / 2);
 
   m_curareaidx = area;
 

@@ -345,8 +345,12 @@ public:
    */
    void setupContainer( ObjContainer* objc, uint8_t mapfloor, uint8_t droplvl );
 
-   bool save( File& f );
-   bool load( File& f );
+  void allocDropitem( uint8_t bi );
+  void allocContainer();
+  void allocEnemy( uint8_t areaid );
+  
+  bool save( File& f );
+  bool load( File& f );
 
 private:
   ObjBase* createObjInstance( uint8_t objid );
@@ -482,9 +486,17 @@ public:
   //load する
   bool load();
 
-  inline uint8_t getMapFloor() { return m_mapfloor; }
+  inline uint8_t getMapFloor() const { return m_mapfloor; }
 
-  inline uint32_t getBaseSeed() { return m_baseseed; }
+  inline uint32_t getBaseSeed() const { return m_baseseed; }
+
+  inline uint8_t getNumDropitem() { return m_numDropitem; }
+  inline uint8_t getNumContainer() { return m_numContainer; }
+  inline uint8_t getNumEnemy() { return m_numEnemy; }
+  inline void incNumDropitem() { m_numDropitem++; }
+  inline void incNumContainer() { m_numContainer++; }
+  inline void incNumEnemy() { m_numEnemy++; }
+  
 
 #if defined( DBG_MAP )
   void DBGout();
@@ -497,6 +509,11 @@ protected:
   int16_t m_homex, m_homey;
   uint8_t m_curareaidx;
   uint32_t m_baseseed; //xorshift32 の乱数シード。create() 毎に再設定される。
+
+  //現在のフロアで生成に成功した数
+  uint8_t m_numDropitem;
+  uint8_t m_numContainer;
+  uint8_t m_numEnemy;
 
   uint8_t m_areaBG[TILELINEW*BLKTILEH]; //x!x! 引数で渡さなくても良い様にグローバル変数にする？
   uint8_t m_attrBG[TILELINEW*BLKTILEH]; //x!x! BG の attribute (通過可能とかのフラグ？ m_areaBG の上位ビットとかに統合する？ bgは0-63なので、上位2bit余るはず)

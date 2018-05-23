@@ -155,7 +155,7 @@ class ObjContainer : public NotContainable //コンテナはコンテナに入�
   typedef NotContainable super;
   friend class Area;
 public:
-  static const uint8_t MAX_CONTENTS = 6; //中身最大数
+  static const uint8_t MAX_CONTENTS = 5; //中身最大数
   
 protected:
   ObjContainer();

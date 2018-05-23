@@ -17,7 +17,7 @@ enum ItemType : int8_t {
   IT_SHIELD,
   IT_HEAD,
   IT_ARMOR,
-  IT_FOOT,
+  IT_FEET,
   IT_HAND,
   IT_RING,
   IT_AMULET,
@@ -28,9 +28,9 @@ enum ItemType : int8_t {
 };
 
 #define ITB( _ITYPE ) ((uint16_t)(1<<IT_##_ITYPE))
-#define ITB_ALL() (ITB(WEAPON)|ITB(SHIELD)|ITB(HEAD)|ITB(ARMOR)|ITB(FOOT)|ITB(HAND)|ITB(RING)|ITB(AMULET)|ITB(POTION)|ITB(SCROLL)|ITB(KEY)) //全種類
-#define ITB_EQALL() (ITB(WEAPON)|ITB(SHIELD)|ITB(HEAD)|ITB(ARMOR)|ITB(FOOT)|ITB(HAND)|ITB(RING)|ITB(AMULET)) //装備するもの全て
-#define ITB_EQMAIN() (ITB(WEAPON)|ITB(SHIELD)|ITB(HEAD)|ITB(ARMOR)|ITB(FOOT)|ITB(HAND)) //AMULET, RING 以外の装備
+#define ITB_ALL() (ITB(WEAPON)|ITB(SHIELD)|ITB(HEAD)|ITB(ARMOR)|ITB(FEET)|ITB(HAND)|ITB(RING)|ITB(AMULET)|ITB(POTION)|ITB(SCROLL)|ITB(KEY)) //全種類
+#define ITB_EQALL() (ITB(WEAPON)|ITB(SHIELD)|ITB(HEAD)|ITB(ARMOR)|ITB(FEET)|ITB(HAND)|ITB(RING)|ITB(AMULET)) //装備するもの全て
+#define ITB_EQMAIN() (ITB(WEAPON)|ITB(SHIELD)|ITB(HEAD)|ITB(ARMOR)|ITB(FEET)|ITB(HAND)) //AMULET, RING 以外の装備
 #define ITB_EQSUB() (ITB(RING)|ITB(AMULET)) //AMULET, RIG
 #define ITB_USEALL() (ITB(POTION)|ITB(SCROLL)|ITB(KEY)) //装備するもの以外の種類(使うもの)
 
@@ -105,55 +105,92 @@ enum ItemSuffix : int8_t { //後置詞
   ITSUFFIXMAX
 };
 
+
 enum ItemBaseIdx : int16_t {
   IBI_UNDEFINED = -1,
   //IT_WEAPON
   IBI_TOP_WEAPON,
-  IBI_SHORTSWORD = IBI_TOP_WEAPON,
+  IBI_DAGGER = IBI_TOP_WEAPON,
+  IBI_SHORTSWORD,
+  IBI_BLADE,
+  IBI_BROARDSWORD,
+  IBI_MACE,
   IBI_LONGSWORD,
-  IBI_DAGGER,
+  IBI_CUTLASS,
+  IBI_WARMACE,
+  IBI_KATANA,
+  IBI_RUNESWORD,
+  IBI_LORDSWORD,
   IBI_MAX_WEAPON,
 
   //IT_SHIELD
   IBI_TOP_SHIELD = IBI_MAX_WEAPON,
   IBI_WOODSHIELD = IBI_TOP_SHIELD,
   IBI_ROUNDSHIELD,
+  IBI_BUCKLER,
+  IBI_HEATERSHIELD,
+  IBI_LARGESHIELD,
+  IBI_KITESHIELD,
+  IBI_TOWERSHIELD,
   IBI_MAX_SHIELD,
 
   //IT_HEAD
   IBI_TOP_HEAD = IBI_MAX_SHIELD,
   IBI_LEATHERHELM = IBI_TOP_HEAD,
   IBI_HELM,
+  IBI_CLOSEDHELM,
+  IBI_GREATHELM,
+  IBI_BASINET,
+  IBI_COIF,
+  IBI_SKULLCAP,
+  IBI_CIRCLET,
+  IBI_HOOD,
+  IBI_MASK,
   IBI_MAX_HEAD,
   
   //IT_ARMOR
   IBI_TOP_ARMOR = IBI_MAX_HEAD,
-  IBI_LEATHERARMOR = IBI_TOP_ARMOR,
+  IBI_ROBE = IBI_TOP_ARMOR,
+  IBI_LEATHERARMOR,
   IBI_CHAINMAIL,
+  IBI_SPLINTMAIL,
+  IBI_BREASTPLATE,
+  IBI_PLATEMAIL,
+  IBI_ETCHEDARMOR,
+  IBI_LORDARMOR,
   IBI_MAX_ARMOR,
 
-  //IT_FOOT
-  IBI_TOP_FOOT = IBI_MAX_ARMOR,
-  IBI_LEATHERBOOTS = IBI_TOP_FOOT,
-  IBI_SHOES,
-  IBI_MAX_FOOT,
+  //IT_FEET
+  IBI_TOP_FEET = IBI_MAX_ARMOR,
+  IBI_SHOES = IBI_TOP_FEET,
+  IBI_LEATHERBOOTS,
+  IBI_CHAINBOOTS,
+  IBI_HEAVYBOOTS,
+  IBI_GREAVES,
+  IBI_MAX_FEET,
 
   //IT_HAND
-  IBI_TOP_HAND = IBI_MAX_FOOT,
+  IBI_TOP_HAND = IBI_MAX_FEET,
   IBI_LEATHERGLOVE = IBI_TOP_HAND,
   IBI_CHAINGLOVE,
+  IBI_GAUNTLETS,
+  IBI_LORDGLOVES,
   IBI_MAX_HAND,
 
   //IT_RING
   IBI_TOP_RING = IBI_MAX_HAND,
   IBI_WOODRING = IBI_TOP_RING,
   IBI_IRONRING,
+  IBI_ETCHEDRING,
+  IBI_ENGRAVEDRING,
   IBI_MAX_RING,
 
   //IT_AMULET
   IBI_TOP_AMULET = IBI_MAX_RING,
   IBI_STONEAMULET = IBI_TOP_AMULET,
   IBI_AMULET,
+  IBI_WOODAMULET,
+  IBI_TALISMAN,
   IBI_MAX_AMULET,
 
   //IT_POTION
@@ -177,18 +214,30 @@ enum ItemBaseIdx : int16_t {
 
 typedef struct {
   ItemBaseIdx base; //基本情報
+  uint8_t rank; //0:normal 1:rare 2:unique
   uint8_t prefix; //前置詞 index
   uint8_t suffix; //後置詞 index
   int16_t minatk; //最低攻撃力(base + x)
   int16_t maxatk; //最大攻撃力(base + x)
   int16_t def;    //守備力
   int16_t addhpmax; //体力最大値増加分
+  int16_t addmpmax; //魔力最大値増加分
   int8_t  addatkspd; //攻撃速度増加
   int8_t  addmovspd; //移動速度増加
-  uint8_t rank; //0:normal 1:rare 2:unique
-  ItemAttribute atr; //属性
+  ItemAttribute attr; //属性
+  int16_t adddmg; //ダメージ増加率(%)
+  int8_t addstr;
+  int8_t adddex;
+  int8_t addint;
+  int8_t addluk;
+  int8_t registfire; //耐火(%)
+  int8_t registcold; //耐冷気(%)
+  int8_t registphysic; //耐物理(%)
+  int8_t registthunder; //耐電気(%)
+  int8_t registmagic; //耐魔法(%)
+  int8_t healhp; //回復量(%/sec)
+  int8_t lightlvl; //明かりレベル
 } ITEM;
-
 
 
 //--------------------------------------------------------------------------------------------------------

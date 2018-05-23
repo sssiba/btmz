@@ -45,6 +45,25 @@ extern ItemPic ipShortSword;   //落ちてる時
 extern ItemPic ipEqShortSword; //装備時
 extern ItemPic ipLongSword;
 extern ItemPic ipEqLongSword;
+extern ItemPic ipDagger;
+extern ItemPic ipEqDagger;
+extern ItemPic ipBlade;
+extern ItemPic ipEqBlade;
+extern ItemPic ipBroadSword;
+extern ItemPic ipEqBroadSword;
+extern ItemPic ipCutlass;
+extern ItemPic ipEqCutlass;
+extern ItemPic ipMace;
+extern ItemPic ipEqMace;
+extern ItemPic ipWarMace;
+extern ItemPic ipEqWarMace;
+extern ItemPic ipKatana;
+extern ItemPic ipEqKatana;
+extern ItemPic ipRuneSword;
+extern ItemPic ipEqRuneSword;
+extern ItemPic ipLordSword;
+extern ItemPic ipEqLordSword;
+
 
 //SHIELD
 extern ItemPic ipWoodShield;
@@ -58,7 +77,7 @@ extern ItemPic ipHelm;
 extern ItemPic ipLeatherArmor;
 extern ItemPic ipChainMail;
 
-//FOOT
+//FEET
 extern ItemPic ipLeatherBoots;
 extern ItemPic ipShoes;
 

@@ -15,6 +15,12 @@
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
+
+
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 //fighter
 int16_t g_plx, g_ply;
 static bool g_plflip;
@@ -152,7 +158,8 @@ static void enterWzMode( uint8_t newmode );
 static void plDrawStat();
 
 static void applyItem(ITEM* item);
-static void removeItem(ITEM* item);
+//static void removeItem(ITEM* item);
+static void calcEquipItem(); //装備中のアイテム効果反映
 
 static void gatherAction( uint8_t slot[UICtrl::BCSLOTMAX] );
 static bool checkActionTarget( ObjBase* obj );
@@ -189,16 +196,15 @@ void plInit()
 
   g_plwkflag = 0;
 
+  memset( &g_plstat, 0, sizeof(PLSTAT) );
   g_plstat.hpmax = g_plstat.hp = 20;
   g_plstat.lvl = 1;
   g_plstat.str = 8;
   g_plstat.dex = 4;
   g_plstat.intl = 4;
   g_plstat.luk = 4;
-  g_plstat.gold = 0;
-  g_plstat.mp = 0;
-  g_plstat.mpmax = 0;
-  g_plstat.ex = 0;
+  g_plstat.curfloor = 1; //1F
+
   for ( int8_t i = 0; i < EQMAX; i++ ) {
     g_plequip[i] = NULL;
   }
@@ -206,12 +212,9 @@ void plInit()
     g_plitems[i] = NULL;
   }
 
-  g_plstat.minatk = 0;
-  g_plstat.maxatk = 0;
-  g_plstat.def = 0;
-  g_plstat.healhp = 0;
-
-  g_plstat.curfloor = 1; //1F
+  //次のレベルへの経験値を記録しておく（float使ってて遅そうなので）。
+  //次に計算するのはレベルアップ時
+  g_plstat.nextexp = plCalcExpReqNextLvl( g_plstat.lvl );
 
   //x!x! 適当な武器を装備させておく
   ITEM* weapon = itGenerate( IBI_SHORTSWORD, ITRANK_NORMAL, 10 );
@@ -344,7 +347,7 @@ void modeMove()
     g_plx += mv;
   }
 
-#define SCROLLMARGIN 16
+#define SCROLLMARGIN 24
 
   //背景スクロール
   updateScroll();
@@ -378,8 +381,8 @@ void updateScroll()
   int16_t hx, hy;
   DUNMAP()->getHome( hx, hy );
   int16_t scrx = DUNMAP()->toScrX( plGetX() );
-  if ( scrx >= (80 - SCROLLMARGIN) - 4 ) {
-    hx += scrx - ((80 - SCROLLMARGIN) - 4 - 1);
+  if ( scrx >= (SCRW - SCROLLMARGIN) - 4 ) {
+    hx += scrx - ((SCRW - SCROLLMARGIN) - 4 - 1);
     DUNMAP()->setHomeX( hx );
   } else if ( scrx < (SCROLLMARGIN) + 4 ) {
     hx -= (SCROLLMARGIN + 4) - scrx;
@@ -1167,7 +1170,7 @@ bool plEquip( ITEM* item )
     if ( !g_plequip[eqpos] ) {
       g_plequip[eqpos] = item;
       //パラメータ反映
-      applyItem( item );
+      calcEquipItem();
 
       return true;
     }
@@ -1189,7 +1192,7 @@ int8_t plCheckEquipPos( ITEM* item )
     case IT_ARMOR: eqpos = EQ_BODY; break;
     case IT_RING: eqpos = EQ_RING; break;
     case IT_AMULET: eqpos = EQ_AMULET; break;
-    case IT_FOOT: eqpos = EQ_FOOT; break;
+    case IT_FEET: eqpos = EQ_FEET; break;
     case IT_HAND: eqpos = EQ_HAND; break;
   }
 
@@ -1210,8 +1213,9 @@ ITEM* plUnequip( int8_t eqpos )
 
   //パラメータ反映
   if ( item ) {
-    removeItem( item );
+//    removeItem( item );
     g_plequip[eqpos] = NULL;
+    calcEquipItem();
   }
 
   return item;
@@ -1224,7 +1228,8 @@ ITEM* plUnequip( ITEM* item )
       g_plequip[i] = NULL;
 
       //パラメータ反映
-      removeItem( item );
+//      removeItem( item );
+      calcEquipItem();
       break;
     }
   }
@@ -1237,23 +1242,52 @@ ITEM* plUnequip( ITEM* item )
 */
 void applyItem( ITEM* item )
 {
-  g_plstat.minatk += item->minatk;
-  g_plstat.maxatk += item->maxatk;
-  g_plstat.def += item->def;
-  g_plstat.hpmax += item->addhpmax;
+  PLITEMBUFF* pib = &g_plstat.itbuff;
+  //パラメータをbyte,wordの配列に分けた方が良いかも…
+  pib->minatk += item->minatk;
+  pib->maxatk += item->maxatk;
+  pib->addhpmax += item->addhpmax;
+  pib->addstr += item->addstr;
+  pib->adddex += item->adddex;
+  pib->addint += item->addint;
+  pib->addluk += item->addluk;
+  pib->def += item->def;
+  pib->healhp += item->healhp;
+  pib->registfire += item->registfire;
+  pib->registcold += item->registcold;
+  pib->registphysic += item->registphysic;
+  pib->registthunder += item->registthunder;
+  pib->registmagic += item->registmagic;
+  pib->itemattr = ItemAttribute( pib->itemattr | item->attr );
+
+  if( pib->minatk >= MAX_PL_MINATK ) pib->minatk = MAX_PL_MINATK;
+  if( pib->maxatk >= MAX_PL_MAXATK ) pib->minatk = MAX_PL_MAXATK;
+  if( pib->addhpmax >= MAX_PL_ADDHPMAX ) pib->addhpmax = MAX_PL_ADDHPMAX;
+  if( pib->addstr >= MAX_PL_ADDSTR ) pib->addstr = MAX_PL_ADDSTR;
+  if( pib->adddex >= MAX_PL_ADDDEX ) pib->adddex = MAX_PL_ADDDEX;
+  if( pib->addint >= MAX_PL_ADDINT ) pib->addint = MAX_PL_ADDINT;
+  if( pib->addluk >= MAX_PL_ADDLUK ) pib->addluk = MAX_PL_ADDLUK;
+  if( pib->def >= MAX_PL_DEF ) pib->def = MAX_PL_DEF;
+  if( pib->healhp >= MAX_PL_HEALHP ) pib->healhp = MAX_PL_HEALHP;
+  if( pib->registfire >= MAX_PL_RGFIRE ) pib->registfire = MAX_PL_RGFIRE;
+  if( pib->registcold >= MAX_PL_RGCOLD ) pib->registcold = MAX_PL_RGCOLD;
+  if( pib->registphysic >= MAX_PL_RGPHYSIC ) pib->registphysic = MAX_PL_RGPHYSIC;
+  if( pib->registthunder >= MAX_PL_RGTHUNDER ) pib->registthunder = MAX_PL_RGTHUNDER;
+  if( pib->registmagic >= MAX_PL_RGMAGIC ) pib->registmagic = MAX_PL_RGMAGIC;
 }
 
-/*
-   アイテムの効果除去
-*/
-void removeItem( ITEM* item )
+void calcEquipItem()
 {
-  //外した装備のパラメータを無くす
-  g_plstat.minatk -= item->minatk;
-  g_plstat.maxatk -= item->maxatk;
-  g_plstat.def -= item->def;
-  g_plstat.hpmax -= item->addhpmax;
+  //一旦全部クリア
+  memset( &g_plstat.itbuff, 0, sizeof(g_plstat.itbuff) );
+  for ( int8_t i = 0; i < EQMAX; i++ ) {
+    if ( g_plequip[i] ) {
+      //パラメータ反映
+      applyItem( g_plequip[i] );
+    }
+  }
 }
+
 
 /*
    アイテムを持たせる
@@ -1331,7 +1365,7 @@ int16_t plCalcDamage( EnemyData* ed )
   */
   PLSTAT& ps = plGetStat();
   float eatk = (ed->str + (ed->str * ed->lvl) / 100.0f);
-  float dmg = (eatk * eatk) / (eatk + ps.def);
+  float dmg = (eatk * eatk) / (eatk + plGetDEF());
 
   return (int16_t)dmg;
 }
@@ -1344,6 +1378,67 @@ bool plDamage( int16_t dmg )
     return true; //死んだ
   }
   return false;
+}
+
+void plAddExp( uint16_t getexp )
+{
+  g_plstat.ex += getexp;
+
+  while( g_plstat.ex >= g_plstat.nextexp ) {
+    g_plstat.ex -= g_plstat.nextexp;
+    plLevelUp();
+    g_plstat.nextexp = plCalcExpReqNextLvl( g_plstat.lvl );
+  }
+}
+
+void plLevelUp()
+{
+  if( ++g_plstat.lvl > MAX_PL_LVL ) g_plstat.lvl = MAX_PL_LVL;
+
+  g_plstat.str++;
+  g_plstat.dex++;
+  g_plstat.intl++;
+  g_plstat.luk++;
+
+  g_plstat.hpmax += 5 + random( g_plstat.luk/10 ) + (g_plstat.lvl/3);
+  g_plstat.hp = g_plstat.hpmax;
+}
+
+int16_t plCalcExpReqNextLvl( uint8_t curlvl )
+{
+/*
+  次のレベルまでの必要値
+    A.-------
+    今のレベル n
+    (前のレベルでの必要値 * 1.3) * 0.78 + (n*10)*0.22
+    LVL1 の時は前のレベルの値がないので固定値。
+    LVL1 の固定値 8 の場合、LVL99 での値は 18057。
+    99 を超えてレベルが上ってくの向き？
+    B.-------
+    今のレベル n
+    (前のレベルでの必要値 * 1.3) * 0.795 + (n*10)*0.205
+    LVL1 の時は前のレベルの値がないので固定値。
+    LVL1 の固定値 8 の場合、LVL90 で 29103
+    LVL91 以降は最大値固定になる
+    99 までの場合向き？
+    C.-------
+    今のレベル n
+    (前のレベルでの必要値 * 1.25) * 0.795 + (n*35)*0.205
+    LVL1 の時は前のレベルの値がないので固定値。
+    LVL1 の固定値 8 の場合、LVL99 で 29208
+ */
+ 
+  float v = 8.0f; //level1 の時の次への必要値
+
+  for( int16_t i=2; i<=curlvl; i++ ) { //level1 は定数なので、1の場合から計算
+    v = ((v * 1.25f) * 0.795) + ((i*35.0f)*0.205f);
+  }
+
+  int16_t ret = (uint16_t)v;
+
+  if( ret > MAX_PL_EXP ) ret = MAX_PL_EXP;
+
+  return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -1670,6 +1765,51 @@ void lbFinish()
 {
 }
 
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+int16_t plGetHPMAX()
+{
+  int16_t ret = g_plstat.hpmax;
+  ret += g_plstat.itbuff.addhpmax;
+  if( ret > MAX_PL_HPMAX ) ret = MAX_PL_HPMAX;
+  return ret;
+}
+int16_t plGetMPMAX()
+{
+  int16_t ret = g_plstat.mpmax;
+  ret += g_plstat.itbuff.addmpmax;
+  if( ret > MAX_PL_MPMAX ) ret = MAX_PL_MPMAX;
+  return ret;
+}
+int16_t plGetSTR()
+{
+  int16_t ret = g_plstat.str;
+  ret += g_plstat.itbuff.addstr;
+  if( ret > MAX_PL_STR ) ret = MAX_PL_STR;
+  return ret;
+}
+int16_t plGetDEX()
+{
+  int16_t ret = g_plstat.dex;
+  ret += g_plstat.itbuff.adddex;
+  if( ret > MAX_PL_DEX ) ret = MAX_PL_DEX;
+  return ret;
+}
+int16_t plGetINT()
+{
+  int16_t ret = g_plstat.intl;
+  ret += g_plstat.itbuff.addint;
+  if( ret > MAX_PL_INT ) ret = MAX_PL_INT;
+  return ret;
+}
+int16_t plGetLUK()
+{
+  int16_t ret = g_plstat.luk;
+  ret += g_plstat.itbuff.addluk;
+  if( ret > MAX_PL_LUK ) ret = MAX_PL_LUK;
+  return ret;
+}
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------

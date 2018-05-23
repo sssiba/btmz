@@ -590,44 +590,44 @@ void drawMenuStatus()
   char s[64];
   gb.display.setColor( ColorIndex::white );
 
-  PLSTAT& ps = plGetStat();
+//  PLSTAT& ps = plGetStat();
 
   //Name[12], Level[99]
-  sprintf( s, "%s", ps.name );
+  sprintf( s, "%s", plGetNAME() );
   gb.display.setCursor( 0, TOPLINE );
   gb.display.print( s );
-  sprintf( s, "L:%-2d", ps.lvl );
+  sprintf( s, "L:%-2d", plGetLVL() );
   gb.display.setCursor( 14 * 4, TOPLINE );
   gb.display.print( s );
 
   //HP[9999] / EXP[29999]
-  sprintf( s, "H:%d/%d", ps.hp, ps.hpmax);
+  sprintf( s, "H:%d/%d", plGetHP(), plGetHPMAX() ); //ps.hp, ps.hpmax);
   gb.display.setCursor( 0, TOPLINE + (LINEH * 1) );
   gb.display.print( s );
-  sprintf( s, "E:%d", ps.ex );
+  sprintf( s, "E:%d", plGetEXP() );
   gb.display.setCursor( 14 * 4, TOPLINE + (LINEH * 1) );
   gb.display.print( s );
 
   //MP[999] / GOLD[9999999]
-  sprintf( s, "M:%d/%d", ps.mp, ps.mpmax );
+  sprintf( s, "M:%d/%d", plGetMP(), plGetMPMAX());//ps.mp, ps.mpmax );
   gb.display.setCursor( 0, TOPLINE + (LINEH * 2) );
   gb.display.print( s );
-  sprintf( s, "G:%d", ps.gold );
+  sprintf( s, "G:%d", plGetGOLD() );
   gb.display.setCursor( 12 * 4, TOPLINE + (LINEH * 2) );
   gb.display.print( s );
 
   //ATK[9999] / DEF[9999]
-  sprintf( s, "ATK:%-4d DEF:%-4d", enCalcDamage( NULL ), ps.def );
+  sprintf( s, "ATK:%-4d DEF:%-4d", enCalcDamage( NULL ), plGetDEF() ); //ps.itbuff.def );
   gb.display.setCursor( 0, TOPLINE + (LINEH * 3) );
   gb.display.print( s );
 
   //STR[999] / DEX[999]
-  sprintf( s, "STR:%-3d  DEX:%-3d", ps.str, ps.dex );
+  sprintf( s, "STR:%-3d  DEX:%-3d", plGetSTR(), plGetDEX() );
   gb.display.setCursor( 0, TOPLINE + (LINEH * 4) );
   gb.display.print( s );
 
   //INT[999] / LUK[999]
-  sprintf( s, "INT:%-3d  LUK:%-3d", ps.intl, ps.luk );
+  sprintf( s, "INT:%-3d  LUK:%-3d", plGetINT(), plGetLUK() );
   gb.display.setCursor( 0, TOPLINE + (LINEH * 5) );
   gb.display.print( s );
 
@@ -981,7 +981,7 @@ void MenuEquipSelect::draw()
           //装備していないなら部位名を表示
           gb.display.setColor( ColorIndex::gray );
           static const char* pname[] = {
-            "HEAD", "WEAPON", "SHIELD", "ARMOR", "HAND", "FOOT", "AMULET", "RING",
+            "HEAD", "WEAPON", "SHIELD", "ARMOR", "HAND", "FEET", "AMULET", "RING",
           };
 
           gb.display.setCursor( x + SCRW - strlen(pname[idx]) * 4, y + 3 );

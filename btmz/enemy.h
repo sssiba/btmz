@@ -10,8 +10,8 @@
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
 #define MAX_ENEMYNAME 10
-#define MAX_ENEMYENTRY 24
-
+#define MAX_ENEMYENTRY 40
+  
 enum {
   ENPHASE_WAIT,
   ENPHASE_MOVE,
@@ -33,8 +33,8 @@ typedef struct EnemyData {
   uint8_t lvl;
   int16_t hpmax;
   int16_t hp;
-  uint16_t str;
-  uint16_t def;
+  uint16_t str; //攻撃力
+  uint16_t def; //防御力
   uint8_t stat;
   uint8_t flip;
   uint8_t anm;
@@ -42,6 +42,7 @@ typedef struct EnemyData {
   int16_t x, y; //位置(マップ座標) 固定小数点
   uint8_t phase;
   uint8_t phasewait; //特定の phase で使う wait
+  uint8_t atkinterval; //攻撃間隔(0の時にのみ攻撃出来る)
   uint8_t wk[2]; //適当に使うワーク
 };
 
@@ -60,7 +61,9 @@ typedef struct EnemyTemplate {
   uint16_t hpmax;
   uint16_t str;
   uint16_t def;
+  uint8_t atkspd; //攻撃間隔(frm)。小さい程速い
   uint8_t w; //配置時の横幅
+  uint16_t getexp; //貰える経験値  
   Rect8 mvrect;
   Rect8 atrect;
   Rect8 dfrect;
